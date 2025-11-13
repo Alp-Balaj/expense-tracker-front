@@ -1,9 +1,9 @@
 import apiClient from "./apiClient";
 
-export const getIncomes = () => apiClient.get("/income");
+export const getIncomes = () => apiClient.get("/Income");
 
-export const addIncome = (incomeData) => apiClient.post("/income", incomeData);
+export const addIncome = (incomeData) => apiClient.post("/Income", incomeData);
 
-export const updateIncome = (id, incomeData) => apiClient.put(`/income/${id}`, incomeData);
+export const updateIncome = (id, incomeData) => apiClient.put(`/Income/${id}`, incomeData);
 
-export const deleteIncome = (id) => apiClient.delete(`/income/${id}`);
+export const deleteIncome = (id) => apiClient.delete(`/Income/${id}`);

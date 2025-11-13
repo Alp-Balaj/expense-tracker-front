@@ -1,6 +1,8 @@
 import styled from "styled-components";
 import { Button, Grid, Typography, Box } from "@mui/material";
-import { useExpenses } from "../../Hooks/useExpenses";
+import { useExpenses } from "../../../Hooks/useExpenses";
+import { useState } from "react";
+import { ExpenseModal } from "./ExpenseModal";
 
 const ActionCard = styled.div`
   width: 100%;
@@ -33,21 +35,13 @@ const ButtonDiv = styled.div`
   border-radius: 10px;
   background-color: #8D4240;
 `
-const BalanceDiv = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-  background-color: #8D4240;
-`
 
-const InnerBalanceDiv = styled.div`
+const TotalExepensesDiv = styled.div`
   width: 100%;
   border-radius: 10px;
   background-color: #E7E7E7;
 `
+
 const H1 = styled.h1`
   padding: 0;
   padding-left: 5px;
@@ -56,11 +50,15 @@ const H1 = styled.h1`
 `
 
 
-function UserActionCard() {
+function UserActionCard(initialData) {
 
-  const { expenses, loading, error } = useExpenses();
+  const { expenses, loading, error, createExpense } = useExpenses();
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <ActionCard>
@@ -69,19 +67,21 @@ function UserActionCard() {
         <Grid container spacing={1} sx={{height:'15%'}}>
           <Grid size={6} sx={{height: '100%'}}>
               <Grid container spacing={1} sx={{height:'100%', padding: '5px', backgroundColor: '#8D4240', borderRadius: '10px'}}>
-                <InnerBalanceDiv>
+                <TotalExepensesDiv>
                   <H1>
                     Total Expenses
                   </H1>
                   <H1>
                     ${totalExpenses.toFixed(2)}
                   </H1>
-                </InnerBalanceDiv>
+                </TotalExepensesDiv>
               </Grid>
           </Grid>
           <Grid size={6}>
             <ButtonDiv>
-              <Button variant="contained" color="primary" sx={{ width: '100%', height: '100%' }}>
+              <Button 
+              variant="contained" color="red" sx={{ width: '100%', height: '100%', color: 'white' }}
+              onClick={handleOpen} >
                 Add Expense
               </Button>
             </ButtonDiv>
@@ -105,9 +105,11 @@ function UserActionCard() {
                       justifyContent: 'space-between',
                       padding: '5px 10px',
                       borderBottom: '1px solid #ccc',
+                      color: 'white'
                     }}
                   >
                     <Typography>{expense.title}</Typography>
+                    <Typography>{expense.category}</Typography>
                     <Typography>${expense.amount.toFixed(2)}</Typography>
                   </Box>
                 ))}
@@ -117,6 +119,14 @@ function UserActionCard() {
         </Grid>
         
       </InnerContainer>
+
+      <ExpenseModal
+        open={open}
+        handleClose={handleClose}
+        onSave={createExpense}
+      />
+
+        
     </ActionCard>
   )
 }

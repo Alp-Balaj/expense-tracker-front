@@ -40,6 +40,11 @@ function UserDashboard() {
         <UsernameText>Username</UsernameText>
 
         <InformationTextArea>
+          <InformationText>Balance:</InformationText>
+          <InformationText>???$</InformationText>
+        </InformationTextArea>
+
+        <InformationTextArea>
           <InformationText>Income:</InformationText>
           <InformationText>???$</InformationText>
         </InformationTextArea>

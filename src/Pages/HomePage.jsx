@@ -1,10 +1,10 @@
 import { Grid, Stack } from "@mui/material";
-import UserDashboard from "../Components/Dashboard/UserDashboard";
-import UserGraph from "../Components/Dashboard/UserGraph";
+import UserDashboard from "../Components/PageComponents/Dashboard/UserDashboard";
+import UserGraph from "../Components/PageComponents/Dashboard/UserGraph";
 import './HomePageStyle.css';
-import IncomeCard from "../Components/IncomeCard/IncomeCard";
-import ExpensesCard from "../Components/ExpensesCard/ExpensesCard";
-import SAndBCard from "../Components/SAndBCard/SAndBCard";
+import IncomeCard from "../Components/PageComponents/IncomeCard/IncomeCard"
+import ExpensesCard from "../Components/PageComponents/ExpensesCard/ExpensesCard";
+import SAndBCard from "../Components/PageComponents/SAndBCard/SAndBCard";
 import Sidebar from "../Components/Sidebar/Sidebar"
 
 const HomePage = () => {

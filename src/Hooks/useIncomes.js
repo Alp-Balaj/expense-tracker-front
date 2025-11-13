@@ -31,5 +31,5 @@ export const useIncomes = () => {
     fetchIncomes();
   }, []);
 
-  return { incomes, loading, error, fetchExpenses, createExpense };
+  return { incomes, loading, error, fetchIncomes, createIncome };
 };
