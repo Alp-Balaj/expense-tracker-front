@@ -3,6 +3,8 @@ import { Button, Grid, Typography, Box } from "@mui/material";
 import { useIncomes } from "../../../Hooks/useIncomes";
 import { useState } from "react";
 import { IncomeModal } from "./IncomeModal"
+import GeneralTableList from '../../CustomGeneralComponents/GeneralTableList';
+import TableSettings from '../../../Models/TableSettings';
 
 //#region styled divs
 const ActionCard = styled.div`
@@ -51,6 +53,16 @@ const H1 = styled.h1`
 
 //#endregion
 
+const columns = [
+  { header: 'Source', accessor: 'source', type: 'string', filterable: true }
+];
+
+const incomeTableSettings = new TableSettings({
+  columns,
+  url: 'api/Income',
+  // editFormStyle: employeeFormStyling
+});  
+
 function UserActionCard() {
 
   const { incomes, loading, error, createIncome } = useIncomes();
@@ -94,36 +106,7 @@ function UserActionCard() {
 
         <Grid container spacing={1} sx={{height:'80%'}}>
           <PlaceHolderDiv>
-            {loading && <Typography sx={{
-                      padding: '5px 10px',
-            }}>Loading...</Typography>}
-            {error && <Typography sx={{
-                      padding: '5px 10px',
-            }} color="error">Error loading incomes</Typography>}
-            {!loading && !error && incomes.length === 0 && (
-              <Typography sx={{
-                      padding: '5px 10px',
-            }}>No incomes added yet.</Typography>
-            )}
-            {!loading && !error && incomes.length > 0 && (
-              <Box>
-                {incomes.map((income) => (
-                  <Box
-                    key={income.id}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      padding: '5px 10px',
-                      borderBottom: '1px solid #ccc',
-                      color: 'white'
-                    }}
-                  >
-                    <Typography>{income.source}</Typography>
-                    <Typography>${income.amount.toFixed(2)}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
+            <GeneralTableList title="Income" tableSettings={incomeTableSettings} editForm={null}/>
           </PlaceHolderDiv>
         </Grid>
         

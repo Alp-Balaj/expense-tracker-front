@@ -1,5 +1,5 @@
 import styled from "styled-components"
-import ExPieChartCard from "./ExPieChartCard";
+import PieChartCard from "../../CustomGeneralComponents/PieChartCard";
 import ExUserActionCard from "./ExUserActionCard";
 import { Grid } from "@mui/material";
 
@@ -19,7 +19,7 @@ function ExpensesCard() {
                 <ExUserActionCard/>
             </Grid>
             <Grid size={5}>
-                <ExPieChartCard/>
+                <PieChartCard url={"api/Expense"}/>
             </Grid>
         </Grid>
     </Card>

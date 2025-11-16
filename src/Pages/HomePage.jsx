@@ -2,9 +2,7 @@ import { Grid, Stack } from "@mui/material";
 import UserDashboard from "../Components/PageComponents/Dashboard/UserDashboard";
 import UserGraph from "../Components/PageComponents/Dashboard/UserGraph";
 import './HomePageStyle.css';
-import IncomeCard from "../Components/PageComponents/IncomeCard/IncomeCard"
-import ExpensesCard from "../Components/PageComponents/ExpensesCard/ExpensesCard";
-import SAndBCard from "../Components/PageComponents/SAndBCard/SAndBCard";
+import HomeCard from "../Components/CustomGeneralComponents/HomeCard/HomeCard";
 import Sidebar from "../Components/Sidebar/Sidebar"
 
 const HomePage = () => {
@@ -30,9 +28,7 @@ const HomePage = () => {
             <Grid container spacing={2} sx={{padding: '15px'}}>
               <Grid size={10}>
                 <Stack spacing={2}>
-                  <IncomeCard/>
-                  <ExpensesCard/>
-                  <SAndBCard/>
+                  <HomeCard/>
                 </Stack>
               </Grid>
               <Grid size={2}>

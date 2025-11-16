@@ -1,11 +1,12 @@
 import './App.css';
 import HomePage from './Pages/HomePage';
+import { AuthProvider } from './Authorization/AuthContext'; 
 
 function App() {
   return (
-    <div>
-      <HomePage/>
-    </div>
+    <AuthProvider>
+      <HomePage />
+    </AuthProvider>
   );
 }
 
