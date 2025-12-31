@@ -1,7 +1,7 @@
 import { useAuth } from '../Authorization/AuthContext';
-import { loginApi, checkLoginApi, refreshTokenApi, logOutApi } from '../services/loginServices';
+import { loginApi, checkLoginApi, refreshTokenApi, logOutApi } from '../Services/loginServices';
 
-export function useAuthApi() {
+export function useAuthenticationApi() {
     const { accessToken, setAccessToken } = useAuth();
 
     const login = async (data) => {

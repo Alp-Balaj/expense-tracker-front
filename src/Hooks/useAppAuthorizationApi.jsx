@@ -1,9 +1,8 @@
 import { useAuth } from "../Authorization/AuthContext";
 import { getDataApi, postDataApi, putDataApi, deleteDataApi, getAllDataApi } from '../Services/apiServices';
 
-export function useAppAuthApi() {
+export function useAuthorizationApi() {
     const { accessToken } = useAuth();
-
 
     const getData = async (url) => {
         const response = await getDataApi(url, accessToken);
