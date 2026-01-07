@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import LoginForm from '../Components/LoginForm';
+import SignUpForm from '../Components/SignUpForm';
 import styled from 'styled-components';
 
 const LoginPageContainer = styled.div`
@@ -9,11 +11,15 @@ const LoginPageContainer = styled.div`
 `;
 
 function LoginPage() {
-  console.log("Rendering LoginPage");
+  const [isLoginPage, setIsLoginPage] = useState(true);
+
+  const handlePage = () => {
+      setIsLoginPage(!isLoginPage);
+  };
 
   return (
     <LoginPageContainer>
-      <LoginForm />
+      {isLoginPage ? <LoginForm changePageState={handlePage}/> : <SignUpForm changePageState={handlePage}/>}
     </LoginPageContainer>
   )
 }

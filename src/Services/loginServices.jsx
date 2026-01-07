@@ -15,6 +15,16 @@ export async function loginApi(data) {
     }
 }
 
+export async function signupApi(data) {
+    try {
+        const response = await api.post('/api/User/signup', data);
+        return response.data;
+    } catch (error) {
+        console.error("Registering user failed:", error);
+        throw error;
+    }
+}
+
 export async function checkLoginApi(token) {
     try {
         if(!token) return false;
