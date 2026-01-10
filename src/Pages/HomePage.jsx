@@ -1,9 +1,12 @@
+import ExpenseList from "../Components/ExpenseList";
+
 const HomePage = () => {
   return (
     <div>
-      <h1>Hello World</h1>
+      <h1>Home Page</h1>
+      <ExpenseList />
     </div>
-  )
+  );
 }
 
-export default HomePage
+export default HomePage;
