@@ -1,10 +1,22 @@
-import ExpenseList from "../Components/ExpenseList";
+import ExpenseList from "../Components/Lists/ExpenseList";
+import IncomeList from "../Components/Lists/IncomeList";
+import AccountList from "../Components/Lists/AccountList";
+import CategoryList from "../Components/Lists/CategoryList";
+import CurrencyList from "../Components/Lists/CurrencyList";
+import FutureExpenseList from "../Components/Lists/FutureExpenseList";
+import SavingList from "../Components/Lists/SavingList";
 
 const HomePage = () => {
   return (
     <div>
-      <h1>Home Page</h1>
+      <h1 style={{color: "#fff"}}>Home Page</h1>
       <ExpenseList />
+      <IncomeList />
+      <AccountList />
+      <CategoryList />
+      <CurrencyList />
+      <FutureExpenseList />
+      <SavingList />
     </div>
   );
 }
