@@ -15,12 +15,12 @@ export function useAuthorizationApi() {
     };
 
     const putData = async (url, data ) => {
-        const response = await putDataApi(url, data, accessToken);
+        const response = await putDataApi(url + `/${data.id}`, data, accessToken);
         return response;
     };
 
     const deleteData = async (url, data ) => {
-        const response = await deleteDataApi(url, data, accessToken);
+        const response = await deleteDataApi(url + `/${data.id}`, accessToken);
         return response;
     };
 

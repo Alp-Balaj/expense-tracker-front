@@ -10,13 +10,15 @@ const HomePage = () => {
   return (
     <div>
       <h1 style={{color: "#fff"}}>Home Page</h1>
-      <ExpenseList />
-      <IncomeList />
-      <AccountList />
-      <CategoryList />
-      <CurrencyList />
-      <FutureExpenseList />
-      <SavingList />
+      <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+        <ExpenseList />
+        <IncomeList />
+        <AccountList />
+        <CategoryList />
+        <CurrencyList />
+        <FutureExpenseList />
+        <SavingList />
+      </div>
     </div>
   );
 }
