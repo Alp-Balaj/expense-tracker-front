@@ -17,7 +17,7 @@ function AccountList() {
             setAccounts(data);
         } catch (err) {
             if (err?.response?.status !== 401) {
-            console.error(err);
+                console.error(err);
             }
         }
     };
@@ -39,7 +39,7 @@ function AccountList() {
     };
 
     const handleSubmit = async (data) => {
-        if (data.id) {
+        if (editingAccount != null) {
             console.log("UPDATE", data);
             await putData('api/Account', data);
         } else {
@@ -47,6 +47,7 @@ function AccountList() {
             await postData('api/Account', data);
         }
         
+        setEditingAccount(null);
         setIsFormOpen(false);
         await fetchAccounts();
     };

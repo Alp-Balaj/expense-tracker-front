@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-function AccountForm({ row = {}, onSubmit }) {
+function AccountForm({ row = {}, onSubmit, onCancel }) {
   console.log("data passed through", row);
 
   const [data, setData] = useState({
-    id: row?.id || "",
+    id: row?.id || null,
     name: row?.name || "",
     amountTypeId: row?.amountTypeId || 0,
     balance: row?.balance || 0,
@@ -43,6 +43,7 @@ function AccountForm({ row = {}, onSubmit }) {
       />
 
       <button type="submit">Save</button>
+      <button type="button" onClick={onCancel}>Cancel</button>
     </form>
   );
 }
