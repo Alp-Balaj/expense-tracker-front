@@ -83,7 +83,7 @@ async function handle401({
     throw err;
   }
 
-  const isRefreshCall = original.url?.includes("/api/user/refresh");
+  const isRefreshCall = original.url?.includes("/api/User/refresh");
   if (isRefreshCall || original._retry) {
     if (!redirectingRef.current) {
       redirectingRef.current = true;
@@ -114,9 +114,11 @@ async function handle401({
   isRefreshingRef.current = true;
 
   try {
-    const refreshRes = await api.post("/api/user/refresh");
-    console.log("ALP, token:", refreshRes.data);
-    const newToken = refreshRes.data?.accessToken;
+    const refreshRes = await api.post("/api/User/refresh");
+    console.log("A, response:", refreshRes);
+    console.log("B, data:", refreshRes.data);
+    console.log("C, data:", refreshRes.data?.token);
+    const newToken = refreshRes.data?.token;
 
     if (!newToken) throw new Error("Refresh returned no access token");
 
