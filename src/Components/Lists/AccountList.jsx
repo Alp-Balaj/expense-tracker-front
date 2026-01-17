@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { useAuthorizationApi } from "../../Hooks/useAppAuthorizationApi";
+import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx"
 import AccountForm from "../Forms/AccountForm";
+import { useAuth } from "../../Authorization/AuthContext.jsx";
 
 function AccountList() {
+    const { accessToken, isAuthReady } = useAuth();
+
     const [accounts, setAccounts] = useState([]);
     const { getAllData, postData, putData } = useAuthorizationApi();
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -10,14 +13,17 @@ function AccountList() {
     
     const fetchAccounts = async () => {
         try {
-            const data = await getAllData('api/Account');
+            const data = await getAllData("api/Account");
             setAccounts(data);
-        } catch (error) {
-            console.error('Error fetching accounts:', error);
+        } catch (err) {
+            if (err?.response?.status !== 401) {
+            console.error(err);
+            }
         }
     };
     
     useEffect(() => {
+        if (!isAuthReady || !accessToken) return;
         fetchAccounts();
         return () => {};
     }, []);
@@ -28,7 +34,6 @@ function AccountList() {
     };
 
     const editAccount = (account) => {
-        console.log("Editing account:", account);
         setEditingAccount(account);
         setIsFormOpen(true);
     };

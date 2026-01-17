@@ -4,27 +4,27 @@ import { getDataApi, postDataApi, putDataApi, deleteDataApi, getAllDataApi } fro
 export function useAuthorizationApi() {
     const { accessToken } = useAuth();
 
-    const getData = async (url) => {
+    const getData = async (url: string) => {
         const response = await getDataApi(url, accessToken);
         return response;
     };
 
-    const postData = async (url, data ) => {
+    const postData = async (url: string, data: any) => {
         const response = await postDataApi(url, data, accessToken);
         return response;
     };
 
-    const putData = async (url, data ) => {
+    const putData = async (url: string, data: any) => {
         const response = await putDataApi(url + `/${data.id}`, data, accessToken);
         return response;
     };
 
-    const deleteData = async (url, data ) => {
+    const deleteData = async (url: string, data: any) => {
         const response = await deleteDataApi(url + `/${data.id}`, accessToken);
         return response;
     };
 
-    const getAllData = async (url) => {
+    const getAllData = async (url: string) => {
         const response = await getAllDataApi(url, accessToken);
         return response;
     };

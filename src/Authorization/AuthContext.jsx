@@ -20,8 +20,10 @@ export function AuthorizationProvider({ children }) {
     else localStorage.removeItem(STORAGE_KEY);
   };
 
+  const logout = () => setToken(null);
+
   const value = useMemo(
-    () => ({ accessToken, setToken, isAuthReady }),
+    () => ({ accessToken, setToken, logout, isAuthReady }),
     [accessToken, isAuthReady]
   );
 

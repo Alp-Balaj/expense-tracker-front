@@ -6,23 +6,25 @@ import LoginPage from "./Pages/LoginPage";
 
 import { AuthorizationProvider } from "./Authorization/AuthContext";
 import RequireAuth from "./Authorization/RequireAuthentication";
+import AxiosAuthBridge from "./Authorization/AxiosAuthBridge";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthorizationProvider>
-        <Routes>
-          {/* Public */}
-          <Route path="/login" element={<LoginPage />} />
+        <AxiosAuthBridge />
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected */}
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<HomePage />} />
-          </Route>
+            {/* Protected */}
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<HomePage />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/notFound" replace />} />
+          </Routes>
       </AuthorizationProvider>
     </BrowserRouter>
   );

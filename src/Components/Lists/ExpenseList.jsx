@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuthorizationApi } from "../../Hooks/useAppAuthorizationApi";
+import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 
 function ExpenseList() {
     const [expenses, setExpenses] = useState([]);
