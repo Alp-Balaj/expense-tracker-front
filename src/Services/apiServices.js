@@ -1,4 +1,3 @@
-// Services/apiServices.js
 import { api } from "./api.ts";
 
 export const getDataApi = async (url) => (await api.get(url)).data;
