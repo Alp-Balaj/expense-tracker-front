@@ -59,7 +59,7 @@ function FutureExpenseList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Future Expenses</h2> <button onClick={addFutureExpense}>Add Future Expense</button>
             <ul>
-                {futureExpense.map(futureExpense => (
+                {Array.isArray(futureExpense) && futureExpense.map(futureExpense => (
                     <li key={futureExpense.id}>
                         {futureExpense.title} - {futureExpense.amount} - {futureExpense.date.toString()} - {futureExpense.categoryId} - {futureExpense.description}
                         <button onClick={() => editFutureExpense(futureExpense)}>Edit</button>

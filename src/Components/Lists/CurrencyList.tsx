@@ -58,7 +58,7 @@ function CurrencyList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Currencies</h2> <button onClick={addCurrency}>Add Currency</button>
             <ul>
-                {currencies.map(currency => (
+                {Array.isArray(currencies) && currencies.map(currency => (
                     <li key={currency.id}>
                         {currency.code} - {currency.symbol} - {currency.exchangeRateToBase}
                         <button onClick={() => editCurrency(currency)}>Edit</button>

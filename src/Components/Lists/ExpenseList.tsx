@@ -59,7 +59,7 @@ function ExpenseList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Expenses</h2> <button onClick={addExpense}>Add Expense</button>
             <ul>
-                {expenses.map(expense => (
+                {Array.isArray(expenses) && expenses.map(expense => (
                     <li key={expense.id}>
                         {expense.title} - {expense.description} - {expense.amount} - {expense.date.toString()}
                         <button onClick={() => editExpense(expense)}>Edit</button>

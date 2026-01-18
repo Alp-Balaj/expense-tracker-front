@@ -58,7 +58,7 @@ export default function CategoryList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Categories</h2> <button onClick={addCategory}>Add Category</button>
             <ul>
-                {categories.map(category => (
+                {Array.isArray(categories) && categories.map(category => (
                     <li key={category.id}>
                         {category.name} - {category.description} - {category.categoryTypeId} - {category.color}
                         <button onClick={() => editCategory(category)}>Edit</button>

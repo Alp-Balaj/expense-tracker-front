@@ -57,7 +57,7 @@ export default function AccountList() {
       <h2>Accounts</h2> <button onClick={addAccount}>Add Account</button>
 
       <ul>
-        {accounts.map((account) => (
+        {Array.isArray(accounts) && accounts.map((account) => (
           <li key={account.id ?? `${account.name}-${account.amountTypeId}`}>
             {account.name} - {account.amountTypeId} - {account.balance} - {account.balanceCurrencyId}
             <button onClick={() => editAccount(account)}>Edit</button>

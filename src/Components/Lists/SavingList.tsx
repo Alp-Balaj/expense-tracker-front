@@ -57,7 +57,7 @@ function SavingList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Savings</h2> <button onClick={addSaving}>Add Saving</button>
             <ul>
-                {savings.map(saving => (
+                {Array.isArray(savings) && savings.map(saving => (
                     <li key={saving.id}>
                         {saving.amount} - {saving.date.toString()} - {saving.accountId} - {saving.categoryId} - {saving.description}
                         <button onClick={() => editSaving(saving)}>Edit</button>

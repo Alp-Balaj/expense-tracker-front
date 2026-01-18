@@ -59,7 +59,7 @@ function IncomeList() {
         <div style={{backgroundColor: '#fff'}}>
             <h2>Incomes</h2> <button onClick={addIncome}>Add Income</button>
             <ul>
-                {incomes.map(income => (
+                {Array.isArray(incomes) && incomes.map(income => (
                     <li key={income.id}>
                         {income.title} - {income.description} - {income.amount} - {income.date.toString()}
                         <button onClick={() => editIncome(income)}>Edit</button>
