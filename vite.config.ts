@@ -7,6 +7,9 @@ export default defineConfig(({ command }) => {
 
   return {
     plugins: [react()],
+    build: {
+      outDir: "build",
+    },
     server: isDev
       ? {
           port: 6969,
