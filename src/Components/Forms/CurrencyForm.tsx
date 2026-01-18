@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Currency, CurrencyFormProps } from "../../Models/Currency";
+import { Button } from "../ui/button";
 
 export default function CurrencyForm({
   row,
@@ -52,8 +53,8 @@ export default function CurrencyForm({
         placeholder="Exchange Rate To Base"
       />
 
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
+      <Button type="submit">Save</Button>
+      <Button type="button" onClick={onCancel}>Cancel</Button>
     </form>
   );
 }

@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext.js";
 import FutureExpenseForm from "../Forms/FutureExpenseForm.js";
 import type { FutureExpense } from "../../Models/FutureExpense.tsx";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button.tsx";
 
 function FutureExpenseList() {
   const { accessToken, isAuthReady } = useAuth();
@@ -57,12 +58,12 @@ function FutureExpenseList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Future Expenses</h2> <button onClick={addFutureExpense}>Add Future Expense</button>
+            <h2>Future Expenses</h2> <Button onClick={addFutureExpense}>Add Future Expense</Button>
             <ul>
                 {Array.isArray(futureExpense) && futureExpense.map(futureExpense => (
                     <li key={futureExpense.id}>
                         {futureExpense.title} - {futureExpense.amount} - {futureExpense.date.toString()} - {futureExpense.categoryId} - {futureExpense.description}
-                        <button onClick={() => editFutureExpense(futureExpense)}>Edit</button>
+                        <Button onClick={() => editFutureExpense(futureExpense)}>Edit</Button>
                     </li>
                 ))}
             </ul>

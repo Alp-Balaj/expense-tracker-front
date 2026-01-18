@@ -1,11 +1,13 @@
 import styled from "styled-components";
-import Input from "@mui/material/Input";
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
 import { useAuth } from "../Authorization/AuthContext";
 import type { LoginRequest } from "../Models/UserAuth";
+import { Button } from "../Components/ui/button";
+import { Spinner } from "../Components/ui/spinner";
+import { Input } from "./ui/input";
 
 const FormContainer = styled.form`
   display: flex;
@@ -68,10 +70,11 @@ function LoginForm({ data, changePageState }: LoginFormProps) {
       <h1 style={{ marginBottom: 0 }}>Login Form</h1>
 
       <p>
-        Don&apos;t have an account?{" "}
-        <button type="button" onClick={changePageState}>
+        Don't have an account?{" "}
+        
+        <Button size="sm" variant="outline" onClick={changePageState}>
           Sign up!
-        </button>
+        </Button>
       </p>
 
       <Input
@@ -90,9 +93,16 @@ function LoginForm({ data, changePageState }: LoginFormProps) {
 
       {serverError && <p>{serverError}</p>}
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Logging in..." : "Login"}
-      </button>
+      {!isSubmitting?
+        <Button size="sm" variant="outline">
+          Login
+        </Button>
+       :
+        <Button size="sm" variant="outline" disabled>
+          <Spinner />
+          Login
+        </Button>
+      }
     </FormContainer>
   );
 }

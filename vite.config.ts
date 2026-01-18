@@ -2,11 +2,14 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "fs";
 
+import path from "path"
+import tailwindcss from "@tailwindcss/vite"
+
 export default defineConfig(({ command }) => {
   const isDev = command === "serve";
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     build: {
       outDir: "build",
     },
@@ -22,6 +25,9 @@ export default defineConfig(({ command }) => {
       : undefined,
     resolve: {
       dedupe: ["react", "react-dom"],
+      alias: {
+      "@": path.resolve(__dirname, "./src"),
+      },
     },
   };
 });

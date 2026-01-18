@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext.js";
 import ExpenseForm from "../Forms/ExpenseForm.js";
 import type { Expense } from "../../Models/Expense.tsx";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button.tsx";
 
 function ExpenseList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -57,12 +58,12 @@ function ExpenseList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Expenses</h2> <button onClick={addExpense}>Add Expense</button>
+            <h2>Expenses</h2> <Button onClick={addExpense}>Add Expense</Button>
             <ul>
                 {Array.isArray(expenses) && expenses.map(expense => (
                     <li key={expense.id}>
                         {expense.title} - {expense.description} - {expense.amount} - {expense.date.toString()}
-                        <button onClick={() => editExpense(expense)}>Edit</button>
+                        <Button onClick={() => editExpense(expense)}>Edit</Button>
                     </li>
                 ))}
             </ul>

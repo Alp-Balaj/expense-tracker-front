@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Category, CategoryFormProps } from "../../Models/Category";
+import { Button } from "../ui/button";
 
 export default function CategoryForm({
   row,
@@ -54,8 +55,8 @@ export default function CategoryForm({
         placeholder="Color"
       />
 
-      <button type="submit">Save</button>      
-      <button type="button" onClick={onCancel}>Cancel</button>
+      <Button type="submit">Save</Button>      
+      <Button type="button" onClick={onCancel}>Cancel</Button>
     </form>
   );
 }

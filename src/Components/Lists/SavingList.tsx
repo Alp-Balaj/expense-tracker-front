@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext.js";
 import SavingForm from "../Forms/IncomeForm.js";
 import type { Saving } from "../../Models/Saving.tsx";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button.tsx";
 
 function SavingList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -55,12 +56,12 @@ function SavingList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Savings</h2> <button onClick={addSaving}>Add Saving</button>
+            <h2>Savings</h2> <Button onClick={addSaving}>Add Saving</Button>
             <ul>
                 {Array.isArray(savings) && savings.map(saving => (
                     <li key={saving.id}>
                         {saving.amount} - {saving.date.toString()} - {saving.accountId} - {saving.categoryId} - {saving.description}
-                        <button onClick={() => editSaving(saving)}>Edit</button>
+                        <Button onClick={() => editSaving(saving)}>Edit</Button>
                     </li>
                 ))}
             </ul>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { FutureExpense, FutureExpenseFormProps } from "../../Models/FutureExpense";
+import { Button } from "../ui/button";
 
 export default function FutureExpenseForm({
   row,
@@ -77,8 +78,8 @@ export default function FutureExpenseForm({
         placeholder="Description"
       />
 
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
+      <Button type="submit">Save</Button>
+      <Button type="button" onClick={onCancel}>Cancel</Button>
     </form>
   );
 }

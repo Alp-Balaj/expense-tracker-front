@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext.js";
 import IncomeForm from "../Forms/IncomeForm.js";
 import type { Income } from "../../Models/Income.tsx";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button.tsx";
 
 function IncomeList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -57,12 +58,12 @@ function IncomeList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Incomes</h2> <button onClick={addIncome}>Add Income</button>
+            <h2>Incomes</h2> <Button onClick={addIncome}>Add Income</Button>
             <ul>
                 {Array.isArray(incomes) && incomes.map(income => (
                     <li key={income.id}>
                         {income.title} - {income.description} - {income.amount} - {income.date.toString()}
-                        <button onClick={() => editIncome(income)}>Edit</button>
+                        <Button onClick={() => editIncome(income)}>Edit</Button>
                     </li>
                 ))}
             </ul>

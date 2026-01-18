@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Account, AccountFormProps } from "../../Models/Account";
+import { Button } from "../ui/button";
 
 export default function AccountForm({
   row,
@@ -68,10 +69,10 @@ export default function AccountForm({
         inputMode="numeric"
       />
 
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>
+      <Button type="submit">Save</Button>
+      <Button type="button" onClick={onCancel}>
         Cancel
-      </button>
+      </Button>
     </form>
   );
 }

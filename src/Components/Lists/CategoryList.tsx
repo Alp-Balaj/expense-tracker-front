@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext";
 import CategoryForm from "../Forms/CategoryForm";
 import type { Category } from "../../Models/Category";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button";
 
 export default function CategoryList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -56,12 +57,12 @@ export default function CategoryList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Categories</h2> <button onClick={addCategory}>Add Category</button>
+            <h2>Categories</h2> <Button onClick={addCategory}>Add Category</Button>
             <ul>
                 {Array.isArray(categories) && categories.map(category => (
                     <li key={category.id}>
                         {category.name} - {category.description} - {category.categoryTypeId} - {category.color}
-                        <button onClick={() => editCategory(category)}>Edit</button>
+                        <Button onClick={() => editCategory(category)}>Edit</Button>
                     </li>
                 ))}
             </ul>

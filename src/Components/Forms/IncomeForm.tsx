@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Income, IncomeFormProps } from "../../Models/Income";
+import { Button } from "../ui/button";
 
 export default function IncomeForm({
   row,
@@ -84,10 +85,10 @@ export default function IncomeForm({
         placeholder="Category Id"
       />
 
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>
+      <Button type="submit">Save</Button>
+      <Button type="button" onClick={onCancel}>
         Cancel
-      </button>
+      </Button>
     </form>
   );
 }

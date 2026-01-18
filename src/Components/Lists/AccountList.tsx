@@ -4,6 +4,7 @@ import AccountForm from "../Forms/AccountForm";
 import type { Account } from "../../Models/Account";
 import { useAuth } from "../../Authorization/AuthContext";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button";
 
 export default function AccountList() {
   const { accessToken, isAuthReady } = useAuth();
@@ -54,13 +55,13 @@ export default function AccountList() {
 
   return (
     <div style={{ backgroundColor: "#fff" }}>
-      <h2>Accounts</h2> <button onClick={addAccount}>Add Account</button>
+      <h2>Accounts</h2> <Button onClick={addAccount}>Add Account</Button>
 
       <ul>
         {Array.isArray(accounts) && accounts.map((account) => (
           <li key={account.id ?? `${account.name}-${account.amountTypeId}`}>
             {account.name} - {account.amountTypeId} - {account.balance} - {account.balanceCurrencyId}
-            <button onClick={() => editAccount(account)}>Edit</button>
+            <Button onClick={() => editAccount(account)}>Edit</Button>
           </li>
         ))}
       </ul>

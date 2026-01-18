@@ -4,6 +4,7 @@ import { useAuth } from "../../Authorization/AuthContext.js";
 import CurrencyForm from "../Forms/CurrencyForm.js";
 import type { Currency } from "../../Models/Currency.tsx";
 import type { AxiosError } from "axios";
+import { Button } from "../ui/button.tsx";
 
 function CurrencyList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -56,12 +57,12 @@ function CurrencyList() {
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <h2>Currencies</h2> <button onClick={addCurrency}>Add Currency</button>
+            <h2>Currencies</h2> <Button onClick={addCurrency}>Add Currency</Button>
             <ul>
                 {Array.isArray(currencies) && currencies.map(currency => (
                     <li key={currency.id}>
                         {currency.code} - {currency.symbol} - {currency.exchangeRateToBase}
-                        <button onClick={() => editCurrency(currency)}>Edit</button>
+                        <Button onClick={() => editCurrency(currency)}>Edit</Button>
                     </li>
                 ))}
             </ul>

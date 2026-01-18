@@ -5,6 +5,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
 import { useAuth } from "../Authorization/AuthContext";
 import type { SignUpRequest } from "../Models/UserAuth";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 
 const FormContainer = styled.form`
@@ -71,33 +73,33 @@ function SignUpForm({ data, changePageState }: SignUpFormProps) {
 
       <p>
         Already have an account?{" "}
-        <button type="button" onClick={changePageState}>
+        <Button type="button" onClick={changePageState}>
           Login!
-        </button>
+        </Button>
       </p>
 
-      <input
+      <Input
         placeholder="FirstName"
         type="text"
         {...register("firstName", { required: "First name is required" })}
       />
       {errors.firstName && <p>{String(errors.firstName.message)}</p>}
 
-      <input
+      <Input
         placeholder="LastName"
         type="text"
         {...register("lastName", { required: "Last name is required" })}
       />
       {errors.lastName && <p>{String(errors.lastName.message)}</p>}
 
-      <input
+      <Input
         placeholder="Email"
         type="email"
         {...register("email", { required: "Email is required" })}
       />
       {errors.email && <p>{String(errors.email.message)}</p>}
 
-      <input
+      <Input
         type="password"
         placeholder="Password"
         {...register("password", { required: "Password is required" })}
@@ -106,9 +108,9 @@ function SignUpForm({ data, changePageState }: SignUpFormProps) {
 
       {serverError && <p>{serverError}</p>}
 
-      <button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Registering user..." : "Sign Up"}
-      </button>
+      </Button>
     </FormContainer>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Saving, SavingFormProps } from "../../Models/Saving";
+import { Button } from "../ui/button";
 
 export default function SavingForm({
   row,
@@ -78,10 +79,10 @@ export default function SavingForm({
         placeholder="Category Id"
       />
 
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>
+      <Button type="submit">Save</Button>
+      <Button type="button" onClick={onCancel}>
         Cancel
-      </button>
+      </Button>
     </form>
   );
 }
