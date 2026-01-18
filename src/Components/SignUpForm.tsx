@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import Input from "@mui/material/Input";
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -77,28 +76,28 @@ function SignUpForm({ data, changePageState }: SignUpFormProps) {
         </button>
       </p>
 
-      <Input
+      <input
         placeholder="FirstName"
         type="text"
         {...register("firstName", { required: "First name is required" })}
       />
       {errors.firstName && <p>{String(errors.firstName.message)}</p>}
 
-      <Input
+      <input
         placeholder="LastName"
         type="text"
         {...register("lastName", { required: "Last name is required" })}
       />
       {errors.lastName && <p>{String(errors.lastName.message)}</p>}
 
-      <Input
+      <input
         placeholder="Email"
         type="email"
         {...register("email", { required: "Email is required" })}
       />
       {errors.email && <p>{String(errors.email.message)}</p>}
 
-      <Input
+      <input
         type="password"
         placeholder="Password"
         {...register("password", { required: "Password is required" })}
