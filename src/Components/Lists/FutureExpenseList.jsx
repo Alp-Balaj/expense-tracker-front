@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import FutureExpenseForm from "../Forms/FutureExpenseForm";
@@ -11,7 +11,7 @@ function FutureExpenseList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingFutureExpense, setEditingFutureExpense] = useState(null);
     
-    const fetchFutureExpense = async () => {
+    const fetchFutureExpense = useCallback(async () => {
         try {
             const data = await getAllData('api/FutureExpense');
             setFutureExpense(data);
@@ -20,13 +20,13 @@ function FutureExpenseList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchFutureExpense();
         return () => {};
-    }, []);
+    }, [fetchFutureExpense, isAuthReady, accessToken]);
 
     const addFutureExpense = () => {
         setEditingFutureExpense(null);

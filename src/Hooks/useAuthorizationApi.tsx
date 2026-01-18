@@ -1,4 +1,3 @@
-import { useAuth } from "../Authorization/AuthContext";
 import { getDataApi, postDataApi, putDataApi, deleteDataApi, getAllDataApi } from '../Services/apiServices';
 
 

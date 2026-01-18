@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx"
 import AccountForm from "../Forms/AccountForm";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
@@ -11,7 +11,7 @@ function AccountList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState(null);
     
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const data = await getAllData("api/Account");
             setAccounts(data);
@@ -20,13 +20,13 @@ function AccountList() {
                 console.error(err);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchAccounts();
         return () => {};
-    }, []);
+    }, [fetchAccounts, isAuthReady, accessToken]);
 
     const addAccount = () => {
         setEditingAccount(null);

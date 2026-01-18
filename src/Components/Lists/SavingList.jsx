@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import SavingForm from "../Forms/SavingForm";
@@ -11,7 +11,7 @@ function SavingList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingSaving, setEditingSaving] = useState(null);
 
-    const fetchSavings = async () => {
+    const fetchSavings = useCallback(async () => {
         try {
             const data = await getAllData('api/Saving');
             setSavings(data);
@@ -20,13 +20,14 @@ function SavingList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchSavings();
+        setTimeout(() => {}, 3000);
         return () => {};
-    }, []);
+    }, [fetchSavings, isAuthReady, accessToken]);
 
     const addSaving = () => {
         setEditingSaving(null);

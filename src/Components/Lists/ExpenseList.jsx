@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import ExpenseForm from "../Forms/ExpenseForm";
@@ -11,7 +11,7 @@ function ExpenseList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     
-    const fetchExpenses = async () => {
+    const fetchExpenses = useCallback(async () => {
         try {
             const data = await getAllData('api/Expense');
             setExpenses(data);
@@ -20,13 +20,13 @@ function ExpenseList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
 
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchExpenses();
         return () => {};
-    }, []);
+    }, [fetchExpenses, isAuthReady, accessToken]);
 
     const addExpense = () => {
         setEditingExpense(null);

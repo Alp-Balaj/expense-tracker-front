@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import CurrencyForm from "../Forms/CurrencyForm";
@@ -11,7 +11,7 @@ function CurrencyList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCurrency, setEditingCurrency] = useState(null);
 
-    const fetchCurrencies = async () => {
+    const fetchCurrencies = useCallback(async () => {
         try {
             const data = await getAllData('api/Currency');
             setCurrencies(data);
@@ -20,13 +20,13 @@ function CurrencyList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchCurrencies();
         return () => {};
-    }, []);
+    }, [fetchCurrencies, isAuthReady, accessToken]);
 
     const addCurrency = () => {
         setEditingCurrency(null);

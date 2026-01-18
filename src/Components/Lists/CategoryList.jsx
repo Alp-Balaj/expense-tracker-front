@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import CategoryForm from "../Forms/CategoryForm";
@@ -11,7 +11,7 @@ function CategoryList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const data = await getAllData('api/Category');
             setCategories(data);
@@ -20,13 +20,13 @@ function CategoryList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchCategories();
         return () => {};
-    }, []);
+    }, [fetchCategories, isAuthReady, accessToken]);
 
     const addCategory = () => {
         setEditingCategory(null);

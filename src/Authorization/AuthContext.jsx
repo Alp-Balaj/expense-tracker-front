@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const STORAGE_KEY = "accessToken";
 
@@ -14,17 +14,19 @@ export function AuthorizationProvider({ children }) {
     setIsAuthReady(true);
   }, []);
 
-  const setToken = (token) => {
+  const setToken = useCallback((token) => {
     setAccessToken(token);
     if (token) localStorage.setItem(STORAGE_KEY, token);
     else localStorage.removeItem(STORAGE_KEY);
-  };
+  }, []);
 
-  const logout = () => setToken(null);
+  const logout = useCallback(() => {
+    setToken(null);
+  }, [setToken]);
 
   const value = useMemo(
     () => ({ accessToken, setToken, logout, isAuthReady }),
-    [accessToken, isAuthReady]
+    [accessToken, isAuthReady, logout, setToken]
   );
 
   return (

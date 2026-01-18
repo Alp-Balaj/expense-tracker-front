@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.jsx";
 import IncomeForm from "../Forms/IncomeForm";
@@ -11,7 +11,7 @@ function IncomeList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingIncome, setEditingIncome] = useState(null);
     
-    const fetchIncomes = async () => {
+    const fetchIncomes = useCallback(async () => {
         try {
             const data = await getAllData('api/Income');
             setIncomes(data);
@@ -20,13 +20,13 @@ function IncomeList() {
                 console.error(error);
             }
         }
-    };
+    }, [getAllData]);
     
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchIncomes();
         return () => {};
-    }, []);
+    }, [fetchIncomes, isAuthReady, accessToken]);
 
     const addIncome = () => {
         setEditingIncome(null);
