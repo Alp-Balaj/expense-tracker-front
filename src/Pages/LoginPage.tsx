@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import LoginForm from '../Components/LoginForm.tsx';
-import SignUpForm from '../Components/SignUpForm.tsx';
+import { LoginForm } from '../Components/LoginForm.tsx';
+import { SignUpForm } from '../Components/SignUpForm.tsx';
 import styled from 'styled-components';
 
 const LoginPageContainer = styled.div`

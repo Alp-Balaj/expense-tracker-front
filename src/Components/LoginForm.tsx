@@ -1,110 +1,161 @@
-import styled from "styled-components";
-import { useEffect, useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
-import { Navigate, useNavigate } from "react-router-dom";
-import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
-import { useAuth } from "../Authorization/AuthContext";
-import type { LoginRequest } from "../Models/UserAuth";
-import { Button } from "../Components/ui/button";
-import { Spinner } from "../Components/ui/spinner";
-import { Input } from "./ui/input";
+import * as React from "react"
+import { useEffect, useState } from "react"
+import { useForm, type SubmitHandler } from "react-hook-form"
+import { Navigate, useNavigate } from "react-router-dom"
 
-const FormContainer = styled.form`
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  div {
-    margin-bottom: 15px;
-  }
-`;
+import { cn } from "@/lib/utils"
+import { Button } from "./ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "./ui/field"
+import { Input } from "./ui/input"
+import { Spinner } from "./ui/spinner"
 
-type LoginFormProps = {
-  data?: { name?: string } | null;
-  changePageState?: () => void;
-};
+import { useAuthenticationApi } from "../Hooks/useAuthenticationApi"
+import { useAuth } from "../Authorization/AuthContext"
+import type { LoginRequest } from "../Models/UserAuth"
 
-function LoginForm({ data, changePageState }: LoginFormProps) {
-  const { login } = useAuthenticationApi();
-  const { accessToken } = useAuth();
-  const navigate = useNavigate();
+type LoginFormProps = React.ComponentProps<"div"> & {
+  data?: { name?: string } | null
+  changePageState?: () => void
+}
 
-  const [serverError, setServerError] = useState<string>("");
+export function LoginForm({ className, data, changePageState, ...props }: LoginFormProps) {
+  const { login } = useAuthenticationApi()
+  const { accessToken } = useAuth()
+  const navigate = useNavigate()
+
+  const [serverError, setServerError] = useState("")
 
   const {
+    register,
     handleSubmit,
     reset,
-    register,
     formState: { errors, isSubmitting },
   } = useForm<LoginRequest>({
     defaultValues: { email: "", password: "" },
-  });
+  })
 
   useEffect(() => {
-    if (data) {
-      reset({
-        email: data.name ?? "",
-        password: "",
-      });
-    }
-  }, [data, reset]);
+    if (!data) return
+    reset({
+      email: data.name ?? "",
+      password: "",
+    })
+  }, [data, reset])
 
   const internalSubmit: SubmitHandler<LoginRequest> = async (formData) => {
-    setServerError("");
+    setServerError("")
     try {
-      await login(formData);
-      navigate("/", { replace: true });
+      await login(formData)
+      navigate("/", { replace: true })
     } catch (error) {
-      setServerError("Login failed");
-      console.error("Login failed:", error);
+      setServerError("Login failed")
+      console.error("Login failed:", error)
     }
-  };
+  }
 
-  if (accessToken) return <Navigate to="/" replace />;
+  if (accessToken) return <Navigate to="/" replace />
 
   return (
-    <FormContainer onSubmit={handleSubmit(internalSubmit)}>
-      <h1 style={{ marginBottom: 0 }}>Login Form</h1>
+    <div style={{minWidth: '400px'}} className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Login to your account</CardTitle>
+          <CardDescription>Enter your email below to login to your account</CardDescription>
+        </CardHeader>
 
-      <p>
-        Don't have an account?{" "}
-        
-        <Button size="sm" variant="outline" onClick={changePageState}>
-          Sign up!
-        </Button>
-      </p>
+        <CardContent>
+          <form onSubmit={handleSubmit(internalSubmit)}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  autoComplete="email"
+                  {...register("email", { required: "Email is required" })}
+                />
+                {errors.email?.message && (
+                  <FieldDescription className="text-sm text-destructive">
+                    {String(errors.email.message)}
+                  </FieldDescription>
+                )}
+              </Field>
 
-      <Input
-        placeholder="Email"
-        type="email"
-        {...register("email", { required: "Email is required" })}
-      />
-      {errors.email && <p>{String(errors.email.message)}</p>}
+              <Field>
+                <div className="flex items-center">
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <a
+                    href="#"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    Forgot your password?
+                  </a>
+                </div>
 
-      <Input
-        type="password"
-        placeholder="Password"
-        {...register("password", { required: "Password is required" })}
-      />
-      {errors.password && <p>{String(errors.password.message)}</p>}
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  {...register("password", { required: "Password is required" })}
+                />
+                {errors.password?.message && (
+                  <FieldDescription className="text-sm text-destructive">
+                    {String(errors.password.message)}
+                  </FieldDescription>
+                )}
+              </Field>
 
-      {serverError && <p>{serverError}</p>}
+              {serverError && (
+                <FieldDescription className="text-sm text-destructive">
+                  {serverError}
+                </FieldDescription>
+              )}
 
-      {!isSubmitting?
-        <Button size="sm" variant="outline">
-          Login
-        </Button>
-       :
-        <Button size="sm" variant="outline" disabled>
-          <Spinner />
-          Login
-        </Button>
-      }
-    </FormContainer>
-  );
+              <Field>
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? (
+                    <>
+                      <Spinner />
+                      <span className="ml-2">Login</span>
+                    </>
+                  ) : (
+                    "Login"
+                  )}
+                </Button>
+
+                <Button variant="outline" type="button" className="w-full">
+                  Login with Google
+                </Button>
+
+                <FieldDescription className="text-center">
+                  Don&apos;t have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={changePageState}
+                    className="underline underline-offset-4 hover:no-underline"
+                  >
+                    Sign up
+                  </button>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
-
-export default LoginForm;

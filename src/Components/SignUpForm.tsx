@@ -1,63 +1,81 @@
-import styled from "styled-components";
+import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "./ui/field";
+import { Input } from "./ui/input";
+
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
+
 import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
 import { useAuth } from "../Authorization/AuthContext";
 import type { SignUpRequest } from "../Models/UserAuth";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
-
-const FormContainer = styled.form`
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  div {
-    margin-bottom: 15px;
-  }
-`;
-
-type SignUpFormProps = {
+type SignupFormProps = React.ComponentProps<"div"> & {
   data?: Partial<SignUpRequest> | null;
-  changePageState?: () => void;
+  changePageState?: () => void; // optional: if you want the "Sign in" link to toggle views
 };
 
-function SignUpForm({ data, changePageState }: SignUpFormProps) {
+type FormShape = SignUpRequest & { confirmPassword: string };
+
+export function SignUpForm({
+  className,
+  data,
+  changePageState,
+  ...props
+}: SignupFormProps) {
   const { signup } = useAuthenticationApi();
   const { accessToken } = useAuth();
   const navigate = useNavigate();
 
-  const [serverError, setServerError] = useState<string>("");
+  const [serverError, setServerError] = useState("");
 
   const {
+    register,
     handleSubmit,
     reset,
-    register,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpRequest>({
-    defaultValues: { firstName: "", lastName: "", email: "", password: "" },
+  } = useForm<FormShape>({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   useEffect(() => {
-    if (data) {
-      reset({
-        firstName: data.firstName ?? "",
-        lastName: data.lastName ?? "",
-        email: data.email ?? "",
-        password: "",
-      });
-    }
+    if (!data) return;
+    reset({
+      firstName: data.firstName ?? "",
+      lastName: data.lastName ?? "",
+      email: data.email ?? "",
+      password: "",
+      confirmPassword: "",
+    });
   }, [data, reset]);
 
-  const internalSubmit: SubmitHandler<SignUpRequest> = async (formData) => {
+  const onSubmit: SubmitHandler<FormShape> = async (formData) => {
     setServerError("");
     try {
-      await signup(formData);
+      // Only send what backend expects (SignUpRequest)
+      const payload: SignUpRequest = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      await signup(payload);
       navigate("/", { replace: true });
     } catch (error) {
       setServerError("Registering user failed");
@@ -67,52 +85,131 @@ function SignUpForm({ data, changePageState }: SignUpFormProps) {
 
   if (accessToken) return <Navigate to="/" replace />;
 
+  const password = watch("password");
+
   return (
-    <FormContainer onSubmit={handleSubmit(internalSubmit)}>
-      <h1 style={{ marginBottom: 0 }}>Sign-Up Form</h1>
+    <div style={{minWidth: '400px'}} className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Create your account</CardTitle>
+          <CardDescription>
+            Enter your details below to create your account
+          </CardDescription>
+        </CardHeader>
 
-      <p>
-        Already have an account?{" "}
-        <Button type="button" onClick={changePageState}>
-          Login!
-        </Button>
-      </p>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <FieldGroup>
+              <Field className="grid grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel htmlFor="firstName">First Name</FieldLabel>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="First Name"
+                    {...register("firstName", {
+                      required: "First name is required",
+                    })}
+                  />
+                  {errors.firstName && (
+                    <FieldDescription>{String(errors.firstName.message)}</FieldDescription>
+                  )}
+                </Field>
 
-      <Input
-        placeholder="FirstName"
-        type="text"
-        {...register("firstName", { required: "First name is required" })}
-      />
-      {errors.firstName && <p>{String(errors.firstName.message)}</p>}
+                <Field>
+                  <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Last Name"
+                    {...register("lastName", {
+                      required: "Last name is required",
+                    })}
+                  />
+                  {errors.lastName && (
+                    <FieldDescription>{String(errors.lastName.message)}</FieldDescription>
+                  )}
+                </Field>
+              </Field>
 
-      <Input
-        placeholder="LastName"
-        type="text"
-        {...register("lastName", { required: "Last name is required" })}
-      />
-      {errors.lastName && <p>{String(errors.lastName.message)}</p>}
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  {...register("email", { required: "Email is required" })}
+                />
+                {errors.email && (
+                  <FieldDescription>{String(errors.email.message)}</FieldDescription>
+                )}
+              </Field>
 
-      <Input
-        placeholder="Email"
-        type="email"
-        {...register("email", { required: "Email is required" })}
-      />
-      {errors.email && <p>{String(errors.email.message)}</p>}
+              <Field className="grid grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("password", { required: "Password is required" })}
+                  />
+                  {errors.password && (
+                    <FieldDescription>{String(errors.password.message)}</FieldDescription>
+                  )}
+                </Field>
 
-      <Input
-        type="password"
-        placeholder="Password"
-        {...register("password", { required: "Password is required" })}
-      />
-      {errors.password && <p>{String(errors.password.message)}</p>}
+                <Field>
+                  <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    {...register("confirmPassword", {
+                      required: "Confirm password is required",
+                      validate: (v) => v === password || "Passwords do not match",
+                    })}
+                  />
+                  {errors.confirmPassword && (
+                    <FieldDescription>
+                      {String(errors.confirmPassword.message)}
+                    </FieldDescription>
+                  )}
+                </Field>
+              </Field>
 
-      {serverError && <p>{serverError}</p>}
+              <FieldDescription>Must be at least 8 characters long.</FieldDescription>
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Registering user..." : "Sign Up"}
-      </Button>
-    </FormContainer>
+              {serverError && (
+                <FieldDescription className="text-destructive">
+                  {serverError}
+                </FieldDescription>
+              )}
+
+              <div className="pt-2">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Registering user..." : "Create Account"}
+                </Button>
+
+                <FieldDescription className="text-center">
+                  Already have an account?{" "}
+                  {changePageState ? (
+                    <button
+                      type="button"
+                      className="underline"
+                      onClick={changePageState}
+                    >
+                      Sign in
+                    </button>
+                  ) : (
+                    <a className="underline" href="#">
+                      Sign in
+                    </a>
+                  )}
+                </FieldDescription>
+              </div>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-
-export default SignUpForm;
