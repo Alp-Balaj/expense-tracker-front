@@ -11,13 +11,13 @@ import {
   SidebarTrigger,
 } from "@/Components/ui/sidebar";
 
-import AccountList from "../Components/Lists/AccountList";
-import CategoryList from "../Components/Lists/CategoryList";
-import CurrencyList from "../Components/Lists/CurrencyList";
+//import AccountList from "../Components/Lists/AccountList";
+//import CategoryList from "../Components/Lists/CategoryList";
+//import CurrencyList from "../Components/Lists/CurrencyList";
 import ExpenseList from "../Components/Lists/ExpenseList";
-import FutureExpenseList from "../Components/Lists/FutureExpenseList";
-import IncomeList from "../Components/Lists/IncomeList";
-import SavingList from "../Components/Lists/SavingList";
+//import FutureExpenseList from "../Components/Lists/FutureExpenseList";
+//import IncomeList from "../Components/Lists/IncomeList";
+//import SavingList from "../Components/Lists/SavingList";
 
 const HomePage = () => {
   return (
