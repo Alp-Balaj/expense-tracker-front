@@ -59,12 +59,12 @@ const HomePage = () => {
         {/* Page body */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 p-4">
           <ExpenseList />
-          <IncomeList />
+          {/* <IncomeList />
           <AccountList />
           <CategoryList />
           <CurrencyList />
           <FutureExpenseList />
-          <SavingList />
+          <SavingList /> */}
         </div>
       </SidebarInset>
     </SidebarProvider>

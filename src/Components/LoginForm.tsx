@@ -142,7 +142,7 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
                 </Button>
 
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{" "}
+                  Don't have an account?{" "}
                   <button
                     type="button"
                     onClick={changePageState}

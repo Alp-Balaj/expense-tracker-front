@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.js";
 import ExpenseForm from "../Forms/ExpenseForm.js";
-import type { Expense } from "../../Models/Expense.tsx";
+import { expenseColumns, type Expense } from "../../Models/Expense.tsx";
 import type { AxiosError } from "axios";
 import { Button } from "../ui/button.tsx";
+import { DataTable } from "../General/DataTable.tsx";
 
 function ExpenseList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -67,6 +68,8 @@ function ExpenseList() {
                     </li>
                 ))}
             </ul>
+            <br />
+            <DataTable columns={expenseColumns} data={expenses}/>
             {isFormOpen && (
                 <ExpenseForm
                     key={editingExpense?.id ?? "new"}

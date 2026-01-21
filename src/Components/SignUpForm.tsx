@@ -17,6 +17,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
 import { useAuth } from "../Authorization/AuthContext";
 import type { SignUpRequest } from "../Models/UserAuth";
+import { Spinner } from "./ui/spinner";
 
 type SignupFormProps = React.ComponentProps<"div"> & {
   data?: Partial<SignUpRequest> | null;
@@ -185,8 +186,15 @@ export function SignUpForm({
               )}
 
               <div className="pt-2">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Registering user..." : "Create Account"}
+                <Button style={{width: '100%'}} type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Spinner />
+                      <span className="ml-2">"Registering user..."</span>
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
 
                 <FieldDescription className="text-center">
