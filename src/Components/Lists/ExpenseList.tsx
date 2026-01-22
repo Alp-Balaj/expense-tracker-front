@@ -61,7 +61,12 @@ function ExpenseList() {
     return (
         <Card>
             <CardHeader>Expenses</CardHeader>
-            <Button onClick={addExpense}>Add Expense</Button>
+            <ExpenseForm
+                key={editingExpense?.id ?? "new"}
+                row={editingExpense}
+                onSubmit={handleSubmit}
+                onCancel={() => setIsFormOpen(false)}
+            />
             <ul>
                 {Array.isArray(expenses) && expenses.map(expense => (
                     <li key={expense.id}>
@@ -72,14 +77,7 @@ function ExpenseList() {
             </ul>
             <br />
             <DataTable columns={expenseColumns} data={expenses}/>
-            {isFormOpen && (
-                <ExpenseForm
-                    key={editingExpense?.id ?? "new"}
-                    row={editingExpense}
-                    onSubmit={handleSubmit}
-                    onCancel={() => setIsFormOpen(false)}
-                />
-            )}
+            
         </Card>
     );
 }

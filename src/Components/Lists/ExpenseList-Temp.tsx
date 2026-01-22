@@ -62,6 +62,7 @@ export default function ExpenseList() {
     setIsFormOpen(true);
   };
 
+
   const handleSubmit = async (data: Expense) => {
     if (editingExpense != null) {
       await putData("api/Expense", data);
@@ -73,6 +74,7 @@ export default function ExpenseList() {
     setIsFormOpen(false);
     await fetchExpenses();
   };
+
 
   const handleDeleteExpense = async (data: Expense) => {
     if (!data) return;
@@ -238,14 +240,19 @@ export default function ExpenseList() {
         </div>
       )}
 
-      {isFormOpen && (
-        <ExpenseFormTEST
-          key={editingExpense?.id ?? "new"}
-          row={editingExpense}
-          onSubmit={handleSubmit}
-          onCancel={() => setIsFormOpen(false)}
-        />
-      )}
+      <ExpenseFormTEST
+        row={editingExpense}
+        onSubmit={handleSubmit}
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setEditingExpense(null);
+        }}
+        onCancel={() => {
+          setIsFormOpen(false);
+          setEditingExpense(null);
+        }}
+      />
     </div>
   );
 }
