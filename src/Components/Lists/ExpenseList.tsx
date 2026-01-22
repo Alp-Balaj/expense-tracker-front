@@ -6,6 +6,7 @@ import { expenseColumns, type Expense } from "../../Models/Expense.tsx";
 import type { AxiosError } from "axios";
 import { Button } from "../ui/button.tsx";
 import { DataTable } from "../General/DataTable.tsx";
+import { Card, CardHeader } from "../ui/card.tsx";
 
 function ExpenseList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -58,8 +59,9 @@ function ExpenseList() {
     };
 
     return (
-        <div style={{backgroundColor: '#fff'}}>
-            <h2>Expenses</h2> <Button onClick={addExpense}>Add Expense</Button>
+        <Card>
+            <CardHeader>Expenses</CardHeader>
+            <Button onClick={addExpense}>Add Expense</Button>
             <ul>
                 {Array.isArray(expenses) && expenses.map(expense => (
                     <li key={expense.id}>
@@ -78,7 +80,7 @@ function ExpenseList() {
                     onCancel={() => setIsFormOpen(false)}
                 />
             )}
-        </div>
+        </Card>
     );
 }
 

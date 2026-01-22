@@ -14,7 +14,9 @@ import {
 //import AccountList from "../Components/Lists/AccountList";
 //import CategoryList from "../Components/Lists/CategoryList";
 //import CurrencyList from "../Components/Lists/CurrencyList";
-import ExpenseList from "../Components/Lists/ExpenseList";
+// import ExpenseList from "../Components/Lists/ExpenseList";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
+import ExpenseListTEST from "@/Components/Lists/ExpenseList-Temp";
 //import FutureExpenseList from "../Components/Lists/FutureExpenseList";
 //import IncomeList from "../Components/Lists/IncomeList";
 //import SavingList from "../Components/Lists/SavingList";
@@ -51,21 +53,23 @@ const HomePage = () => {
       {/* Main content */}
       <SidebarInset>
         {/* Optional header */}
-        <div className="flex items-center gap-2 p-4 border-b">
+        <div className="flex items-center gap-2 p-4 border-b mb-5">
           <SidebarTrigger />
           <h1 className="text-lg font-semibold">Dashboard</h1>
         </div>
 
         {/* Page body */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 p-4">
-          <ExpenseList />
-          {/* <IncomeList />
-          <AccountList />
-          <CategoryList />
-          <CurrencyList />
-          <FutureExpenseList />
-          <SavingList /> */}
-        </div>
+        <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Recent Expenses</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Manage and track your spending across all accounts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpenseListTEST />
+            </CardContent>
+          </Card>
       </SidebarInset>
     </SidebarProvider>
   );
