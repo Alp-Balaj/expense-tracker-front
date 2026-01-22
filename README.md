@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# Expense Tracker - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project was built to resolve personal issues in tracking expenses.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React (v19) 
+- Vite
+- TypeScript
+#### UI & Styling
+- Shadcn / UI components ([Shadcn](https://ui.shadcn.com/))
+- [Tailwind CSS](https://tailwindcss.com/) / Utility classes
+#### Forms & Routing
+- React Router
+- React Hook Form
+#### Data & Tables
+- Axios
+- TanStack Table
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [User authentication](#authentication) (login & registration)
+- Expense, Income, Savings and Future planning management
+- Account, Category and Currency management
+- Date-based filtering and summaries
+- Costumizable table columns
+- Responsive UI
+- Report generation
+- Integration with a REST API backend
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project Structure
+```bash
+src/
+├── Authorization/     # Authorization and Authentication Logic
+├── Components/        # Reusable UI components
+├── Enums/             # General Enums
+├── Hooks/             # Custom React hooks
+├── Models/            # Entity models
+├── Pages/             # Application pages
+├── Services/          # API communication layer
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js (v18 or later)
+- npm or yarn
+- mkcert (https certificate generator, for cookie usage when running locally)
+
+### Installation
+
+```bash
+git clone https://github.com/your-username/expense-tracker-frontend.git
+cd expense-tracker-frontend
+npm install
+mkecrt localhost {ip} ::1
 ```
+
+### Environment Variables
+
+Create a `.env` (see `.env.example` for reference) file in the root directory:
+
+```ts
+VITE_API_BASE_URL = https://{your back end API url}
+```
+
+The frontend expects the backend API is running seperately.
+
+### Running the App
+```bash
+npm run dev
+```
+
+## Backend Dependency
+
+This frontend is designed to work with a seperate backend service written in .Net 8.0. You're more than welcome to write your own backend server to run this app.
+
+If instead you choose to use the backend service I developed you can check that out here:
+- ***https://github.com/Alp-Balaj/ExpenseTracker***
+
+Make sure the backend is running before using this application.
+
+
+### Authentication
+
+The application uses a token-based authentication system to securely manage user sessions
+and provide user-specific data access.
+
+- **Access tokens (JWT)** are used to authorize API requests and retrieve personalized data
+  from a shared database.
+- **Refresh tokens** are used to maintain long-lived user sessions without requiring
+  frequent re-authentication.
+- Access tokens are automatically attached to API requests via a centralized API layer.
+- Protected routes are accessible only to authenticated users.
