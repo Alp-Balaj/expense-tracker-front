@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
-import AccountsPage from "./Pages/AccountPage";
+import AccountPage from "./Pages/AccountPage";
 
 import { AuthorizationProvider } from "./Authorization/AuthContext";
 import RequireAuth from "./Authorization/RequireAuthentication";
@@ -10,6 +10,7 @@ import AxiosAuthBridge from "./Authorization/AxiosAuthBridge";
 
 import AppLayout from "./Components/Layout/AppLayout";
 import { SidebarProvider } from "./Components/ui/sidebar";
+import CategoryAndCurrencyPage from "./Pages/CategoryAndCurrencyPage";
 
 function App() {
   return (
@@ -25,7 +26,8 @@ function App() {
             <Route element={<RequireAuth />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/accounts" element={<AccountsPage />} />
+                <Route path="/account" element={<AccountPage />} />
+                <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
               </Route>
             </Route>
 

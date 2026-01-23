@@ -22,8 +22,8 @@ export default function AppLayout() {
     {
       icon: Wallet,
       label: "Accounts",
-      isActive: location.pathname.startsWith("/accounts"),
-      onClick: () => navigate("/accounts"),
+      isActive: location.pathname.startsWith("/account"),
+      onClick: () => navigate("/account"),
     },
     {
       icon: TrendingUp,
@@ -32,8 +32,8 @@ export default function AppLayout() {
     },
     {
       icon: Tags,
-      label: "Categories",
-      onClick: () => navigate("/categories"),
+      label: "Categories & Currencies",
+      onClick: () => navigate("/categoryAndCurrency"),
     },
     {
       icon: PiggyBank,

@@ -41,12 +41,12 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
   { icon: Receipt, label: "Expenses", isActive: true },
   { icon: TrendingUp, label: "Income" },
   { icon: Wallet, label: "Accounts" },
-  { icon: Tags, label: "Categories" },
+  { icon: Tags, label: "Categories and Currencies" },
   { icon: PiggyBank, label: "Savings" },
 ];
 
 export function AppSidebar({
-  appName = "FinanceTrack",
+  appName = "Finance Tracker",
   appSubtitle = "Expense Manager",
   userName = "John Doe",
   planName = "Free Plan",
