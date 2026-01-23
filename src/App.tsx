@@ -1,12 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// import HomePage from "./Pages/HomePage";
+import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
 
 import { AuthorizationProvider } from "./Authorization/AuthContext";
 import RequireAuth from "./Authorization/RequireAuthentication";
 import AxiosAuthBridge from "./Authorization/AxiosAuthBridge";
-import HomePageTEST from "./Pages/HomePageTEST";
 
 function App() {
   return (
@@ -19,7 +18,7 @@ function App() {
 
             {/* Protected */}
             <Route element={<RequireAuth />}>
-              <Route path="/" element={<HomePageTEST />} />
+              <Route path="/" element={<HomePage />} />
             </Route>
 
             {/* Fallback */}
