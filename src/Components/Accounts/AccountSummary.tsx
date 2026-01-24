@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/Components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import type { Account } from "@/Models/Account";
 
@@ -63,24 +63,22 @@ export function AccountSummary({ accounts }: AccountsSummaryProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {summaryCards.map((card) => (
-        <Card key={card.title} className="border border-border">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-primary">{card.title}</p>
-              <card.icon className="h-4 w-4 text-muted-foreground" />
+        <Card key={card.title} className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {card.title}
+            </CardTitle>
+            <card.icon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">
+              {card.value}
             </div>
-            <div className="mt-2">
-              <p className="text-2xl font-bold text-foreground">{card.value}</p>
-              <p
-                className={`text-xs mt-1 ${
-                  card.trend === "up" ? "text-success" : "text-destructive"
-                }`}
-              >
-                {card.description}
-              </p>
-            </div>
+            <p className={`text-xs mt-1 ${ card.trend === "up" ? "text-muted-foreground" : "text-destructive"}`}>
+              {card.description}
+            </p>
           </CardContent>
         </Card>
       ))}

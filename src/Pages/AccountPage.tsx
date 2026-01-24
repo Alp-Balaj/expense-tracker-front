@@ -14,8 +14,8 @@ import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
 import type { Account, AccountFormData, AccountType } from "@/Models/Account";
+import { SidebarTrigger } from "@/Components/ui/sidebar";
 
-// Sample initial accounts data - in production this would come from your .NET API
 const initialAccounts: Account[] = [
   {
     id: "1",
@@ -110,13 +110,12 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center gap-4 px-6 py-4">
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+          <SidebarTrigger className="text-foreground" />
           <div className="flex items-center gap-3">
-            <Wallet className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold text-foreground">Accounts</h1>
+          <Wallet className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold text-foreground">Categories & Cyrrencies</h1>
           </div>
-        </div>
       </header>
 
       <main className="p-6 space-y-8">
