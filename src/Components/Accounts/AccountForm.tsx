@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Textarea } from "@/Components/ui/textarea";
-import type { Account, AccountFormData, AccountType } from "@/Models/Account";
-import { accountTypeLabels } from "@/Models/Account";
+import type { Account, AccountFormData } from "@/Models/Account";
+import { AmountType } from "@/Enums/enums";
 
 interface AddAccountDialogProps {
   open: boolean;
@@ -39,14 +39,6 @@ const currencies = [
   { value: "CHF", label: "CHF - Swiss Franc" },
 ];
 
-const accountTypes: AccountType[] = [
-  "checking",
-  "savings",
-  "cash",
-  "credit",
-  "investment",
-];
-
 export function AccountForm({
   open,
   onOpenChange,
@@ -55,12 +47,13 @@ export function AccountForm({
 }: AddAccountDialogProps) {
   const [formData, setFormData] = useState<AccountFormData>({
     name: editingAccount?.name || "",
-    type: editingAccount?.type || "checking",
+    type: editingAccount?.type || 0,
     balance: editingAccount?.balance || 0,
     currencyId: editingAccount?.currencyId || "USD",
     description: editingAccount?.description || "",
   });
 
+  const [amountType, setAmountType] = useState<AmountType>(AmountType.CheckingAccount);
   const [errors, setErrors] = useState<Partial<Record<keyof AccountFormData, string>>>({});
 
   const resetForm = () => {
@@ -75,7 +68,7 @@ export function AccountForm({
     } else {
       setFormData({
         name: "",
-        type: "checking",
+        type: 0,
         balance: 0,
         currencyId: "USD",
         description: "",
@@ -91,7 +84,7 @@ export function AccountForm({
       newErrors.name = "Account name is required";
     }
 
-    if (formData.balance < 0 && formData.type !== "credit") {
+    if (formData.balance < 0 && formData.type !== 3) {
       newErrors.balance = "Balance cannot be negative for this account type";
     }
 
@@ -145,25 +138,20 @@ export function AccountForm({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="type">Account Type</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value: AccountType) =>
-                setFormData({ ...formData, type: value })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select account type" />
-              </SelectTrigger>
-              <SelectContent>
-                {accountTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {accountTypeLabels[type]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-2">
+              <Label htmlFor="type">Type</Label>
+              <Select value={String(amountType)} onValueChange={(v) => setAmountType(Number(v) as AmountType)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={String(AmountType.CheckingAccount)}>CheckingAccount</SelectItem>
+                    <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
+                    <SelectItem value={String(AmountType.SavingsAccount)}>SavingsAccount</SelectItem>
+                    <SelectItem value={String(AmountType.CreditCard)}>CreditCard</SelectItem>
+                    <SelectItem value={String(AmountType.Investment)}>Investment</SelectItem>
+                </SelectContent>
+              </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

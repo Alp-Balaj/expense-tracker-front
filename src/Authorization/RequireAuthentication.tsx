@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import LoadingSpinner from "../Components/LoadingSpinner.tsx";
+import LoadingSpinner from "../Components/General/LoadingSpinner.tsx";
 
 export default function RequireAuth() {
   const { accessToken, isAuthReady } = useAuth();

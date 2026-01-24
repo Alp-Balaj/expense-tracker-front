@@ -17,7 +17,8 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
-import type { Account, AccountType } from "@/Models/Account";
+import type { Account } from "@/Models/Account";
+import { AmountType } from "@/Enums/enums";
 
 interface AccountCardProps {
   account: Account;
@@ -26,39 +27,42 @@ interface AccountCardProps {
   onViewDetails?: (account: Account) => void;
 }
 
-const accountTypeColors: Record<AccountType, { bg: string; text: string }> = {
-  checking: { bg: "bg-[#2d3142]", text: "text-white" },
-  savings: { bg: "bg-[#4a5568]", text: "text-white" },
-  cash: { bg: "bg-primary", text: "text-primary-foreground" },
-  credit: { bg: "bg-[#1a365d]", text: "text-white" },
-  investment: { bg: "bg-[#2f5f4a]", text: "text-white" },
+type ColorPair = { bg: string; text: string };
+
+export const amountTypeColors: Record<AmountType, ColorPair> = {
+  [AmountType.CheckingAccount]: { bg: "bg-[#2d3142]", text: "text-white" },
+  [AmountType.SavingsAccount]: { bg: "bg-[#4a5568]", text: "text-white" },
+  [AmountType.Cash]: { bg: "bg-primary", text: "text-primary-foreground" },
+  [AmountType.CreditCard]: { bg: "bg-[#1a365d]", text: "text-white" },
+  [AmountType.Investment]: { bg: "bg-[#2f5f4a]", text: "text-white" },
 };
 
-const AccountTypeIcon = ({ type }: { type: AccountType }) => {
+export const accountTypeLabels: Record<AmountType, string> = {
+  [AmountType.CheckingAccount]: "Checking",
+  [AmountType.SavingsAccount]: "Savings",
+  [AmountType.Cash]: "Cash",
+  [AmountType.CreditCard]: "Credit",
+  [AmountType.Investment]: "Investment",
+};
+
+export const AmountTypeIcon = ({ type }: { type: AmountType }) => {
   const iconClass = "h-5 w-5";
   switch (type) {
-    case "checking":
+    case AmountType.CheckingAccount:
       return <Wallet className={iconClass} />;
-    case "savings":
+    case AmountType.SavingsAccount:
       return <PiggyBank className={iconClass} />;
-    case "cash":
+    case AmountType.Cash:
       return <Banknote className={iconClass} />;
-    case "credit":
+    case AmountType.CreditCard:
       return <CreditCard className={iconClass} />;
-    case "investment":
+    case AmountType.Investment:
       return <TrendingUp className={iconClass} />;
     default:
       return <Wallet className={iconClass} />;
   }
 };
 
-const accountTypeLabels: Record<AccountType, string> = {
-  checking: "Checking",
-  savings: "Savings",
-  cash: "Cash",
-  credit: "Credit",
-  investment: "Investment",
-};
 
 export function AccountCard({
   account,
@@ -66,7 +70,7 @@ export function AccountCard({
   onDelete,
   onViewDetails,
 }: AccountCardProps) {
-  const colors = accountTypeColors[account.type] || accountTypeColors.checking;
+  const colors = amountTypeColors[account.type];
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
@@ -84,7 +88,7 @@ export function AccountCard({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-white/10">
-              <AccountTypeIcon type={account.type} />
+              <AmountTypeIcon type={account.type} />
             </div>
             <div>
               <h3 className="font-medium opacity-90">{account.name}</h3>

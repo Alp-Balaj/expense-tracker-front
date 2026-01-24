@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import type { Account } from "@/Models/Account";
+import { AmountType } from "@/Enums/enums";
 
 interface AccountsSummaryProps {
   accounts: Account[];
@@ -12,15 +13,15 @@ export function AccountSummary({ accounts }: AccountsSummaryProps) {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
   const savingsBalance = accounts
-    .filter((acc) => acc.type === "savings")
+    .filter((acc) => acc.type === AmountType.SavingsAccount)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const checkingBalance = accounts
-    .filter((acc) => acc.type === "checking")
+    .filter((acc) => acc.type === AmountType.CheckingAccount)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const cashBalance = accounts
-    .filter((acc) => acc.type === "cash")
+    .filter((acc) => acc.type === AmountType.Cash)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const formatCurrency = (amount: number) => {

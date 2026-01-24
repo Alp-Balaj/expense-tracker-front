@@ -1,9 +1,9 @@
-export type AccountType = "checking" | "savings" | "cash" | "credit" | "investment";
+import type { AmountType } from "@/Enums/enums";
 
 export type Account = {
   id: string;
   name: string;
-  type: AccountType;
+  type: AmountType;
   balance: number;
   currencyId: string;
   description?: string;
@@ -11,24 +11,24 @@ export type Account = {
 
 export type AccountFormData = {
   name: string;
-  type: AccountType;
+  type: AmountType;
   balance: number;
   currencyId: string;
   description?: string;
 };
 
-export const accountTypeLabels: Record<AccountType, string> = {
-  checking: "Checking Account",
-  savings: "Savings Account",
-  cash: "Cash",
-  credit: "Credit Card",
-  investment: "Investment",
+export const amountTypeLabels: Record<AmountType, string> = {
+  0: "Checking Account",
+  1: "Savings Account",
+  2: "Cash",
+  3: "Credit Card",
+  4: "Investment",
 };
 
-export const accountTypeIcons: Record<AccountType, string> = {
-  checking: "wallet",
-  savings: "piggy-bank",
-  cash: "banknote",
-  credit: "credit-card",
-  investment: "trending-up",
+export const amountTypeIcons: Record<AmountType, string> = {
+  0: "wallet",
+  1: "piggy-bank",
+  2: "banknote",
+  3: "credit-card",
+  4: "trending-up",
 };

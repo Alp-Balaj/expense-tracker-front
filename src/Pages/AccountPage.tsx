@@ -13,14 +13,15 @@ import { AccountCard } from "@/Components/Accounts/AccountCard";
 import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
-import type { Account, AccountFormData, AccountType } from "@/Models/Account";
+import type { Account, AccountFormData } from "@/Models/Account";
+import { AmountType } from "@/Enums/enums";
 import { SidebarTrigger } from "@/Components/ui/sidebar";
 
 const initialAccounts: Account[] = [
   {
     id: "1",
     name: "Main Checking",
-    type: "checking",
+    type: AmountType.CheckingAccount,
     balance: 10000.0,
     currencyId: "USD",
     description: "Primary checking account for daily expenses",
@@ -28,7 +29,7 @@ const initialAccounts: Account[] = [
   {
     id: "2",
     name: "Emergency Savings",
-    type: "savings",
+    type: AmountType.SavingsAccount,
     balance: 8000.0,
     currencyId: "USD",
     description: "Emergency fund - 6 months expenses",
@@ -36,7 +37,7 @@ const initialAccounts: Account[] = [
   {
     id: "3",
     name: "Wallet Cash",
-    type: "cash",
+    type: AmountType.Cash,
     balance: 2000.0,
     currencyId: "USD",
     description: "Physical cash on hand",
@@ -44,7 +45,7 @@ const initialAccounts: Account[] = [
   {
     id: "4",
     name: "Investment Portfolio",
-    type: "investment",
+    type: AmountType.Investment,
     balance: 15000.0,
     currencyId: "USD",
     description: "Stock and ETF investments",
@@ -52,7 +53,7 @@ const initialAccounts: Account[] = [
   {
     id: "5",
     name: "Credit Card",
-    type: "credit",
+    type: AmountType.CreditCard,
     balance: -1500.0,
     currencyId: "USD",
     description: "Monthly credit card balance",
@@ -62,10 +63,12 @@ const initialAccounts: Account[] = [
 export default function AccountPage() {
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<AccountType | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<AmountType | "all">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
+
+  const [amountType, setAmountType] = useState<AmountType>(AmountType.CheckingAccount);
 
   // Filter accounts based on search and type
   const filteredAccounts = accounts.filter((account) => {
@@ -142,23 +145,16 @@ export default function AccountPage() {
               </div>
 
               {/* Type Filter */}
-              <Select
-                value={typeFilter}
-                onValueChange={(value) =>
-                  setTypeFilter(value as AccountType | "all")
-                }
-              >
-                <SelectTrigger className="w-full sm:w-40">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by type" />
+              <Select value={String(amountType)} onValueChange={(v) => setAmountType(Number(v) as AmountType)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="checking">Checking</SelectItem>
-                  <SelectItem value="savings">Savings</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="credit">Credit</SelectItem>
-                  <SelectItem value="investment">Investment</SelectItem>
+                    <SelectItem value={String(AmountType.CheckingAccount)}>CheckingAccount</SelectItem>
+                    <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
+                    <SelectItem value={String(AmountType.SavingsAccount)}>SavingsAccount</SelectItem>
+                    <SelectItem value={String(AmountType.CreditCard)}>CreditCard</SelectItem>
+                    <SelectItem value={String(AmountType.Investment)}>Investment</SelectItem>
                 </SelectContent>
               </Select>
 
