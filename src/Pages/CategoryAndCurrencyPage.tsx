@@ -26,22 +26,6 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 
-// Sample data
-const initialCategories: Category[] = [
-  { id: "1", name: "Groceries", description: "Food and household items", categoryType: CategoryType.Expense, color: "#ef4444", totalAmount: 450 },
-  { id: "2", name: "Utilities", description: "Electricity, water, internet", categoryType: CategoryType.Expense, color: "#f97316", totalAmount: 180 },
-  { id: "3", name: "Transport", description: "Fuel and public transport", categoryType: CategoryType.Expense, color: "#eab308", totalAmount: 120 },
-  { id: "4", name: "Entertainment", description: "Movies, games, subscriptions", categoryType: CategoryType.Expense, color: "#8b5cf6", totalAmount: 85 },
-  { id: "5", name: "Salary", description: "Monthly salary", categoryType: CategoryType.Income, color: "#22c55e", totalAmount: 3500 },
-  { id: "6", name: "Freelance", description: "Side projects and consulting", categoryType: CategoryType.Income, color: "#14b8a6", totalAmount: 800 },
-  { id: "7", name: "Investments", description: "Dividends and returns", categoryType: CategoryType.Income, color: "#3b82f6", totalAmount: 250 },
-  { id: "8", name: "Emergency Fund", description: "For unexpected expenses", categoryType: CategoryType.Savings, color: "#3b82f6", totalAmount: 5000 },
-  { id: "9", name: "Vacation", description: "Holiday savings", categoryType: CategoryType.Savings, color: "#14b8a6", totalAmount: 1200 },
-  { id: "10", name: "Retirement", description: "Long-term savings", categoryType: CategoryType.Savings, color: "#6b7280", totalAmount: 15000 },
-  { id: "11", name: "New Laptop", description: "Planned purchase", categoryType: CategoryType.FutureExpense, color: "#ec4899", totalAmount: 1500 },
-  { id: "12", name: "Home Renovation", description: "Kitchen remodel", categoryType: CategoryType.FutureExpense, color: "#f97316", totalAmount: 8000 },
-];
-
 const initialCurrencies: Currency[] = [
   { id: "1", code: "EUR", symbol: "€", name: "Euro", exchangeRateToBase: 1 },
   { id: "2", code: "USD", symbol: "$", name: "US Dollar", exchangeRateToBase: 1.0856 },
@@ -69,15 +53,14 @@ export default function CategoryAndCurrencyPage() {
   const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     setCategoryLoadError(null);
-
     try {
       const data = await getAllData<Category[]>("api/Category");
       setCategories(data);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
-        console.error(err);
         setCategoryLoadError("Failed to load categories.");
+        console.error(categoryLoadError);
       }
     } finally {
       setIsLoadingCategories(false);
@@ -86,7 +69,8 @@ export default function CategoryAndCurrencyPage() {
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
-    fetchCategories();
+    if(!isLoadingCategories)
+      fetchCategories();
   }, [fetchCategories, isAuthReady, accessToken]);
 
   const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
@@ -114,16 +98,69 @@ export default function CategoryAndCurrencyPage() {
     setCategories((prev) => prev.filter((c) => c.id !== category.id));
   };
 
-  const handleSaveCategory = (category: Category) => {
-    setCategories((prev) => {
-      const exists = prev.find((c) => c.id === category.id);
-      if (exists) {
-        return prev.map((c) => (c.id === category.id ? category : c));
+  const handleSaveCategory = useCallback(async (category: Category) => {
+    setIsLoadingCategories(true);
+    if(category.id === null){
+      try {
+        await postData<Category>("api/Category", category);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to add category.");
+        }
+      } finally {
+        setIsLoadingCategories(false);
       }
-      return [...prev, category];
-    });
+      fetchCategories();
+    } else {
+      try {
+        await putData<Category>("api/Category", category);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to edit category.");
+        }
+      } finally {
+        setIsLoadingCategories(false);
+      }
+      fetchCategories();
+    }
     setEditingCategory(null);
-  };
+  },[postData, putData, fetchCategories]);
+
+  const handleSaveCurrency = useCallback(async (currency: Currency) => {
+    // setIsLoadingCurrency(true);
+    if(currency.id === null){
+      try {
+        await postData<Currency>("api/Currency", currency);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to add currency.");
+        }
+      } finally {
+        // setIsLoadingCategories(false);
+      }
+      // fetchCurrencies();
+    } else {
+      try {
+        await putData<Currency>("api/Currency", currency);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to edit currency.");
+        }
+      } finally {
+        // setIsLoadingCategories(false);
+      }
+      // fetchCurrencies();
+    }
+    setEditingCurrency(null);
+  },[postData, putData]);
 
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -138,17 +175,6 @@ export default function CategoryAndCurrencyPage() {
 
   const handleDeleteCurrency = (currency: Currency) => {
     setCurrencies((prev) => prev.filter((c) => c.id !== currency.id));
-  };
-
-  const handleSaveCurrency = (currency: Currency) => {
-    setCurrencies((prev) => {
-      const exists = prev.find((c) => c.id === currency.id);
-      if (exists) {
-        return prev.map((c) => (c.id === currency.id ? currency : c));
-      }
-      return [...prev, currency];
-    });
-    setEditingCurrency(null);
   };
 
   const handleAddCurrency = () => {
