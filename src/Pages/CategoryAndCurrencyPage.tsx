@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
@@ -15,7 +13,6 @@ import { CurrencyForm } from "@/Components/Forms/CurrencyForm";
 import type { Category } from "@/Models/Category";
 import { CategoryType } from "@/Enums/enums";
 import {
-  LayoutGrid,
   Plus,
   Wallet,
   TrendingUp,
@@ -25,6 +22,9 @@ import {
 } from "lucide-react";
 import type { Currency } from "@/Models/Currency";
 import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { AxiosError } from "axios";
+import { useAuth } from "@/Authorization/AuthContext";
 
 // Sample data
 const initialCategories: Category[] = [
@@ -58,7 +58,37 @@ const tabConfig = [
 ];
 
 export default function CategoryAndCurrencyPage() {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData, postData, putData } = useAuthorizationApi();
+
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setCategoryLoadError(null);
+
+    try {
+      const data = await getAllData<Category[]>("api/Category");
+      setCategories(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCategoryLoadError("Failed to load categories.");
+      }
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, [getAllData]);
+
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    fetchCategories();
+  }, [fetchCategories, isAuthReady, accessToken]);
+
   const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
   const [activeTab, setActiveTab] = useState("expenses");
 
