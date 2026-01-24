@@ -24,6 +24,7 @@ import {
   Coins,
 } from "lucide-react";
 import type { Currency } from "@/Models/Currency";
+import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
 
 // Sample data
 const initialCategories: Category[] = [
@@ -61,20 +62,17 @@ export default function CategoryAndCurrencyPage() {
   const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
   const [activeTab, setActiveTab] = useState("expenses");
 
-  // Category dialog state
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  // Currency dialog state
   const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
 
-  // Get current tab's category type
   const currentTabConfig = tabConfig.find((t) => t.value === activeTab);
   const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
 
   // Filter categories by type
-//   const filteredCategories = categories.filter((c) => c.categoryType === currentType);
+  // const filteredCategories = categories.filter((c) => c.categoryType === currentType);
 
   // Category handlers
   const handleEditCategory = (category: Category) => {
@@ -129,17 +127,14 @@ export default function CategoryAndCurrencyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <SidebarInset className="bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4">
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+          <SidebarTrigger className="text-foreground" />
           <div className="flex items-center gap-3">
-            <LayoutGrid className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">
-              Categories & Currencies
-            </h1>
+          <Wallet className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold text-foreground">Categories & Cyrrencies</h1>
           </div>
-        </div>
       </header>
 
       <main className="container mx-auto px-6 py-8">
@@ -267,6 +262,6 @@ export default function CategoryAndCurrencyPage() {
         currency={editingCurrency}
         onSave={handleSaveCurrency}
       />
-    </div>
+    </SidebarInset>
   );
 }

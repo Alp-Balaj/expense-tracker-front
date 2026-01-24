@@ -57,52 +57,52 @@ const cards = [
 export default function AccountPage() {
   return (
     <SidebarInset className="bg-background">
-    <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-        <SidebarTrigger className="text-foreground" />
-        <div className="flex items-center gap-3">
-        <Wallet className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-semibold text-foreground">Accounts and Cards</h1>
-        </div>
-    </header>
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+          <SidebarTrigger className="text-foreground" />
+          <div className="flex items-center gap-3">
+          <Wallet className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold text-foreground">Accounts and Cards</h1>
+          </div>
+      </header>
 
-    <main className="p-6 space-y-8">
-        {/* My Accounts Section */}
-        <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">My accounts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {accounts.map((account) => (
-            <AccountCard
-                key={account.title}
-                title={account.title}
-                balance={account.balance}
-                iban={account.iban}
-                owner={account.owner}
-                growth={account.growth}
-                variant={account.variant}
-            />
-            ))}
-        </div>
-        </section>
+      <main className="p-6 space-y-8">
+          {/* My Accounts Section */}
+          <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4">My accounts</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {accounts.map((account) => (
+              <AccountCard
+                  key={account.title}
+                  title={account.title}
+                  balance={account.balance}
+                  iban={account.iban}
+                  owner={account.owner}
+                  growth={account.growth}
+                  variant={account.variant}
+              />
+              ))}
+          </div>
+          </section>
 
-        {/* My Cards Section */}
-        <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">My cards</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {cards.map((card, index) => (
-            <BankCard
-                key={index}
-                type={card.type}
-                balance={card.balance}
-                cardNumber={card.cardNumber}
-                expiryDate={card.expiryDate}
-                isPhysical={card.isPhysical}
-                isActive={card.isActive}
-                expiryWarning={card.expiryWarning}
-            />
-            ))}
-        </div>
-        </section>
-    </main>
+          {/* My Cards Section */}
+          <section>
+          <h2 className="text-lg font-semibold text-foreground mb-4">My cards</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {cards.map((card, index) => (
+              <BankCard
+                  key={index}
+                  type={card.type}
+                  balance={card.balance}
+                  cardNumber={card.cardNumber}
+                  expiryDate={card.expiryDate}
+                  isPhysical={card.isPhysical}
+                  isActive={card.isActive}
+                  expiryWarning={card.expiryWarning}
+              />
+              ))}
+          </div>
+          </section>
+      </main>
     </SidebarInset>
   );
 }

@@ -69,7 +69,7 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
 
   return (
     <div style={{minWidth: '400px'}} className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-border">
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>Enter your email below to login to your account</CardDescription>

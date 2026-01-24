@@ -60,6 +60,9 @@ export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) 
             <p className="text-sm text-muted-foreground mt-1">
               {category.description}
             </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Total Amount: {category.totalAmount}
+            </p>
           </div>
         </div>
 

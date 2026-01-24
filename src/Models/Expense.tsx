@@ -38,7 +38,7 @@ export const expenseColumns = [
         navigator.clipboard.writeText(e.id ?? ""),
     },
     {
-      label: "View details",
+      label: "Edit",
       onClick: (e) => console.log(e),
     },
   ]),

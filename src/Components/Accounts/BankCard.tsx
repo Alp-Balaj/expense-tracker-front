@@ -34,7 +34,7 @@ export function BankCard({
   };
 
   return (
-    <Card className="border overflow-hidden py-0 gap-0">
+    <Card className="border-border overflow-hidden py-0 gap-0">
       <div className="flex flex-col md:flex-row">
         {/* Card Visual */}
         <div className={`bg-gradient-to-br ${cardColors[type]} p-5 min-w-[220px] md:min-w-[200px] aspect-[1.6/1] flex flex-col justify-between`}>

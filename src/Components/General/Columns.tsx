@@ -29,8 +29,7 @@ export function textColumn<T>(
 ----------------------------------------- */
 export function sortableColumn<T>(
   accessorKey: keyof T & string,
-  header: string,
-  cell?: ColumnDef<T>["cell"]
+  header: string
 ): ColumnDef<T> {
   return {
     accessorKey,
@@ -44,8 +43,7 @@ export function sortableColumn<T>(
         {header}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
-    ),
-    cell,
+    )
   }
 }
 
@@ -84,7 +82,7 @@ export function currencyColumn<T>(
         currency,
       }).format(value)
 
-      return <div className="text-right font-medium">{formatted}</div>
+      return <div className="text-left font-medium">{formatted}</div>
     },
   }
 }
