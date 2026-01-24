@@ -1,6 +1,5 @@
 //#region Imports
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
-import { AppSidebar } from "@/Components/Layout/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
 import {
   Card,
   CardContent,
@@ -52,41 +51,37 @@ const summaryCards = [
   },
 ];
 
-export default function HomePageTEST() {
+export default function HomePage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    <SidebarInset className="bg-background">
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+        <SidebarTrigger className="text-foreground" />
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+        </div>
+      </header>
 
-      <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-          <SidebarTrigger className="text-foreground" />
-          <div className="flex items-center gap-3">
-            <LayoutDashboard className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
-          </div>
-        </header>
+      <main className="p-6 space-y-6">
+        {/* Summary Cards */}
+        <SummaryCards cards={summaryCards}/>
+        
+        {/* Expense Chart */}
+        <ExpenseCharts />
 
-        <main className="p-6 space-y-6">
-          {/* Summary Cards */}
-          <SummaryCards cards={summaryCards}/>
-          
-          {/* Expense Chart */}
-          <ExpenseCharts />
-
-          {/* Expenses Table Card */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Recent Expenses</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Manage and track your spending across all accounts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ExpenseList />
-            </CardContent>
-          </Card>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+        {/* Expenses Table Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Recent Expenses</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Manage and track your spending across all accounts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpenseList />
+          </CardContent>
+        </Card>
+      </main>
+    </SidebarInset>
   );
 }

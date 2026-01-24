@@ -1,4 +1,9 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import {
+  textColumn,
+  sortableColumn,
+  currencyColumn,
+  actionsColumn,
+} from "@/Components/General/Columns"
 
 export type Expense = {
   id: string | null;
@@ -16,43 +21,25 @@ export type ExpenseFormProps = {
   onCancel?: () => void;
 };
 
-export const expenseColumns: ColumnDef<Expense>[] = [
-  {
-    accessorKey: "title",
-    header: "Title",
-  },
-  // {
-  //   accessorKey: "amount",
-  //   header: "Amount",
-  // },
-  {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"))
-      const formatted = new Intl.NumberFormat("de-DE", {
-        style: "currency",
-        currency: "EUR",
-      }).format(amount)
- 
-      return <div className="text-right font-medium">{formatted}</div>
+export const expenseColumns = [
+  sortableColumn<Expense>("title", "Title"),
+  currencyColumn<Expense>("amount", "Amount", {
+    locale: "de-DE",
+    currency: "EUR",
+  }),
+  textColumn<Expense>("date", "Date"),
+  textColumn<Expense>("description", "Description"),
+  textColumn<Expense>("accountId", "Account"),
+  textColumn<Expense>("categoryId", "Category"),
+  actionsColumn<Expense>([
+    {
+      label: "Copy Expense ID",
+      onClick: (e) =>
+        navigator.clipboard.writeText(e.id ?? ""),
     },
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-  },
-  {
-    accessorKey: "accountId",
-    header: "AccountId",
-  },
-  {
-    accessorKey: "categoryId",
-    header: "CategoryId",
-  },
-  
+    {
+      label: "Edit",
+      onClick: (e) => console.log(e),
+    },
+  ]),
 ]

@@ -1,6 +1,7 @@
 export type Currency = {
   id: string | null;
   code: string;
+  name: string;
   symbol: string;
   exchangeRateToBase: number;
 };

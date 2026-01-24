@@ -1,8 +1,11 @@
+import type { CategoryType } from "@/Enums/enums";
+
 export type Category = {
   id: string | null;
   name: string;
   description: string;
-  categoryTypeId: string;
+  categoryType: CategoryType;
+  totalAmount: number | null | undefined;
   color: string;
 };
 

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,14 +22,14 @@ import {
   DollarSign,
 } from "lucide-react";
 
-type MenuItem = {
+export type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   isActive?: boolean;
   onClick?: () => void;
 };
 
-type AppSidebarProps = {
+export type AppSidebarProps = {
   appName?: string;
   appSubtitle?: string;
   userName?: string;
@@ -36,20 +37,20 @@ type AppSidebarProps = {
   menuItems?: MenuItem[];
 };
 
-const defaultMenuItems: MenuItem[] = [
+const DEFAULT_MENU_ITEMS: MenuItem[] = [
   { icon: Receipt, label: "Expenses", isActive: true },
   { icon: TrendingUp, label: "Income" },
   { icon: Wallet, label: "Accounts" },
-  { icon: Tags, label: "Categories" },
+  { icon: Tags, label: "Categories and Currencies" },
   { icon: PiggyBank, label: "Savings" },
 ];
 
 export function AppSidebar({
-  appName = "FinanceTrack",
+  appName = "Finance Tracker",
   appSubtitle = "Expense Manager",
   userName = "John Doe",
   planName = "Free Plan",
-  menuItems = defaultMenuItems,
+  menuItems = DEFAULT_MENU_ITEMS,
 }: AppSidebarProps) {
   return (
     <Sidebar className="border-sidebar-border">
@@ -58,8 +59,11 @@ export function AppSidebar({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <DollarSign className="h-5 w-5 text-primary-foreground" />
           </div>
+
           <div>
-            <h2 className="text-sm font-semibold text-sidebar-foreground">{appName}</h2>
+            <h2 className="text-sm font-semibold text-sidebar-foreground">
+              {appName}
+            </h2>
             <p className="text-xs text-muted-foreground">{appSubtitle}</p>
           </div>
         </div>
@@ -75,7 +79,7 @@ export function AppSidebar({
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
-                  isActive={!!item.isActive}
+                  isActive={Boolean(item.isActive)}
                   className="gap-3 px-4"
                   onClick={item.onClick}
                 >
@@ -90,11 +94,9 @@ export function AppSidebar({
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-sm font-medium text-sidebar-foreground">{userName}</p>
-              <p className="text-xs text-muted-foreground">{planName}</p>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-sidebar-foreground">{userName}</p>
+            <p className="text-xs text-muted-foreground">{planName}</p>
           </div>
 
           <div className="flex gap-1">
