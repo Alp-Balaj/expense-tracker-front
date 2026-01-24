@@ -43,7 +43,7 @@ export default function AppLayout() {
   ];
 
   return (
-    <div className="flex min-h-screen min-w-screen">
+    <div className="flex min-h-screen w-screen overflow-x-hidden">
       <AppSidebar menuItems={menuItems} />
       <main className="flex-1">
         <Outlet />

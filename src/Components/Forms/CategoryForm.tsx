@@ -73,7 +73,7 @@ export function CategoryForm({
 
   const handleSave = () => {
     onSave({
-      id: category?.id || crypto.randomUUID(),
+      id: category?.id || null,
       name,
       description,
       categoryType,

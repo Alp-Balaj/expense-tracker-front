@@ -45,15 +45,14 @@ export default function CategoryAndCurrencyPage() {
   const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     setCategoryLoadError(null);
-
     try {
       const data = await getAllData<Category[]>("api/Category");
       setCategories(data);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
-        console.error(err);
         setCategoryLoadError("Failed to load categories.");
+        console.error(categoryLoadError);
       }
     } finally {
       setIsLoadingCategories(false);
@@ -116,16 +115,69 @@ export default function CategoryAndCurrencyPage() {
     setCategories((prev) => prev.filter((c) => c.id !== category.id));
   };
 
-  const handleSaveCategory = (category: Category) => {
-    setCategories((prev) => {
-      const exists = prev.find((c) => c.id === category.id);
-      if (exists) {
-        return prev.map((c) => (c.id === category.id ? category : c));
+  const handleSaveCategory = useCallback(async (category: Category) => {
+    setIsLoadingCategories(true);
+    if(category.id === null){
+      try {
+        await postData<Category>("api/Category", category);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to add category.");
+        }
+      } finally {
+        setIsLoadingCategories(false);
       }
-      return [...prev, category];
-    });
+      fetchCategories();
+    } else {
+      try {
+        await putData<Category>("api/Category", category);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to edit category.");
+        }
+      } finally {
+        setIsLoadingCategories(false);
+      }
+      fetchCategories();
+    }
     setEditingCategory(null);
-  };
+  },[postData, putData, fetchCategories]);
+
+  const handleSaveCurrency = useCallback(async (currency: Currency) => {
+    // setIsLoadingCurrency(true);
+    if(currency.id === null){
+      try {
+        await postData<Currency>("api/Currency", currency);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to add currency.");
+        }
+      } finally {
+        // setIsLoadingCategories(false);
+      }
+      // fetchCurrencies();
+    } else {
+      try {
+        await putData<Currency>("api/Currency", currency);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setCategoryLoadError("Failed to edit currency.");
+        }
+      } finally {
+        // setIsLoadingCategories(false);
+      }
+      // fetchCurrencies();
+    }
+    setEditingCurrency(null);
+  },[postData, putData]);
 
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -140,17 +192,6 @@ export default function CategoryAndCurrencyPage() {
 
   const handleDeleteCurrency = (currency: Currency) => {
     setCurrencies((prev) => prev.filter((c) => c.id !== currency.id));
-  };
-
-  const handleSaveCurrency = (currency: Currency) => {
-    setCurrencies((prev) => {
-      const exists = prev.find((c) => c.id === currency.id);
-      if (exists) {
-        return prev.map((c) => (c.id === currency.id ? currency : c));
-      }
-      return [...prev, currency];
-    });
-    setEditingCurrency(null);
   };
 
   const handleAddCurrency = () => {
