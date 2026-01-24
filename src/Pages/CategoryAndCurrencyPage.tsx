@@ -26,14 +26,6 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 
-const initialCurrencies: Currency[] = [
-  { id: "1", code: "EUR", symbol: "€", name: "Euro", exchangeRateToBase: 1 },
-  { id: "2", code: "USD", symbol: "$", name: "US Dollar", exchangeRateToBase: 1.0856 },
-  { id: "3", code: "GBP", symbol: "£", name: "British Pound", exchangeRateToBase: 0.8521 },
-  { id: "4", code: "JPY", symbol: "¥", name: "Japanese Yen", exchangeRateToBase: 162.45 },
-  { id: "5", code: "CHF", symbol: "Fr", name: "Swiss Franc", exchangeRateToBase: 0.9432 },
-];
-
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
   { value: "income", label: "Income", icon: TrendingUp, categoryType: CategoryType.Income },
@@ -45,7 +37,7 @@ export default function CategoryAndCurrencyPage() {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData, postData, putData } = useAuthorizationApi();
 
-
+  //#region Category
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
@@ -66,14 +58,39 @@ export default function CategoryAndCurrencyPage() {
       setIsLoadingCategories(false);
     }
   }, [getAllData]);
+  //#endregion
 
+  //#region Currency
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setCategoryLoadError(null);
+
+    try {
+      const data = await getAllData<Currency[]>("api/Currency");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCurrencyLoadError("Failed to load currencies.");
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+  //#endregion
+  
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
-    if(!isLoadingCategories)
-      fetchCategories();
-  }, [fetchCategories, isAuthReady, accessToken]);
+    fetchCategories();
+    fetchCurrencies();
+  }, [fetchCategories, fetchCurrencies, isAuthReady, accessToken]);
 
-  const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
   const [activeTab, setActiveTab] = useState("expenses");
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
