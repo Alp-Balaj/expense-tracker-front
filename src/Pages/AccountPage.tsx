@@ -1,108 +1,233 @@
+import { useState } from "react";
+import { Wallet, Plus, Search, Filter } from "lucide-react";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
 import {
-  SidebarInset,
-  SidebarTrigger,
-} from "@/Components/ui/sidebar";
-import { Wallet } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/Components/ui/select";
 import { AccountCard } from "@/Components/Accounts/AccountCard";
-import { BankCard } from "@/Components/Accounts/BankCard";
+import { AccountSummary } from "@/Components/Accounts/AccountSummary";
+import { AccountForm } from "@/Components/Accounts/AccountForm";
+import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
+import type { Account, AccountFormData, AccountType } from "@/Models/Account";
 
-const accounts = [
+// Sample initial accounts data - in production this would come from your .NET API
+const initialAccounts: Account[] = [
   {
-    title: "Checking Account",
-    balance: "USD 10,000.00",
-    iban: "AB11 0000 0000 1111 1111",
-    owner: "John Doe",
-    growth: "2.36%",
-    variant: "primary" as const,
+    id: "1",
+    name: "Main Checking",
+    type: "checking",
+    balance: 10000.0,
+    currencyId: "USD",
+    description: "Primary checking account for daily expenses",
   },
   {
-    title: "Savings Account",
-    balance: "USD 8,000.00",
-    iban: "AB11 0000 0000 1111 1111",
-    owner: "John Doe",
-    growth: "2.36%",
-    variant: "secondary" as const,
+    id: "2",
+    name: "Emergency Savings",
+    type: "savings",
+    balance: 8000.0,
+    currencyId: "USD",
+    description: "Emergency fund - 6 months expenses",
   },
   {
-    title: "Budget Account",
-    balance: "USD 2,000.00",
-    iban: "AB11 0000 0000 1111 1111",
-    owner: "John Doe",
-    growth: "2.36%",
-    variant: "tertiary" as const,
-  },
-];
-
-const cards = [
-  {
-    type: "credit" as const,
-    balance: "USD 10,000.00",
-    cardNumber: "1111000011000000",
-    expiryDate: "12/24",
-    isPhysical: true,
-    isActive: true,
-    expiryWarning: "1 month left",
+    id: "3",
+    name: "Wallet Cash",
+    type: "cash",
+    balance: 2000.0,
+    currencyId: "USD",
+    description: "Physical cash on hand",
   },
   {
-    type: "debit" as const,
-    balance: "USD 8,500.00",
-    cardNumber: "1111000011000000",
-    expiryDate: "12/24",
-    isPhysical: true,
-    isActive: true,
-    expiryWarning: "1 month left",
+    id: "4",
+    name: "Investment Portfolio",
+    type: "investment",
+    balance: 15000.0,
+    currencyId: "USD",
+    description: "Stock and ETF investments",
+  },
+  {
+    id: "5",
+    name: "Credit Card",
+    type: "credit",
+    balance: -1500.0,
+    currencyId: "USD",
+    description: "Monthly credit card balance",
   },
 ];
 
 export default function AccountPage() {
+  const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<AccountType | "all">("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
+
+  // Filter accounts based on search and type
+  const filteredAccounts = accounts.filter((account) => {
+    const matchesSearch = account.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || account.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const handleAddAccount = (data: AccountFormData) => {
+    const newAccount: Account = {
+      id: Date.now().toString(),
+      ...data,
+    };
+    setAccounts([...accounts, newAccount]);
+  };
+
+  const handleEditAccount = (data: AccountFormData) => {
+    if (!editingAccount) return;
+    setAccounts(
+      accounts.map((acc) =>
+        acc.id === editingAccount.id
+          ? { ...acc, ...data, updatedAt: new Date().toISOString() }
+          : acc
+      )
+    );
+    setEditingAccount(null);
+  };
+
+  const handleDeleteAccount = () => {
+    if (!deletingAccount) return;
+    setAccounts(accounts.filter((acc) => acc.id !== deletingAccount.id));
+    setDeletingAccount(null);
+  };
+
+  const handleViewDetails = (account: Account) => {
+    // In production, this would navigate to a details page or open a details modal
+    console.log("View details for:", account.name);
+  };
+
   return (
-    <SidebarInset className="bg-background">
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-          <SidebarTrigger className="text-foreground" />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-4 px-6 py-4">
           <div className="flex items-center gap-3">
-          <Wallet className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Accounts and Cards</h1>
+            <Wallet className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold text-foreground">Accounts</h1>
           </div>
+        </div>
       </header>
 
       <main className="p-6 space-y-8">
-          {/* My Accounts Section */}
-          <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">My accounts</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accounts.map((account) => (
-              <AccountCard
-                  key={account.title}
-                  title={account.title}
-                  balance={account.balance}
-                  iban={account.iban}
-                  owner={account.owner}
-                  growth={account.growth}
-                  variant={account.variant}
-              />
-              ))}
-          </div>
-          </section>
+        {/* Summary Cards */}
+        <AccountSummary accounts={accounts} />
 
-          {/* My Cards Section */}
-          <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">My cards</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {cards.map((card, index) => (
-              <BankCard
-                  key={index}
-                  type={card.type}
-                  balance={card.balance}
-                  cardNumber={card.cardNumber}
-                  expiryDate={card.expiryDate}
-                  isPhysical={card.isPhysical}
-                  isActive={card.isActive}
-                  expiryWarning={card.expiryWarning}
-              />
-              ))}
+        {/* Accounts Section */}
+        <section>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 className="text-lg font-semibold text-foreground">
+              My Accounts
+            </h2>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search accounts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full sm:w-64 bg-primary/5 border-primary/20 focus:border-primary"
+                />
+              </div>
+
+              {/* Type Filter */}
+              <Select
+                value={typeFilter}
+                onValueChange={(value) =>
+                  setTypeFilter(value as AccountType | "all")
+                }
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="checking">Checking</SelectItem>
+                  <SelectItem value="savings">Savings</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="credit">Credit</SelectItem>
+                  <SelectItem value="investment">Investment</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Add Account Button */}
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Account
+              </Button>
+            </div>
           </div>
-          </section>
+
+          {/* Accounts Grid */}
+          {filteredAccounts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredAccounts.map((account) => (
+                <AccountCard
+                  key={account.id}
+                  account={account}
+                  onEdit={(acc) => setEditingAccount(acc)}
+                  onDelete={(acc) => setDeletingAccount(acc)}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                No accounts found
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {searchQuery || typeFilter !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "Get started by adding your first account."}
+              </p>
+              {!searchQuery && typeFilter === "all" && (
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Account
+                </Button>
+              )}
+            </div>
+          )}
+        </section>
       </main>
-    </SidebarInset>
+
+      {/* Add Account Dialog */}
+      <AccountForm
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSubmit={handleAddAccount}
+      />
+
+      {/* Edit Account Dialog */}
+      <AccountForm
+        open={!!editingAccount}
+        onOpenChange={(open) => !open && setEditingAccount(null)}
+        onSubmit={handleEditAccount}
+        editingAccount={editingAccount}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteAccountDialog
+        open={!!deletingAccount}
+        onOpenChange={(open) => !open && setDeletingAccount(null)}
+        account={deletingAccount}
+        onConfirm={handleDeleteAccount}
+      />
+    </div>
   );
 }
