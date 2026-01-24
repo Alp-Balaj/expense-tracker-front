@@ -48,7 +48,7 @@ export function CurrencyForm({
 
   const handleSave = () => {
     onSave({
-      id: currency?.id || crypto.randomUUID(),
+      id: currency?.id || null,
       code: code.toUpperCase(),
       symbol,
       name,
