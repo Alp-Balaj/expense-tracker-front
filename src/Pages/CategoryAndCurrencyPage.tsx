@@ -26,30 +26,6 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 
-// Sample data
-const initialCategories: Category[] = [
-  { id: "1", name: "Groceries", description: "Food and household items", categoryType: CategoryType.Expense, color: "#ef4444", totalAmount: 450 },
-  { id: "2", name: "Utilities", description: "Electricity, water, internet", categoryType: CategoryType.Expense, color: "#f97316", totalAmount: 180 },
-  { id: "3", name: "Transport", description: "Fuel and public transport", categoryType: CategoryType.Expense, color: "#eab308", totalAmount: 120 },
-  { id: "4", name: "Entertainment", description: "Movies, games, subscriptions", categoryType: CategoryType.Expense, color: "#8b5cf6", totalAmount: 85 },
-  { id: "5", name: "Salary", description: "Monthly salary", categoryType: CategoryType.Income, color: "#22c55e", totalAmount: 3500 },
-  { id: "6", name: "Freelance", description: "Side projects and consulting", categoryType: CategoryType.Income, color: "#14b8a6", totalAmount: 800 },
-  { id: "7", name: "Investments", description: "Dividends and returns", categoryType: CategoryType.Income, color: "#3b82f6", totalAmount: 250 },
-  { id: "8", name: "Emergency Fund", description: "For unexpected expenses", categoryType: CategoryType.Savings, color: "#3b82f6", totalAmount: 5000 },
-  { id: "9", name: "Vacation", description: "Holiday savings", categoryType: CategoryType.Savings, color: "#14b8a6", totalAmount: 1200 },
-  { id: "10", name: "Retirement", description: "Long-term savings", categoryType: CategoryType.Savings, color: "#6b7280", totalAmount: 15000 },
-  { id: "11", name: "New Laptop", description: "Planned purchase", categoryType: CategoryType.FutureExpense, color: "#ec4899", totalAmount: 1500 },
-  { id: "12", name: "Home Renovation", description: "Kitchen remodel", categoryType: CategoryType.FutureExpense, color: "#f97316", totalAmount: 8000 },
-];
-
-const initialCurrencies: Currency[] = [
-  { id: "1", code: "EUR", symbol: "€", name: "Euro", exchangeRateToBase: 1 },
-  { id: "2", code: "USD", symbol: "$", name: "US Dollar", exchangeRateToBase: 1.0856 },
-  { id: "3", code: "GBP", symbol: "£", name: "British Pound", exchangeRateToBase: 0.8521 },
-  { id: "4", code: "JPY", symbol: "¥", name: "Japanese Yen", exchangeRateToBase: 162.45 },
-  { id: "5", code: "CHF", symbol: "Fr", name: "Swiss Franc", exchangeRateToBase: 0.9432 },
-];
-
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
   { value: "income", label: "Income", icon: TrendingUp, categoryType: CategoryType.Income },
@@ -61,7 +37,7 @@ export default function CategoryAndCurrencyPage() {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData, postData, putData } = useAuthorizationApi();
 
-
+  //#region Category
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
@@ -83,13 +59,39 @@ export default function CategoryAndCurrencyPage() {
       setIsLoadingCategories(false);
     }
   }, [getAllData]);
+  //#endregion
 
+  //#region Currency
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setCategoryLoadError(null);
+
+    try {
+      const data = await getAllData<Currency[]>("api/Currency");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCurrencyLoadError("Failed to load currencies.");
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+  //#endregion
+  
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
     fetchCategories();
-  }, [fetchCategories, isAuthReady, accessToken]);
+    fetchCurrencies();
+  }, [fetchCategories, fetchCurrencies, isAuthReady, accessToken]);
 
-  const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
   const [activeTab, setActiveTab] = useState("expenses");
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
