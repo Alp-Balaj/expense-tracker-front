@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Textarea } from "@/Components/ui/textarea";
-import type { Account } from "@/Models/Account";
+import type { AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import type { CurrencyDropdown } from "@/Models/Currency";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -29,8 +29,8 @@ import type { AxiosError } from "axios";
 interface AddAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  account?: Account | null;
-  onSave: (account: Account) => void;
+  account?: AddAccount | null;
+  onSave: (account: AddAccount) => void;
   defaultType?: AmountType;
 }
 

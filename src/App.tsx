@@ -11,6 +11,7 @@ import AxiosAuthBridge from "./Authorization/AxiosAuthBridge";
 import AppLayout from "./Components/Layout/AppLayout";
 import { SidebarProvider } from "./Components/ui/sidebar";
 import CategoryAndCurrencyPage from "./Pages/CategoryAndCurrencyPage";
+import ReportsPage from "./Pages/ReportPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
               </Route>
             </Route>
 

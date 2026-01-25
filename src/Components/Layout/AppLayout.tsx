@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Tags,
   PiggyBank,
+  Paperclip,
 } from "lucide-react";
 
 export default function AppLayout() {
@@ -39,6 +40,11 @@ export default function AppLayout() {
       icon: PiggyBank,
       label: "Savings",
       onClick: () => navigate("/savings"),
+    },
+    {
+      icon: Paperclip,
+      label: "Reports",
+      onClick: () => navigate("/reports"),
     },
   ];
 
