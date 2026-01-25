@@ -15,7 +15,7 @@ import {
   Wallet,
   PiggyBank,
 } from "lucide-react";
-import { ExpenseCharts } from "@/Components/Charts/ExpenseCharts";
+import { ExpenseCharts } from "@/Components/Dashboard/ExpenseCharts";
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards";
 
 //#endregion

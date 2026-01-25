@@ -1,13 +1,19 @@
+import type { AmountType } from "@/Enums/enums";
+
 export type Account = {
   id: string | null;
   name: string;
-  amountTypeId: string;
+  amountType: AmountType;
   balance: number;
   balanceCurrencyId: string;
+  description: string;
 };
 
-export type AccountFormProps = {
-  row?: Partial<Account> | null;
-  onSubmit: (data: Account) => void;
-  onCancel?: () => void;
+export type AccountFormData = {
+  id: string | null;
+  name: string;
+  amountType: AmountType;
+  balance: number;
+  balanceCurrencyId: string;
+  description: string;
 };

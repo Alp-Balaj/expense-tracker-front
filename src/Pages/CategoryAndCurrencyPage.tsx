@@ -2,15 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
+import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
+
 import { CategoryCard } from "@/Components/Category/CategoryCard";
 import { CategoryChart } from "@/Components/Category/CategoryChart";
+import { CategoryForm } from "@/Components/Category/CategoryForm";
+import type { Category } from "@/Models/Category";
+
+import { CurrencyForm } from "@/Components/Currency/CurrencyForm";
 import { CurrencyCard } from "@/Components/Currency/CurrencyCard";
 import { CurrencyComparisonTable } from "@/Components/Currency/CurrencyComparisonTable";
+import type { Currency } from "@/Models/Currency";
 
-import { CategoryForm } from "@/Components/Forms/CategoryForm";
-import { CurrencyForm } from "@/Components/Forms/CurrencyForm";
-
-import type { Category } from "@/Models/Category";
 import { CategoryType } from "@/Enums/enums";
 import {
   Plus,
@@ -20,8 +23,7 @@ import {
   Calendar,
   Coins,
 } from "lucide-react";
-import type { Currency } from "@/Models/Currency";
-import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
+
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -58,54 +60,11 @@ export default function CategoryAndCurrencyPage() {
       setIsLoadingCategories(false);
     }
   }, [getAllData]);
-  //#endregion
 
-  //#region Currency
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
-
-
-  const fetchCurrencies = useCallback(async () => {
-    setIsLoadingCategories(true);
-    setCategoryLoadError(null);
-
-    try {
-      const data = await getAllData<Currency[]>("api/Currency");
-      setCurrencies(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        console.error(err);
-        setCurrencyLoadError("Failed to load currencies.");
-      }
-    } finally {
-      setIsLoadingCurrencies(false);
-    }
-  }, [getAllData]);
-  //#endregion
   
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    fetchCategories();
-    fetchCurrencies();
-  }, [fetchCategories, fetchCurrencies, isAuthReady, accessToken]);
-
-  const [activeTab, setActiveTab] = useState("expenses");
-
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
-  const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
-
-  const currentTabConfig = tabConfig.find((t) => t.value === activeTab);
-  const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
-
-  // Filter categories by type
-  // const filteredCategories = categories.filter((c) => c.categoryType === currentType);
-
-  // Category handlers
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
     setCategoryDialogOpen(true);
@@ -147,8 +106,42 @@ export default function CategoryAndCurrencyPage() {
     setEditingCategory(null);
   },[postData, putData, fetchCategories]);
 
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryDialogOpen(true);
+  };
+
+  //#endregion
+
+  //#region Currency
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setCategoryLoadError(null);
+
+    try {
+      const data = await getAllData<Currency[]>("api/Currency");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setCurrencyLoadError("Failed to load currencies.");
+        console.error(currencyLoadError);
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+
+  const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
+  const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+
   const handleSaveCurrency = useCallback(async (currency: Currency) => {
-    // setIsLoadingCurrency(true);
+    setIsLoadingCurrencies(true);
     if(currency.id === null){
       try {
         await postData<Currency>("api/Currency", currency);
@@ -159,9 +152,9 @@ export default function CategoryAndCurrencyPage() {
           setCategoryLoadError("Failed to add currency.");
         }
       } finally {
-        // setIsLoadingCategories(false);
+        setIsLoadingCategories(false);
       }
-      // fetchCurrencies();
+      fetchCurrencies();
     } else {
       try {
         await putData<Currency>("api/Currency", currency);
@@ -172,19 +165,13 @@ export default function CategoryAndCurrencyPage() {
           setCategoryLoadError("Failed to edit currency.");
         }
       } finally {
-        // setIsLoadingCategories(false);
+        setIsLoadingCategories(false);
       }
-      // fetchCurrencies();
+      fetchCurrencies();
     }
     setEditingCurrency(null);
   },[postData, putData]);
-
-  const handleAddCategory = () => {
-    setEditingCategory(null);
-    setCategoryDialogOpen(true);
-  };
-
-  // Currency handlers
+  
   const handleEditCurrency = (currency: Currency) => {
     setEditingCurrency(currency);
     setCurrencyDialogOpen(true);
@@ -198,6 +185,20 @@ export default function CategoryAndCurrencyPage() {
     setEditingCurrency(null);
     setCurrencyDialogOpen(true);
   };
+  
+  //#endregion
+  
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    if(!isLoadingCategories)
+      fetchCategories();
+    if(!isLoadingCurrencies)
+      fetchCurrencies();
+  }, [fetchCategories, fetchCurrencies, isAuthReady, accessToken]);
+  
+  const [activeTab, setActiveTab] = useState("expenses");
+  const currentTabConfig = tabConfig.find((t) => t.value === activeTab);
+  const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
 
   return (
     <SidebarInset className="bg-background">

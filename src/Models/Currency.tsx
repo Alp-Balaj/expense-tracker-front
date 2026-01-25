@@ -11,3 +11,11 @@ export type CurrencyFormProps = {
   onSubmit: (data: Currency) => void;
   onCancel?: () => void;
 };
+
+export type CurrencyDropdown = {
+  id: string;
+  code: string;
+  name: string;
+  symbol: string;
+  exchangeRateToBase: number;
+}

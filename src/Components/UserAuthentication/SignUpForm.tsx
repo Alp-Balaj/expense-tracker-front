@@ -1,23 +1,23 @@
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "./ui/field";
-import { Input } from "./ui/input";
+} from "../ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "../ui/field";
+import { Input } from "../ui/input";
 
 import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { useAuthenticationApi } from "../Hooks/useAuthenticationApi";
-import { useAuth } from "../Authorization/AuthContext";
-import type { SignUpRequest } from "../Models/UserAuth";
-import { Spinner } from "./ui/spinner";
+import { useAuthenticationApi } from "../../Hooks/useAuthenticationApi";
+import { useAuth } from "../../Authorization/AuthContext";
+import type { SignUpRequest } from "../../Models/UserAuth";
+import { Spinner } from "../ui/spinner";
 
 type SignupFormProps = React.ComponentProps<"div"> & {
   data?: Partial<SignUpRequest> | null;
