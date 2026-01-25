@@ -27,9 +27,9 @@ interface AccountCardProps {
   onViewDetails?: (account: Account) => void;
 }
 
-type ColorPair = { bg: string; text: string };
+// type ColorPair = { bg: string; text: string };
 
-export const amountTypeColors: Record<AmountType, ColorPair> = {
+export const amountTypeColors: Record<AmountType, { bg: string; text: string }> = {
   [AmountType.CheckingAccount]: { bg: "bg-[#2d3142]", text: "text-white" },
   [AmountType.SavingsAccount]: { bg: "bg-[#4a5568]", text: "text-white" },
   [AmountType.Cash]: { bg: "bg-primary", text: "text-primary-foreground" },
@@ -63,37 +63,35 @@ export const AmountTypeIcon = ({ type }: { type: AmountType }) => {
   }
 };
 
-
 export function AccountCard({
   account,
   onEdit,
   onDelete,
   onViewDetails,
 }: AccountCardProps) {
-  const colors = amountTypeColors[account.type];
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const colorStyle = amountTypeColors[account.amountType];
+  // const formatCurrency = (amount: number, currency: string) => {
+  //   return new Intl.NumberFormat("en-US", {
+  //     style: "currency",
+  //     currency: currency,
+  //     minimumFractionDigits: 2,
+  //   }).format(amount);
+  // };
 
   return (
     <Card
-      className={`${colors.bg} ${colors.text} border-0 overflow-hidden py-0 gap-0`}
+      className={`${colorStyle.bg} ${colorStyle.text} border-0 overflow-hidden py-0 gap-0`}
     >
       <CardContent className="p-5 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-white/10">
-              <AmountTypeIcon type={account.type} />
+              <AmountTypeIcon type={account.amountType} />
             </div>
             <div>
               <h3 className="font-medium opacity-90">{account.name}</h3>
               <p className="text-xs opacity-60">
-                {accountTypeLabels[account.type]}
+                {accountTypeLabels[account.amountType]}
               </p>
             </div>
           </div>
@@ -138,7 +136,7 @@ export function AccountCard({
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            {formatCurrency(account.balance, account.currencyId)}
+            {account.balance}{account.balanceCurrencyId}
           </p>
         </div>
 

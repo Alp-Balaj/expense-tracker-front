@@ -25,13 +25,13 @@ export function DeleteAccountDialog({
 }: DeleteAccountDialogProps) {
   if (!account) return null;
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  // const formatCurrency = (amount: number, currency: string) => {
+  //   return new Intl.NumberFormat("en-US", {
+  //     style: "currency",
+  //     currency: currency,
+  //     minimumFractionDigits: 2,
+  //   }).format(amount);
+  // };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -46,7 +46,7 @@ export function DeleteAccountDialog({
             <span className="block">
               This account has a balance of{" "}
               <strong className="text-foreground">
-                {formatCurrency(account.balance, account.currencyId)}
+                {account.balance}{account.balanceCurrencyId}
               </strong>
               .
             </span>

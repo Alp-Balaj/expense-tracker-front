@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Wallet, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -16,66 +16,48 @@ import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
 import type { Account, AccountFormData } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { SidebarTrigger } from "@/Components/ui/sidebar";
-
-const initialAccounts: Account[] = [
-  {
-    id: "1",
-    name: "Main Checking",
-    type: AmountType.CheckingAccount,
-    balance: 10000.0,
-    currencyId: "USD",
-    description: "Primary checking account for daily expenses",
-  },
-  {
-    id: "2",
-    name: "Emergency Savings",
-    type: AmountType.SavingsAccount,
-    balance: 8000.0,
-    currencyId: "USD",
-    description: "Emergency fund - 6 months expenses",
-  },
-  {
-    id: "3",
-    name: "Wallet Cash",
-    type: AmountType.Cash,
-    balance: 2000.0,
-    currencyId: "USD",
-    description: "Physical cash on hand",
-  },
-  {
-    id: "4",
-    name: "Investment Portfolio",
-    type: AmountType.Investment,
-    balance: 15000.0,
-    currencyId: "USD",
-    description: "Stock and ETF investments",
-  },
-  {
-    id: "5",
-    name: "Credit Card",
-    type: AmountType.CreditCard,
-    balance: -1500.0,
-    currencyId: "USD",
-    description: "Monthly credit card balance",
-  },
-];
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { AxiosError } from "axios";
 
 export default function AccountPage() {
-  const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData, postData, putData } = useAuthorizationApi();
+
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
+
+  const fetchAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    setAccountLoadError(null);
+    try {
+      const data = await getAllData<Account[]>("api/Account");
+      setAccounts(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setAccountLoadError("Failed to load accounts.");
+        console.error(accountLoadError);
+      }
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, [getAllData]);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<AmountType | "all">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
-  const [amountType, setAmountType] = useState<AmountType>(AmountType.CheckingAccount);
+  const [amountType, setAmountType] = useState<AmountType | "all">("all");
 
   // Filter accounts based on search and type
   const filteredAccounts = accounts.filter((account) => {
     const matchesSearch = account.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || account.type === typeFilter;
+    const matchesType = amountType === "all" || account.amountType === amountType;
     return matchesSearch && matchesType;
   });
 
@@ -110,6 +92,12 @@ export default function AccountPage() {
     console.log("View details for:", account.name);
   };
 
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    if(!isLoadingAccounts)
+      fetchAccounts();
+  }, [fetchAccounts, isAuthReady, accessToken]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -117,7 +105,7 @@ export default function AccountPage() {
           <SidebarTrigger className="text-foreground" />
           <div className="flex items-center gap-3">
           <Wallet className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Categories & Cyrrencies</h1>
+          <h1 className="text-xl font-semibold text-foreground">Accounts</h1>
           </div>
       </header>
 
@@ -145,11 +133,17 @@ export default function AccountPage() {
               </div>
 
               {/* Type Filter */}
-              <Select value={String(amountType)} onValueChange={(v) => setAmountType(Number(v) as AmountType)}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+              <Select value={amountType === "all" ? "all" : String(amountType)}
+                onValueChange={(v) =>
+                  setAmountType(v === "all" ? "all" : (Number(v) as AmountType))
+                }
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value={String(AmountType.CheckingAccount)}>CheckingAccount</SelectItem>
                     <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
                     <SelectItem value={String(AmountType.SavingsAccount)}>SavingsAccount</SelectItem>
@@ -186,11 +180,11 @@ export default function AccountPage() {
                 No accounts found
               </h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || typeFilter !== "all"
+                {searchQuery || amountType !== "all"
                   ? "Try adjusting your search or filter criteria."
                   : "Get started by adding your first account."}
               </p>
-              {!searchQuery && typeFilter === "all" && (
+              {!searchQuery && amountType === "all" && (
                 <Button onClick={() => setIsAddDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Account

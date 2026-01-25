@@ -47,9 +47,9 @@ export function AccountForm({
 }: AddAccountDialogProps) {
   const [formData, setFormData] = useState<AccountFormData>({
     name: editingAccount?.name || "",
-    type: editingAccount?.type || 0,
+    amountType: editingAccount?.amountType || 0,
     balance: editingAccount?.balance || 0,
-    currencyId: editingAccount?.currencyId || "USD",
+    balanceCurrencyId: editingAccount?.balanceCurrencyId || "USD",
     description: editingAccount?.description || "",
   });
 
@@ -60,17 +60,17 @@ export function AccountForm({
     if (editingAccount) {
       setFormData({
         name: editingAccount.name,
-        type: editingAccount.type,
+        amountType: editingAccount.amountType,
         balance: editingAccount.balance,
-        currencyId: editingAccount.currencyId,
+        balanceCurrencyId: editingAccount.balanceCurrencyId,
         description: editingAccount.description || "",
       });
     } else {
       setFormData({
         name: "",
-        type: 0,
+        amountType: 0,
         balance: 0,
-        currencyId: "USD",
+        balanceCurrencyId: "USD",
         description: "",
       });
     }
@@ -84,7 +84,7 @@ export function AccountForm({
       newErrors.name = "Account name is required";
     }
 
-    if (formData.balance < 0 && formData.type !== 3) {
+    if (formData.balance < 0 && formData.amountType !== 3) {
       newErrors.balance = "Balance cannot be negative for this account type";
     }
 
@@ -178,9 +178,9 @@ export function AccountForm({
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Select
-                value={formData.currencyId}
+                value={formData.balanceCurrencyId}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, currencyId: value })
+                  setFormData({ ...formData, balanceCurrencyId: value })
                 }
               >
                 <SelectTrigger className="w-full">

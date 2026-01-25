@@ -77,7 +77,7 @@ export function AccountSummary({ accounts }: AccountsSummaryProps) {
             <div className="text-2xl font-bold text-foreground">
               {card.value}
             </div>
-            <p className={`text-xs mt-1 ${ card.trend === "up" ? "text-muted-foreground" : "text-destructive"}`}>
+            <p className={`text-xs mt-1 ${ card.trend === "up" ? "text-primary" : "text-destructive"}`}>
               {card.description}
             </p>
           </CardContent>
