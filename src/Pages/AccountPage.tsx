@@ -13,7 +13,7 @@ import { AccountCard } from "@/Components/Accounts/AccountCard";
 import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
-import type { Account, AccountFormData } from "@/Models/Account";
+import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { SidebarTrigger } from "@/Components/ui/sidebar";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -45,12 +45,45 @@ export default function AccountPage() {
     }
   }, [getAllData]);
 
+  const handleSaveAccount = useCallback(async (account: Account) => {
+    setIsLoadingAccounts(true);
+    if(account.id === null){
+      try {
+        await postData<Account>("api/Account", account);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setAccountLoadError("Failed to add account.");
+        }
+      } finally {
+        setIsLoadingAccounts(false);
+      }
+      fetchAccounts();
+    } else {
+      try {
+        await putData<Account>("api/Account", account as Account);
+      }  catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) {
+          console.error(err);
+          setAccountLoadError("Failed to edit account.");
+        }
+      } finally {
+        setIsLoadingAccounts(false);
+      }
+      fetchAccounts();
+    }
+    setEditingAccount(null);
+  },[postData, putData, fetchAccounts]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
   const [amountType, setAmountType] = useState<AmountType | "all">("all");
+  const currentType = amountType != "all"? amountType : AmountType.CheckingAccount;
 
   // Filter accounts based on search and type
   const filteredAccounts = accounts.filter((account) => {
@@ -60,26 +93,6 @@ export default function AccountPage() {
     const matchesType = amountType === "all" || account.amountType === amountType;
     return matchesSearch && matchesType;
   });
-
-  const handleAddAccount = (data: AccountFormData) => {
-    const newAccount: Account = {
-      id: Date.now().toString(),
-      ...data,
-    };
-    setAccounts([...accounts, newAccount]);
-  };
-
-  const handleEditAccount = (data: AccountFormData) => {
-    if (!editingAccount) return;
-    setAccounts(
-      accounts.map((acc) =>
-        acc.id === editingAccount.id
-          ? { ...acc, ...data, updatedAt: new Date().toISOString() }
-          : acc
-      )
-    );
-    setEditingAccount(null);
-  };
 
   const handleDeleteAccount = () => {
     if (!deletingAccount) return;
@@ -97,6 +110,7 @@ export default function AccountPage() {
     if(!isLoadingAccounts)
       fetchAccounts();
   }, [fetchAccounts, isAuthReady, accessToken]);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -199,15 +213,16 @@ export default function AccountPage() {
       <AccountForm
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleAddAccount}
+        onSave={handleSaveAccount}
+        defaultType={currentType}
       />
 
       {/* Edit Account Dialog */}
       <AccountForm
         open={!!editingAccount}
         onOpenChange={(open) => !open && setEditingAccount(null)}
-        onSubmit={handleEditAccount}
-        editingAccount={editingAccount}
+        account={editingAccount}
+        onSave={handleSaveAccount}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -1,4 +1,4 @@
-import React from "react"
+import { useEffect } from "react"
 import { useState } from "react";
 import {
   Dialog,
@@ -19,14 +19,15 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Textarea } from "@/Components/ui/textarea";
-import type { Account, AccountFormData } from "@/Models/Account";
+import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 
 interface AddAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: AccountFormData) => void;
-  editingAccount?: Account | null;
+  account?: Account | null;
+  onSave: (account: Account) => void;
+  defaultType?: AmountType;
 }
 
 const currencies = [
@@ -42,100 +43,71 @@ const currencies = [
 export function AccountForm({
   open,
   onOpenChange,
-  onSubmit,
-  editingAccount,
+  account,
+  onSave,
+  defaultType = AmountType.CheckingAccount,
 }: AddAccountDialogProps) {
-  const [formData, setFormData] = useState<AccountFormData>({
-    name: editingAccount?.name || "",
-    amountType: editingAccount?.amountType || 0,
-    balance: editingAccount?.balance || 0,
-    balanceCurrencyId: editingAccount?.balanceCurrencyId || "USD",
-    description: editingAccount?.description || "",
-  });
+  const [name, setName] = useState("");
+  const [amountType, setAmountType] = useState<AmountType>(defaultType);
+  const [balance, setBalance] = useState(0);
+  const [balanceCurrencyId, setBalanceCurrencyId] = useState("");
+  const [description, setDescription] = useState<string>("");
 
-  const [amountType, setAmountType] = useState<AmountType>(AmountType.CheckingAccount);
-  const [errors, setErrors] = useState<Partial<Record<keyof AccountFormData, string>>>({});
+  const isEditing = !!account;
 
-  const resetForm = () => {
-    if (editingAccount) {
-      setFormData({
-        name: editingAccount.name,
-        amountType: editingAccount.amountType,
-        balance: editingAccount.balance,
-        balanceCurrencyId: editingAccount.balanceCurrencyId,
-        description: editingAccount.description || "",
-      });
+  useEffect(() => {
+    if (account) {
+      setName(account.name);
+      setAmountType(account.amountType);
+      setBalance(account.balance);
+      setBalanceCurrencyId(account.balanceCurrencyId);
+      setDescription(account.description);
     } else {
-      setFormData({
-        name: "",
-        amountType: 0,
-        balance: 0,
-        balanceCurrencyId: "USD",
-        description: "",
-      });
+      setName("");
+      setAmountType(defaultType);
+      setBalance(0);
+      setBalanceCurrencyId("");
+      setDescription("");
     }
-    setErrors({});
-  };
+  }, [account, defaultType]);
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof AccountFormData, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Account name is required";
-    }
-
-    if (formData.balance < 0 && formData.amountType !== 3) {
-      newErrors.balance = "Balance cannot be negative for this account type";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-      resetForm();
-      onOpenChange(false);
-    }
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      resetForm();
-    }
-    onOpenChange(newOpen);
+  const handleSave = () => {
+    onSave({
+      id: account?.id || null,
+      name,
+      amountType,
+      balance,
+      balanceCurrencyId,
+      description,
+    });
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {editingAccount ? "Edit Account" : "Add New Account"}
+            {isEditing ? "Edit Account" : "Add New Account"}
           </DialogTitle>
           <DialogDescription>
-            {editingAccount
+            {isEditing
               ? "Update your account details below."
               : "Create a new account to track your finances."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="name">Account Name</Label>
             <Input
               id="name"
               placeholder="e.g., Main Checking"
-              value={formData.name}
+              value={name}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setName(e.target.value)
               }
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
           </div>
 
           <div className="grid gap-2">
@@ -162,25 +134,17 @@ export function AccountForm({
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                value={formData.balance}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    balance: parseFloat(e.target.value) || 0,
-                  })
-                }
+                value={balance}
+                onChange={(e) => setBalance(parseFloat(e.target.value))}
               />
-              {errors.balance && (
-                <p className="text-sm text-destructive">{errors.balance}</p>
-              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Select
-                value={formData.balanceCurrencyId}
+                value={balanceCurrencyId}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, balanceCurrencyId: value })
+                  setBalanceCurrencyId(value)
                 }
               >
                 <SelectTrigger className="w-full">
@@ -197,32 +161,25 @@ export function AccountForm({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Add a note about this account..."
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g., Weekly grocery shopping expenses"
+              rows={2}
             />
           </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">
-              {editingAccount ? "Save Changes" : "Add Account"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={!name.trim()}>
+            {isEditing ? "Save Changes" : "Create Account"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

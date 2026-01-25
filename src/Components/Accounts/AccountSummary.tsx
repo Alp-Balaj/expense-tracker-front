@@ -13,15 +13,15 @@ export function AccountSummary({ accounts }: AccountsSummaryProps) {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
   const savingsBalance = accounts
-    .filter((acc) => acc.type === AmountType.SavingsAccount)
+    .filter((acc) => acc.amountType === AmountType.SavingsAccount)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const checkingBalance = accounts
-    .filter((acc) => acc.type === AmountType.CheckingAccount)
+    .filter((acc) => acc.amountType === AmountType.CheckingAccount)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const cashBalance = accounts
-    .filter((acc) => acc.type === AmountType.Cash)
+    .filter((acc) => acc.amountType === AmountType.Cash)
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   const formatCurrency = (amount: number) => {
