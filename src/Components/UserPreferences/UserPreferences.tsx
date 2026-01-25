@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,10 @@ import {
 } from "@/Components/ui/select";
 import { Settings, User, Palette, Eye, EyeOff, Check } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import type { CurrencyDropdown } from "@/Models/Currency";
+import type { AxiosError } from "axios";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 
 interface UserSettings {
   email: string;
@@ -39,19 +43,6 @@ interface UserSettingsModalProps {
   onPasswordChange?: (currentPassword: string, newPassword: string) => void;
 }
 
-const currencies = [
-  { value: "USD", label: "US Dollar ($)", symbol: "$" },
-  { value: "EUR", label: "Euro (€)", symbol: "€" },
-  { value: "GBP", label: "British Pound (£)", symbol: "£" },
-  { value: "JPY", label: "Japanese Yen (¥)", symbol: "¥" },
-  { value: "CAD", label: "Canadian Dollar (C$)", symbol: "C$" },
-  { value: "AUD", label: "Australian Dollar (A$)", symbol: "A$" },
-  { value: "CHF", label: "Swiss Franc (CHF)", symbol: "CHF" },
-  { value: "CNY", label: "Chinese Yuan (¥)", symbol: "¥" },
-  { value: "INR", label: "Indian Rupee (₹)", symbol: "₹" },
-  { value: "MXN", label: "Mexican Peso (MX$)", symbol: "MX$" },
-];
-
 export function UserSettingsModal({
   initialSettings = { email: "john.doe@example.com", username: "johndoe" },
   initialPreferences = { theme: "light", baseCurrency: "USD" },
@@ -59,8 +50,40 @@ export function UserSettingsModal({
   onPreferencesSave,
   onPasswordChange,
 }: UserSettingsModalProps) {
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData, putDataNoId } = useAuthorizationApi();
+
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("settings");
+
+  //#region Currency dropdown
+  const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCurrencies(true);
+    setCurrencyLoadError(null);
+
+    try {
+      const data = await getAllData<CurrencyDropdown[]>("api/Currency/Dropdown");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setCurrencyLoadError("Failed to load currencies.");
+        console.error(currencyLoadError);
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    if(!isLoadingCurrencies)
+        fetchCurrencies();
+  },[fetchCurrencies]);
 
   // User Settings State
   const [email, setEmail] = useState(initialSettings.email);
@@ -118,25 +141,16 @@ export function UserSettingsModal({
     setTimeout(() => setPasswordChanged(false), 2000);
   };
 
-  const handlePreferencesSave = () => {
-    // Apply theme change
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else if (theme === "light") {
-      document.documentElement.classList.remove("dark");
-    } else {
-      // System preference
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
+  const handlePreferencesSave = useCallback(async () => {
+    await putDataNoId<UserPreferences>("/api/UserPreferences", {
+      theme,
+      baseCurrency,
+    });
 
     onPreferencesSave?.({ theme, baseCurrency });
     setPreferencesSaved(true);
     setTimeout(() => setPreferencesSaved(false), 2000);
-  };
+  }, [theme, baseCurrency, onPreferencesSave]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -443,13 +457,13 @@ export function UserSettingsModal({
                     </SelectTrigger>
                     <SelectContent>
                       {currencies.map((currency) => (
-                        <SelectItem key={currency.value} value={currency.value}>
+                        <SelectItem key={currency.id} value={currency.id}>
                           <span className="flex items-center gap-2">
                             <span className="font-medium w-10">
-                              {currency.value}
+                              {currency.code}
                             </span>
                             <span className="text-muted-foreground">
-                              {currency.label}
+                              {currency.name} ({currency.symbol})
                             </span>
                           </span>
                         </SelectItem>

@@ -17,7 +17,6 @@ import {
   Wallet,
   Tags,
   PiggyBank,
-  Settings,
   HelpCircle,
   DollarSign,
 } from "lucide-react";
@@ -117,7 +116,7 @@ export function AppSidebar({
                 console.log("Preferences saved:", preferences)
               }
               onPasswordChange={(current, newPass) =>
-                console.log("Password change requested")
+                console.log("Password change requested",current,newPass)
               }
             />
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
