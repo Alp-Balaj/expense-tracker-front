@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { useState } from "react";
 import {
   Dialog,
@@ -21,6 +21,10 @@ import {
 import { Textarea } from "@/Components/ui/textarea";
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
+import type { CurrencyDropdown } from "@/Models/Currency";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { AxiosError } from "axios";
 
 interface AddAccountDialogProps {
   open: boolean;
@@ -30,16 +34,6 @@ interface AddAccountDialogProps {
   defaultType?: AmountType;
 }
 
-const currencies = [
-  { value: "USD", label: "USD - US Dollar" },
-  { value: "EUR", label: "EUR - Euro" },
-  { value: "GBP", label: "GBP - British Pound" },
-  { value: "JPY", label: "JPY - Japanese Yen" },
-  { value: "CAD", label: "CAD - Canadian Dollar" },
-  { value: "AUD", label: "AUD - Australian Dollar" },
-  { value: "CHF", label: "CHF - Swiss Franc" },
-];
-
 export function AccountForm({
   open,
   onOpenChange,
@@ -47,6 +41,32 @@ export function AccountForm({
   onSave,
   defaultType = AmountType.CheckingAccount,
 }: AddAccountDialogProps) {
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
+
+
+  const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCurrencies(true);
+    setCurrencyLoadError(null);
+
+    try {
+      const data = await getAllData<CurrencyDropdown[]>("api/Currency");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setCurrencyLoadError("Failed to load currencies.");
+        console.error(err);
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+
   const [name, setName] = useState("");
   const [amountType, setAmountType] = useState<AmountType>(defaultType);
   const [balance, setBalance] = useState(0);
@@ -56,6 +76,10 @@ export function AccountForm({
   const isEditing = !!account;
 
   useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    if(!isLoadingCurrencies)
+        fetchCurrencies();
+
     if (account) {
       setName(account.name);
       setAmountType(account.amountType);
@@ -141,23 +165,36 @@ export function AccountForm({
 
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
+
               <Select
                 value={balanceCurrencyId}
-                onValueChange={(value) =>
-                  setBalanceCurrencyId(value)
-                }
+                onValueChange={setBalanceCurrencyId}
+                disabled={isLoadingCurrencies || !!currencyLoadError}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select currency" />
+                <SelectTrigger className="w-full" id="currency">
+                  <SelectValue
+                    placeholder={
+                      isLoadingCurrencies
+                        ? "Loading currencies..."
+                        : currencyLoadError
+                        ? "Failed to load"
+                        : "Select currency"
+                    }
+                  />
                 </SelectTrigger>
+
                 <SelectContent>
-                  {currencies.map((currency) => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.label}
+                  {currencies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code} - {c.symbol}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {currencyLoadError && (
+                <p className="text-sm text-destructive">{currencyLoadError}</p>
+              )}
             </div>
           </div>
 

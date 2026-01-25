@@ -28,6 +28,8 @@ export default function AccountPage() {
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
 
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+
   const fetchAccounts = useCallback(async () => {
     setIsLoadingAccounts(true);
     setAccountLoadError(null);
@@ -78,7 +80,6 @@ export default function AccountPage() {
   },[postData, putData, fetchAccounts]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
@@ -111,6 +112,15 @@ export default function AccountPage() {
       fetchAccounts();
   }, [fetchAccounts, isAuthReady, accessToken]);
 
+  const handleAddAccount = () => {
+    setEditingAccount(null);
+    setAccountDialogOpen(true);
+  }
+
+  const handleEditAccount = (account: Account) => {
+    setEditingAccount(account);
+    setAccountDialogOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,7 +177,7 @@ export default function AccountPage() {
               </Select>
 
               {/* Add Account Button */}
-              <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Button onClick={handleAddAccount}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Account
               </Button>
@@ -181,7 +191,7 @@ export default function AccountPage() {
                 <AccountCard
                   key={account.id}
                   account={account}
-                  onEdit={(acc) => setEditingAccount(acc)}
+                  onEdit={handleEditAccount}
                   onDelete={(acc) => setDeletingAccount(acc)}
                   onViewDetails={handleViewDetails}
                 />
@@ -199,7 +209,7 @@ export default function AccountPage() {
                   : "Get started by adding your first account."}
               </p>
               {!searchQuery && amountType === "all" && (
-                <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Button onClick={handleAddAccount}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Account
                 </Button>
@@ -209,20 +219,13 @@ export default function AccountPage() {
         </section>
       </main>
 
-      {/* Add Account Dialog */}
+      {/* Dialogs */}
       <AccountForm
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSave={handleSaveAccount}
-        defaultType={currentType}
-      />
-
-      {/* Edit Account Dialog */}
-      <AccountForm
-        open={!!editingAccount}
-        onOpenChange={(open) => !open && setEditingAccount(null)}
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
         account={editingAccount}
         onSave={handleSaveAccount}
+        defaultType={currentType}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -115,7 +115,7 @@ export function AccountCard({
                 </DropdownMenuItem>
               )}
               {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(account)}>
+                <DropdownMenuItem onClick={() => onEdit?.(account)}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>

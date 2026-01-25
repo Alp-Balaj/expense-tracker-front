@@ -200,8 +200,6 @@ export default function CategoryAndCurrencyPage() {
   const currentTabConfig = tabConfig.find((t) => t.value === activeTab);
   const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
 
-  // Filter categories by type
-  // const filteredCategories = categories.filter((c) => c.categoryType === currentType);
   return (
     <SidebarInset className="bg-background">
       {/* Header */}

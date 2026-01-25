@@ -135,7 +135,7 @@ export function CurrencyForm({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!code.trim() || !symbol.trim() || !name.trim()}
+            disabled={!code.trim() || !symbol.trim() || !name?.trim()}
           >
             {isEditing ? "Save Changes" : "Add Currency"}
           </Button>
