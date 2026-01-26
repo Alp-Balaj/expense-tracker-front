@@ -1,5 +1,4 @@
 //#region Imports
-import { SidebarInset } from "@/Components/ui/sidebar";
 import {
   Card,
   CardContent,
@@ -54,10 +53,10 @@ const summaryCards = [
 
 export default function HomePage() {
   return (
-    <SidebarInset className="bg-background">
+    <div className="min-h-screen bg-background">
       <PageHeader title="Dashboard" icon={<LayoutDashboard className="h-5 w-5 text-primary" />} />
 
-      <main className="p-6 space-y-6">
+      <main className="p-6 space-y-6 min-h-screen">
         {/* Summary Cards */}
         <SummaryCards cards={summaryCards}/>
         
@@ -77,6 +76,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </main>
-    </SidebarInset>
+    </div>
   );
 }

@@ -68,7 +68,7 @@ export function AccountSummary({ accounts }: AccountsSummaryProps) {
       {summaryCards.map((card) => (
         <Card key={card.title} className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium">
               {card.title}
             </CardTitle>
             <card.icon className="h-4 w-4 text-muted-foreground" />

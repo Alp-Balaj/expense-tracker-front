@@ -30,11 +30,26 @@ interface AccountCardProps {
 // type ColorPair = { bg: string; text: string };
 
 export const amountTypeColors: Record<AmountType, { bg: string; text: string }> = {
-  [AmountType.CheckingAccount]: { bg: "bg-[#2d3142]", text: "text-white" },
-  [AmountType.SavingsAccount]: { bg: "bg-[#4a5568]", text: "text-white" },
-  [AmountType.Cash]: { bg: "bg-primary", text: "text-primary-foreground" },
-  [AmountType.CreditCard]: { bg: "bg-[#1a365d]", text: "text-white" },
-  [AmountType.Investment]: { bg: "bg-[#2f5f4a]", text: "text-white" },
+  [AmountType.CheckingAccount]: { 
+    bg: "bg-[#2d3142]", 
+    text: "text-white" 
+  },
+  [AmountType.SavingsAccount]: { 
+    bg: "bg-[#4a5568]", 
+    text: "text-white" 
+  },
+  [AmountType.Cash]: { 
+    bg: "bg-primary", 
+    text: "text-primary-foreground" 
+  },
+  [AmountType.CreditCard]: { 
+    bg: "bg-[#1a365d]", 
+    text: "text-white" 
+  },
+  [AmountType.Investment]: { 
+    bg: "bg-[#2f5f4a]", 
+    text: "text-white" 
+  },
 };
 
 export const accountTypeLabels: Record<AmountType, string> = {
@@ -80,7 +95,7 @@ export function AccountCard({
 
   return (
     <Card
-      className={`${colorStyle?.bg} ${colorStyle?.text} border-0 overflow-hidden py-0 gap-0`}
+      className={`${colorStyle.bg} ${colorStyle.text} border-0 overflow-hidden py-0 gap-0`}
     >
       <CardContent className="p-5 pb-4">
         <div className="flex items-center justify-between mb-4">

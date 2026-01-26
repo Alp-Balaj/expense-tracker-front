@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
-import { SidebarInset } from "@/Components/ui/sidebar";
 
 import { CategoryCard } from "@/Components/Category/CategoryCard";
 import { CategoryChart } from "@/Components/Category/CategoryChart";
@@ -203,7 +202,8 @@ export default function CategoryAndCurrencyPage() {
   const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
 
   return (
-    <SidebarInset className="bg-background">
+    <div className="min-h-screen bg-background">
+
       {/* Header */}
       <PageHeader title="Categories And Currencies" icon={<Tags className="h-5 w-5 text-primary" />} />
 
@@ -332,6 +332,6 @@ export default function CategoryAndCurrencyPage() {
         currency={editingCurrency}
         onSave={handleSaveCurrency}
       />
-    </SidebarInset>
+    </div>
   );
 }
