@@ -11,8 +11,11 @@ export function useAuthorizationApi() {
   const putData = useCallback(<T = unknown, B extends EntityWithId = EntityWithId>(url: string, data: B) => putDataApi(`${url}/${data.id}`, data) as Promise<T>, []);
   const deleteData = useCallback(<T = unknown>(url: string, data: EntityWithId) => deleteDataApi(`${url}/${data.id}`) as Promise<T>, []);
 
+  const putDataNoId = useCallback(<T = unknown, B = unknown>(url: string, data: B) => putDataApi(url, data) as Promise<T>, []);
+
+
   return useMemo(
-    () => ({ getData, getAllData, postData, putData, deleteData }),
-    [getData, getAllData, postData, putData, deleteData]
+    () => ({ getData, getAllData, postData, putData, deleteData, putDataNoId }),
+    [getData, getAllData, postData, putData, deleteData, putDataNoId]
   );
 }

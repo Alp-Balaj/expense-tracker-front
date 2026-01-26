@@ -5,7 +5,7 @@ import {
   PieChart,
   TrendingUp,
   Construction,
-  LayoutDashboard,
+  Paperclip,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
@@ -21,7 +21,7 @@ import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import { SidebarTrigger } from "@/Components/ui/sidebar";
+import { PageHeader } from "@/Components/General/PageHeader";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportType>("transactions");
@@ -120,13 +120,8 @@ const { accessToken, isAuthReady } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-        <SidebarTrigger className="text-foreground" />
-        <div className="flex items-center gap-3">
-          <LayoutDashboard className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Reports</h1>
-        </div>
-      </header>
+      <PageHeader title="Reports" icon={<Paperclip className="h-5 w-5 text-primary" />} />
+      
       <main className="p-6 space-y-8">
         {/* Report Type Tabs */}
         <Tabs
