@@ -24,6 +24,7 @@ import type { CurrencyDropdown } from "@/Models/Currency";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import { usePreferences } from "@/Authorization/UserPreferencesContext";
 
 interface UserSettings {
   email: string;
@@ -55,6 +56,9 @@ export function UserSettingsModal({
 
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("settings");
+
+  const { setPreferences } = usePreferences();
+
 
   //#region Currency dropdown
   const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
@@ -146,7 +150,7 @@ export function UserSettingsModal({
       theme,
       baseCurrency,
     });
-
+    setPreferences({ theme, baseCurrency });
     onPreferencesSave?.({ theme, baseCurrency });
     setPreferencesSaved(true);
     setTimeout(() => setPreferencesSaved(false), 2000);

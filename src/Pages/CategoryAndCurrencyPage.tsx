@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
-import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
+import { SidebarInset } from "@/Components/ui/sidebar";
 
 import { CategoryCard } from "@/Components/Category/CategoryCard";
 import { CategoryChart } from "@/Components/Category/CategoryChart";
@@ -22,11 +22,13 @@ import {
   PiggyBank,
   Calendar,
   Coins,
+  Tags,
 } from "lucide-react";
 
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
+import { PageHeader } from "@/Components/General/PageHeader";
 
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
@@ -203,13 +205,7 @@ export default function CategoryAndCurrencyPage() {
   return (
     <SidebarInset className="bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-          <SidebarTrigger className="text-foreground" />
-          <div className="flex items-center gap-3">
-          <Wallet className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Categories & Cyrrencies</h1>
-          </div>
-      </header>
+      <PageHeader title="Categories And Currencies" icon={<Tags className="h-5 w-5 text-primary" />} />
 
       <main className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

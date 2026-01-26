@@ -15,10 +15,10 @@ import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
 import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
-import { SidebarTrigger } from "@/Components/ui/sidebar";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
+import { PageHeader } from "@/Components/General/PageHeader";
 
 export default function AccountPage() {
   const { accessToken, isAuthReady } = useAuth();
@@ -125,13 +125,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
-          <SidebarTrigger className="text-foreground" />
-          <div className="flex items-center gap-3">
-          <Wallet className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground">Accounts</h1>
-          </div>
-      </header>
+      <PageHeader title="Accounts" icon={<Wallet className="h-5 w-5 text-primary" />} />
 
       <main className="p-6 space-y-8">
         {/* Summary Cards */}
