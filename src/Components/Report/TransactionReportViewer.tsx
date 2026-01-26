@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { TransactionReportResult } from "@/Models/Report";
+import { TransactionKind } from "@/Enums/enums";
 
 interface TransactionReportViewerProps {
   report: TransactionReportResult | null;
@@ -41,7 +42,7 @@ type SortDirection = "asc" | "desc";
 export function TransactionReportViewer({
   report,
   isLoading = false,
-  currencySymbol = "$",
+  currencySymbol = "€",
 }: TransactionReportViewerProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -66,13 +67,10 @@ export function TransactionReportViewer({
             comparison = a.amount - b.amount;
             break;
           case "category":
-            comparison = a.categoryName.localeCompare(b.categoryName);
+            comparison = a.category.localeCompare(b.category);
             break;
           case "account":
-            comparison = a.accountName.localeCompare(b.accountName);
-            break;
-          case "type":
-            comparison = a.type.localeCompare(b.type);
+            comparison = a.account.localeCompare(b.account);
             break;
         }
         return sortDirection === "asc" ? comparison : -comparison;
@@ -80,11 +78,11 @@ export function TransactionReportViewer({
     : [];
 
   const totalExpenses = report?.rows
-    .filter((row) => row.type === "expense")
+    .filter((row) => row.kind === TransactionKind.Expense)
     .reduce((sum, row) => sum + row.amount, 0) ?? 0;
 
   const totalIncomes = report?.rows
-    .filter((row) => row.type === "income")
+    .filter((row) => row.kind === TransactionKind.Income)
     .reduce((sum, row) => sum + row.amount, 0) ?? 0;
 
   const netAmount = totalIncomes - totalExpenses;
@@ -92,23 +90,22 @@ export function TransactionReportViewer({
   const downloadCSV = () => {
     if (!report?.rows.length) return;
 
-    const headers = ["Date", "Description", "Type", "Category", "Account", "Amount"];
+    const headers = ["Date", "Type", "Category", "Account", "Amount"];
     const csvContent = [
       headers.join(","),
       ...sortedRows.map((row) =>
         [
           format(new Date(row.date), "yyyy-MM-dd"),
-          `"${row.description.replace(/"/g, '""')}"`,
-          row.type,
-          `"${row.categoryName}"`,
-          `"${row.accountName}"`,
-          row.type === "expense" ? -row.amount : row.amount,
+          row.kind,
+          `"${row.category}"`,
+          `"${row.account}"`,
+          row.kind === TransactionKind.Expense ? -row.amount : row.amount,
         ].join(",")
       ),
       "",
-      `Total Expenses,,,,,${-totalExpenses}`,
-      `Total Incomes,,,,,${totalIncomes}`,
-      `Net Amount,,,,,${netAmount}`,
+      `Total Expenses,,,,${-totalExpenses}`,
+      `Total Incomes,,,,${totalIncomes}`,
+      `Net Amount,,,,${netAmount}`,
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -182,7 +179,7 @@ export function TransactionReportViewer({
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Expenses
@@ -200,7 +197,7 @@ export function TransactionReportViewer({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Incomes
@@ -218,7 +215,7 @@ export function TransactionReportViewer({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Net Amount
@@ -295,7 +292,6 @@ export function TransactionReportViewer({
                   <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
-              <TableHead>Description</TableHead>
               <TableHead>
                 <Button
                   variant="ghost"
@@ -348,34 +344,30 @@ export function TransactionReportViewer({
                 <TableCell className="font-medium">
                   {format(new Date(row.date), "MMM dd, yyyy")}
                 </TableCell>
-                <TableCell className="max-w-[200px] truncate">
-                  {row.description}
-                </TableCell>
                 <TableCell>
                   <Badge
-                    variant={row.type === "expense" ? "destructive" : "default"}
+                    variant={row.kind === TransactionKind.Expense ? "destructive" : "default"}
                     className={cn(
-                      row.type === "income" &&
+                      row.kind === TransactionKind.Income &&
                         "bg-success text-success-foreground hover:bg-success/90"
                     )}
                   >
-                    {row.type === "expense" ? "Expense" : "Income"}
+                    {row.kind === TransactionKind.Expense ? "Expense" : "Income"}
                   </Badge>
                 </TableCell>
-                <TableCell>{row.categoryName}</TableCell>
-                <TableCell>{row.accountName}</TableCell>
+                <TableCell>{row.category}</TableCell>
+                <TableCell>{row.account}</TableCell>
                 <TableCell
                   className={cn(
                     "text-right font-medium",
-                    row.type === "expense" ? "text-destructive" : "text-success"
+                    row.kind === TransactionKind.Expense ? "text-destructive" : "text-success"
                   )}
                 >
-                  {row.type === "expense" ? "-" : "+"}
-                  {currencySymbol}
                   {row.amount.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
+                  {currencySymbol}
                 </TableCell>
               </TableRow>
             ))}

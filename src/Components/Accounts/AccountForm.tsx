@@ -70,7 +70,7 @@ export function AccountForm({
   const [name, setName] = useState("");
   const [amountType, setAmountType] = useState<AmountType>(defaultType);
   const [balance, setBalance] = useState(0);
-  const [balanceCurrencyId, setBalanceCurrencyId] = useState("");
+  const [currencyId, setCurrencyId] = useState("");
   const [description, setDescription] = useState<string>("");
 
   const isEditing = !!account;
@@ -84,13 +84,13 @@ export function AccountForm({
       setName(account.name);
       setAmountType(account.amountType);
       setBalance(account.balance);
-      setBalanceCurrencyId(account.balanceCurrencyId);
+      setCurrencyId(account.currencyId);
       setDescription(account.description);
     } else {
       setName("");
       setAmountType(defaultType);
       setBalance(0);
-      setBalanceCurrencyId("");
+      setCurrencyId("");
       setDescription("");
     }
   }, [account, defaultType]);
@@ -101,7 +101,7 @@ export function AccountForm({
       name,
       amountType,
       balance,
-      balanceCurrencyId,
+      currencyId,
       description,
     });
     onOpenChange(false);
@@ -167,8 +167,8 @@ export function AccountForm({
               <Label htmlFor="currency">Currency</Label>
 
               <Select
-                value={balanceCurrencyId}
-                onValueChange={setBalanceCurrencyId}
+                value={currencyId}
+                onValueChange={setCurrencyId}
                 disabled={isLoadingCurrencies || !!currencyLoadError}
               >
                 <SelectTrigger className="w-full" id="currency">

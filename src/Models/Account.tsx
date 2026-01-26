@@ -5,7 +5,7 @@ export type Account = {
   name: string;
   amountType: AmountType;
   balance: number;
-  balanceCurrencyId: string;
+  currencyId: string;
   description: string;
 };
 
@@ -14,6 +14,6 @@ export type AddAccount = {
   name: string;
   amountType: AmountType;
   balance: number;
-  balanceCurrencyId: string;
+  currencyId: string;
   description: string;
 };

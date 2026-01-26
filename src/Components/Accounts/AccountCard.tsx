@@ -80,7 +80,7 @@ export function AccountCard({
 
   return (
     <Card
-      className={`${colorStyle.bg} ${colorStyle.text} border-0 overflow-hidden py-0 gap-0`}
+      className={`${colorStyle?.bg} ${colorStyle?.text} border-0 overflow-hidden py-0 gap-0`}
     >
       <CardContent className="p-5 pb-4">
         <div className="flex items-center justify-between mb-4">
@@ -136,7 +136,7 @@ export function AccountCard({
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            {account.balance}{account.balanceCurrencyId}
+            {account.balance}{account.currencyId}
           </p>
         </div>
 

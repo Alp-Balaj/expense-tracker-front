@@ -5,6 +5,7 @@ import {
   PieChart,
   TrendingUp,
   Construction,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
@@ -16,148 +17,11 @@ import type {
   ReportType,
 } from "@/Models/Report";
 import type { Account } from "@/Models/Account";
-// import { AmountType, CategoryType } from "@/Enums/enums";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-
-// Generate sample report data
-// function generateSampleReport(
-//   filters: TransactionReportRequest
-// ): TransactionReportResult {
-//   const { accessToken, isAuthReady } = useAuth();
-//   const { getAllData } = useAuthorizationApi();
-
-//   //#region Accounts
-//   const [accounts, setAccounts] = useState<Account[]>([]);
-//   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-//   const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
-
-//   const fetchAccounts = useCallback(async () => {
-//     setIsLoadingAccounts(true);
-//     setAccountLoadError(null);
-//     try {
-//       const data = await getAllData<Account[]>("api/Account");
-//       setAccounts(data);
-//     } catch (e: unknown) {
-//       const err = e as AxiosError;
-//       if (err.response?.status !== 401) {
-//         setAccountLoadError("Failed to load accounts.");
-//         console.error(accountLoadError);
-//       }
-//     } finally {
-//       setIsLoadingAccounts(false);
-//     }
-//   }, [getAllData]);
-
-//   //#endregion
-//   //#region Categories
-//   const [categories, setCategories] = useState<Category[]>([]);
-//   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-//   const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
-
-//   const fetchCategories = useCallback(async () => {
-//     setIsLoadingCategories(true);
-//     setCategoryLoadError(null);
-//     try {
-//       const data = await getAllData<Category[]>("api/Category");
-//       setCategories(data);
-//     } catch (e: unknown) {
-//       const err = e as AxiosError;
-//       if (err.response?.status !== 401) {
-//         setCategoryLoadError("Failed to load categories.");
-//         console.error(categoryLoadError);
-//       }
-//     } finally {
-//       setIsLoadingCategories(false);
-//     }
-//   }, [getAllData]);
-//   //#endregion
-  
-//   useEffect(() => {
-//     if (!isAuthReady || !accessToken) return;
-//     if(!isLoadingCategories)
-//       fetchCategories();
-//     if(!isLoadingAccounts)
-//       fetchAccounts();
-//   }, [fetchCategories, fetchAccounts, isAuthReady, accessToken]);
-
-//   const fromDate = new Date(filters.from);
-//   const toDate = new Date(filters.to);
-//   const daysDiff = Math.ceil(
-//     (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
-//   );
-
-//   const rows = [];
-//   const transactionCount = Math.min(Math.max(daysDiff * 2, 10), 50);
-
-//   for (let i = 0; i < transactionCount; i++) {
-//     const randomDays = Math.floor(Math.random() * daysDiff);
-//     const date = new Date(fromDate);
-//     date.setDate(date.getDate() + randomDays);
-
-//     const isExpense =
-//       (filters.includeExpenses && filters.includeIncomes && Math.random() > 0.3) ||
-//       (filters.includeExpenses && !filters.includeIncomes);
-
-//     if (!isExpense && !filters.includeIncomes) continue;
-//     if (isExpense && !filters.includeExpenses) continue;
-
-//     const type = isExpense ? CategoryType.Expense : CategoryType.Income;
-//     const relevantCategories = categories.filter((c) => c.categoryType === type);
-//     const category =
-//       relevantCategories[Math.floor(Math.random() * relevantCategories.length)];
-//     const account =
-//       accounts[Math.floor(Math.random() * accounts.length)];
-
-//     // Filter by selected accounts and categories
-//     if (filters.accountIds?.length && !filters.accountIds.includes(account.id))
-//       continue;
-//     if (
-//       filters.categoryIds?.length &&
-//       !filters.categoryIds.includes(category.id)
-//     )
-//       continue;
-
-//     const descriptions: Record<string, string[]> = {
-//       Housing: ["Rent payment", "Home insurance", "Property tax", "Repairs"],
-//       Food: ["Grocery shopping", "Restaurant", "Coffee shop", "Food delivery"],
-//       Transport: ["Gas station", "Uber ride", "Bus fare", "Car maintenance"],
-//       Utilities: ["Electric bill", "Water bill", "Internet", "Phone bill"],
-//       Entertainment: ["Netflix", "Movie tickets", "Concert", "Gaming"],
-//       Other: ["Miscellaneous", "Gift", "Donation", "Subscription"],
-//       Salary: ["Monthly salary", "Bonus", "Overtime pay"],
-//       Freelance: ["Project payment", "Consulting fee", "Design work"],
-//       Investments: ["Dividend", "Stock sale", "Interest"],
-//     };
-
-//     const descList = descriptions[category.name] || ["Transaction"];
-//     const description = descList[Math.floor(Math.random() * descList.length)];
-//     const amount = isExpense
-//       ? Math.floor(Math.random() * 500) + 10
-//       : Math.floor(Math.random() * 2000) + 500;
-
-//     rows.push({
-//       id: `txn-${i}`,
-//       date: date.toISOString(),
-//       description,
-//       amount,
-//       type: CategoryType.Expense | CategoryType.Income,
-//       categoryId: category.id,
-//       categoryName: category.name,
-//       accountId: account.id,
-//       accountName: account.name,
-//     });
-//   }
-
-//   const total = rows.reduce(
-//     (sum, row) => sum + (row.type === CategoryType.Expense ? -row.amount : row.amount),
-//     0
-//   );
-
-//   return { rows, total };
-// }
+import { SidebarTrigger } from "@/Components/ui/sidebar";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportType>("transactions");
@@ -224,13 +88,9 @@ const { accessToken, isAuthReady } = useAuth();
   const handleGenerateReport = async (filters: TransactionReportRequest) => {
     setIsLoading(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const response = await postData<TransactionReportResult>('/api/Reports/transactions/preview', JSON.stringify(filters));
+    const response = await postData<TransactionReportResult>('/api/Reports/transactions/preview', filters);
     const data = await response;
-    // const jsonData = data.json();
-    // const data = generateSampleReport(filters);
+
     setReport(data);
     setIsLoading(false);
   };
@@ -260,17 +120,14 @@ const { accessToken, isAuthReady } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Reports
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Generate and download detailed financial reports
-          </p>
+      <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4">
+        <SidebarTrigger className="text-foreground" />
+        <div className="flex items-center gap-3">
+          <LayoutDashboard className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold text-foreground">Reports</h1>
         </div>
-
+      </header>
+      <main className="p-6 space-y-8">
         {/* Report Type Tabs */}
         <Tabs
           value={activeTab}
@@ -308,7 +165,7 @@ const { accessToken, isAuthReady } = useAuth();
                 <TransactionReportViewer
                   report={report}
                   isLoading={isLoading}
-                  currencySymbol="$"
+                  currencySymbol="€"
                 />
               </div>
             </div>
@@ -357,7 +214,7 @@ const { accessToken, isAuthReady } = useAuth();
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 }

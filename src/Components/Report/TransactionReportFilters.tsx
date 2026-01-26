@@ -121,11 +121,11 @@ export function TransactionReportFilters({
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal overflow-hidden border-border",
                   !fromDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                 {fromDate ? format(fromDate, "PPP") : "Select date"}
               </Button>
             </PopoverTrigger>
@@ -147,11 +147,11 @@ export function TransactionReportFilters({
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal overflow-hidden border-border",
                   !toDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                 {toDate ? format(toDate, "PPP") : "Select date"}
               </Button>
             </PopoverTrigger>
