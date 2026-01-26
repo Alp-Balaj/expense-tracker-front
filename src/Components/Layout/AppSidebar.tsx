@@ -17,10 +17,10 @@ import {
   Wallet,
   Tags,
   PiggyBank,
-  Settings,
   HelpCircle,
   DollarSign,
 } from "lucide-react";
+import { UserSettingsModal } from "../UserPreferences/UserPreferences";
 
 export type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
@@ -100,10 +100,25 @@ export function AppSidebar({
           </div>
 
           <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-              <Settings className="h-4 w-4" />
-              <span className="sr-only">Settings</span>
-            </Button>
+            <UserSettingsModal
+              initialSettings={{
+                email: "john.doe@example.com",
+                username: "johndoe",
+              }}
+              initialPreferences={{
+                theme: "light",
+                baseCurrency: "USD",
+              }}
+              onSettingsSave={(settings) =>
+                console.log("Settings saved:", settings)
+              }
+              onPreferencesSave={(preferences) =>
+                console.log("Preferences saved:", preferences)
+              }
+              onPasswordChange={(current, newPass) =>
+                console.log("Password change requested",current,newPass)
+              }
+            />
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Help</span>
