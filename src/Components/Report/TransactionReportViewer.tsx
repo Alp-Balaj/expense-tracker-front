@@ -7,6 +7,8 @@ import {
   ArrowUpDown,
   TrendingDown,
   TrendingUp,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 
 import { Button } from "@/Components/ui/button";
@@ -36,7 +38,7 @@ interface TransactionReportViewerProps {
   currencySymbol?: string;
 }
 
-type SortField = "date" | "amount" | "category" | "account" | "type";
+type SortField = "date" | "amount" | "category" | "account" | "kind";
 type SortDirection = "asc" | "desc";
 
 export function TransactionReportViewer({
@@ -72,6 +74,9 @@ export function TransactionReportViewer({
           case "account":
             comparison = a.account.localeCompare(b.account);
             break;
+          case "kind":
+            comparison = a.kind - b.kind;
+            break;
         }
         return sortDirection === "asc" ? comparison : -comparison;
       })
@@ -85,7 +90,7 @@ export function TransactionReportViewer({
     .filter((row) => row.kind === TransactionKind.Income)
     .reduce((sum, row) => sum + row.amount, 0) ?? 0;
 
-  const netAmount = totalIncomes - totalExpenses;
+  const netAmount = totalIncomes + totalExpenses;
 
   const downloadCSV = () => {
     if (!report?.rows.length) return;
@@ -188,11 +193,11 @@ export function TransactionReportViewer({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">
-              {currencySymbol}
               {totalExpenses.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
+              {currencySymbol}
             </p>
           </CardContent>
         </Card>
@@ -206,11 +211,11 @@ export function TransactionReportViewer({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-success">
-              {currencySymbol}
               {totalIncomes.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
+              {currencySymbol}
             </p>
           </CardContent>
         </Card>
@@ -234,11 +239,11 @@ export function TransactionReportViewer({
               )}
             >
               {netAmount < 0 ? "-" : ""}
-              {currencySymbol}
               {Math.abs(netAmount).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
+              {currencySymbol}
             </p>
           </CardContent>
         </Card>
@@ -289,7 +294,9 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("date")}
                 >
                   Date
-                  <ArrowUpDown className="h-3 w-3" />
+                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
+                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
+                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
                 </Button>
               </TableHead>
               <TableHead>
@@ -297,10 +304,12 @@ export function TransactionReportViewer({
                   variant="ghost"
                   size="sm"
                   className="h-8 gap-1 px-2 font-medium"
-                  onClick={() => handleSort("type")}
+                  onClick={() => handleSort("kind")}
                 >
                   Type
-                  <ArrowUpDown className="h-3 w-3" />
+                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
+                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
+                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
                 </Button>
               </TableHead>
               <TableHead>
@@ -311,7 +320,9 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("category")}
                 >
                   Category
-                  <ArrowUpDown className="h-3 w-3" />
+                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
+                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
+                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
                 </Button>
               </TableHead>
               <TableHead>
@@ -322,7 +333,9 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("account")}
                 >
                   Account
-                  <ArrowUpDown className="h-3 w-3" />
+                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
+                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
+                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
                 </Button>
               </TableHead>
               <TableHead className="text-right">
@@ -333,7 +346,9 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("amount")}
                 >
                   Amount
-                  <ArrowUpDown className="h-3 w-3" />
+                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
+                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
+                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
                 </Button>
               </TableHead>
             </TableRow>
@@ -345,13 +360,7 @@ export function TransactionReportViewer({
                   {format(new Date(row.date), "MMM dd, yyyy")}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={row.kind === TransactionKind.Expense ? "destructive" : "default"}
-                    className={cn(
-                      row.kind === TransactionKind.Income &&
-                        "bg-success text-success-foreground hover:bg-success/90"
-                    )}
-                  >
+                  <Badge variant={row.kind === TransactionKind.Expense? "destructive" : "success"}>
                     {row.kind === TransactionKind.Expense ? "Expense" : "Income"}
                   </Badge>
                 </TableCell>
