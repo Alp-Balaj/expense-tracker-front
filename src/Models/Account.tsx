@@ -1,19 +1,19 @@
 import type { AmountType } from "@/Enums/enums";
 
 export type Account = {
-  id: string | null;
+  id: string;
   name: string;
   amountType: AmountType;
   balance: number;
-  balanceCurrencyId: string;
+  currencyId: string;
   description: string;
 };
 
-export type AccountFormData = {
+export type AddAccount = {
   id: string | null;
   name: string;
   amountType: AmountType;
   balance: number;
-  balanceCurrencyId: string;
+  currencyId: string;
   description: string;
 };

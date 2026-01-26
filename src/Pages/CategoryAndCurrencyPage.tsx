@@ -7,7 +7,7 @@ import { SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar";
 import { CategoryCard } from "@/Components/Category/CategoryCard";
 import { CategoryChart } from "@/Components/Category/CategoryChart";
 import { CategoryForm } from "@/Components/Category/CategoryForm";
-import type { Category } from "@/Models/Category";
+import type { AddCategory, Category } from "@/Models/Category";
 
 import { CurrencyForm } from "@/Components/Currency/CurrencyForm";
 import { CurrencyCard } from "@/Components/Currency/CurrencyCard";
@@ -74,7 +74,7 @@ export default function CategoryAndCurrencyPage() {
     setCategories((prev) => prev.filter((c) => c.id !== category.id));
   };
 
-  const handleSaveCategory = useCallback(async (category: Category) => {
+  const handleSaveCategory = useCallback(async (category: AddCategory) => {
     setIsLoadingCategories(true);
     if(category.id === null){
       try {

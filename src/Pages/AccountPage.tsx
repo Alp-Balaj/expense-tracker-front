@@ -13,7 +13,7 @@ import { AccountCard } from "@/Components/Accounts/AccountCard";
 import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
-import type { Account } from "@/Models/Account";
+import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { SidebarTrigger } from "@/Components/ui/sidebar";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -47,11 +47,11 @@ export default function AccountPage() {
     }
   }, [getAllData]);
 
-  const handleSaveAccount = useCallback(async (account: Account) => {
+  const handleSaveAccount = useCallback(async (account: AddAccount) => {
     setIsLoadingAccounts(true);
     if(account.id === null){
       try {
-        await postData<Account>("api/Account", account);
+        await postData<AddAccount>("api/Account", account);
       }  catch (e: unknown) {
         const err = e as AxiosError;
         if (err.response?.status !== 401) {
@@ -64,7 +64,7 @@ export default function AccountPage() {
       fetchAccounts();
     } else {
       try {
-        await putData<Account>("api/Account", account as Account);
+        await putData<AddAccount>("api/Account", account as AddAccount);
       }  catch (e: unknown) {
         const err = e as AxiosError;
         if (err.response?.status !== 401) {

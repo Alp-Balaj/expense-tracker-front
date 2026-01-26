@@ -46,7 +46,7 @@ export function DeleteAccountDialog({
             <span className="block">
               This account has a balance of{" "}
               <strong className="text-foreground">
-                {account.balance}{account.balanceCurrencyId}
+                {account.balance}{account.currencyId}
               </strong>
               .
             </span>

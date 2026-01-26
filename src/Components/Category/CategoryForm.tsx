@@ -20,14 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/select";
-import type { Category } from "@/Models/Category";
+import type { AddCategory } from "@/Models/Category";
 import { CategoryType } from "@/Enums/enums";
 
 interface CategoryEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category?: Category | null;
-  onSave: (category: Category) => void;
+  category?: AddCategory | null;
+  onSave: (category: AddCategory) => void;
   defaultType?: CategoryType;
 }
 
