@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Filter, Plus, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 type DataTableToolbarProps = {
   searchPlaceholder?: string;
@@ -56,6 +57,11 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
+  const [accountFilter, setAccountFilter] = React.useState<string>("all");
+
 
   const table = useReactTable({
     data,
@@ -88,14 +94,46 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
       {(enableGlobalSearch || toolbar) && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {enableGlobalSearch && (
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary-foreground" />
-              <Input
-                placeholder={toolbar?.searchPlaceholder ?? searchPlaceholder}
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="pl-9 bg-primary text-primary-foreground placeholder:text-primary-foreground/70 border-none focus-visible:ring-primary/50"
-              />
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-primary/5 border-primary/20 focus:border-primary"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Sources" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  {incomeCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={accountFilter} onValueChange={setAccountFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Accounts" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Accounts</SelectItem>
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Income
+              </Button>
             </div>
           )}
 

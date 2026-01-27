@@ -3,15 +3,6 @@ import {
   TrendingUp,
   Plus,
   Search,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  ArrowUpDown,
-  Briefcase,
-  Building2,
-  Gift,
-  PiggyBank,
-  Banknote,
 } from "lucide-react";
 import {
   Card,
@@ -22,20 +13,6 @@ import {
 } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/Components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -84,30 +61,11 @@ const lineChartConfig: ChartConfig = {
   },
 };
 
-const getCategoryIcon = (categoryName: string) => {
-  switch (categoryName.toLowerCase()) {
-    case "salary":
-      return Briefcase;
-    case "freelance":
-      return Building2;
-    case "investments":
-      return TrendingUp;
-    case "gifts":
-      return Gift;
-    case "rental":
-      return PiggyBank;
-    default:
-      return Banknote;
-  }
-};
-
 export default function IncomePage() {
   const [incomes, setIncomes] = useState<IncomeWithDetails[]>(sampleIncomes);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<"date" | "amount">("date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -192,57 +150,12 @@ export default function IncomePage() {
   }, [incomes]);
 
   // Filter and sort incomes
-  const filteredIncomes = useMemo(() => {
-    let filtered = [...incomes];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (inc) =>
-          inc.title.toLowerCase().includes(query) ||
-          inc.description?.toLowerCase().includes(query)
-      );
-    }
-
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter((inc) => inc.categoryId === categoryFilter);
-    }
-
-    if (accountFilter !== "all") {
-      filtered = filtered.filter((inc) => inc.accountId === accountFilter);
-    }
-
-    filtered.sort((a, b) => {
-      const aValue = sortField === "date" ? new Date(a.date).getTime() : a.amount;
-      const bValue = sortField === "date" ? new Date(b.date).getTime() : b.amount;
-      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-    });
-
-    return filtered;
-  }, [incomes, searchQuery, categoryFilter, accountFilter, sortField, sortDirection]);
-
-  const toggleSort = (field: "date" | "amount") => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("desc");
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(date));
   };
 
   const pieChartConfig: ChartConfig = stats.bySource.reduce((acc, item) => {
