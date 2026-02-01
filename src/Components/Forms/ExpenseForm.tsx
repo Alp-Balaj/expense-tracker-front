@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
@@ -19,6 +19,11 @@ import {
 import { Calendar, DollarSign, FileText, Tag, Wallet } from "lucide-react";
 
 import type { Expense as ModelExpense } from "@/Models/Expense";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { Account } from "@/Models/Account";
+import type { Category } from "@/Models/Category";
+import type { AxiosError } from "axios";
 
 type FormState = Omit<ModelExpense, "date"> & { date: Date };
 
@@ -39,6 +44,53 @@ export default function ExpenseFormModal({
   onOpenChange,
   onCancel,
 }: ExpenseFormModalProps) {
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
+
+  // #region Accounts and Categories for dropdown
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
+
+  const fetchAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    setAccountLoadError(null);
+    try {
+      const data = await getAllData<Account[]>("api/Account");
+      setAccounts(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setAccountLoadError("Failed to load accounts.");
+        console.error(accountLoadError);
+      }
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, [getAllData]);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    setCategoryLoadError(null);
+    try {
+      const data = await getAllData<Category[]>("api/Category");
+      setCategories(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setCategoryLoadError("Failed to load categories.");
+        console.error(categoryLoadError);
+      }
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, [getAllData]);
+  //#endregion
+
   const normalizeDate = (value: unknown) => {
     if (value instanceof Date) return value;
     if (typeof value === "string" || typeof value === "number") {
@@ -67,7 +119,12 @@ export default function ExpenseFormModal({
 
   React.useEffect(() => {
     setData(initial);
-  }, [initial]);
+    if (!isAuthReady || !accessToken) return;
+    if(!isLoadingCategories)
+      fetchCategories();
+    if(!isLoadingAccounts)
+      fetchAccounts();
+  }, [fetchCategories, fetchAccounts, initial, isAuthReady, accessToken]);
 
   const toNumber = (value: string) => {
     const n = Number(value);
@@ -100,21 +157,7 @@ export default function ExpenseFormModal({
     onOpenChange(false);
   };
 
-  // Sample data - replace with your actual data from API
-  const accounts = [
-    { id: "1", name: "Checking Account" },
-    { id: "2", name: "Savings Account" },
-    { id: "3", name: "Credit Card" },
-  ];
-
-  const categories = [
-    { id: "1", name: "Food & Dining" },
-    { id: "2", name: "Transportation" },
-    { id: "3", name: "Shopping" },
-    { id: "4", name: "Utilities" },
-    { id: "5", name: "Entertainment" },
-  ];
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">

@@ -16,7 +16,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Filter, Plus, Search } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 type DataTableToolbarProps = {
   searchPlaceholder?: string;
@@ -59,8 +58,8 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
-  const [accountFilter, setAccountFilter] = React.useState<string>("all");
+  // const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
+  // const [accountFilter, setAccountFilter] = React.useState<string>("all");
 
 
   const table = useReactTable({
@@ -104,7 +103,7 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
                   className="pl-9 bg-primary/5 border-primary/20 focus:border-primary"
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="All Sources" />
                 </SelectTrigger>
@@ -129,11 +128,7 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Income
-              </Button>
+              </Select> */}
             </div>
           )}
 

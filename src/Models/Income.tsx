@@ -15,6 +15,10 @@ export type Income = {
   categoryId: string;
 };
 
+export type IncomeWithDetails = {
+  
+}
+
 export type IncomeFormProps = {
   row?: Partial<Income> | null;
   onSubmit: (data: Income) => void;

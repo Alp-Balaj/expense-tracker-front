@@ -10,7 +10,7 @@ import { Wallet } from "lucide-react";
 export type IncomeByAccountItem = {
   name: string;
   value: number;
-  percentage: number; // 0-100
+  percentage: number;
 };
 
 type IncomeByAccountCardProps = {

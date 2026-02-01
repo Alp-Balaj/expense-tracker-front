@@ -1,11 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
-import {
-  Calendar,
-  DollarSign,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import ThisMonthIncomeCard from "./SummaryCards/ThisMonthIncomeCard";
+import LastMonthIncomeCard from "./SummaryCards/LastMonthIncomeCard";
+import AverageMonthlyCard from "./SummaryCards/AverageMonthlyCard";
+import TopSourceCard from "./SummaryCards/TopSourceCard";
 
 export type IncomeStats = {
   currentMonthTotal: number;
@@ -21,7 +17,6 @@ export type IncomeStats = {
 type IncomeSummaryCardsProps = {
   stats: IncomeStats;
   formatCurrency: (value: number) => string;
-  lastMonthLabel?: string;
   averageWindowLabel?: string;
   className?: string;
 };
@@ -29,85 +24,21 @@ type IncomeSummaryCardsProps = {
 export function IncomeSummaryCards({
   stats,
   formatCurrency,
-  lastMonthLabel = "Last month total",
-  averageWindowLabel = "Over the last 6 months",
   className = "",
 }: IncomeSummaryCardsProps) {
-  const isUp = stats.percentChange >= 0;
-
   return (
     <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8 ${className}`}>
       {/* This Month Income */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">This Month</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-foreground">
-            {formatCurrency(stats.currentMonthTotal)}
-          </div>
-
-          <div className="flex items-center gap-1 mt-1">
-            {isUp ? (
-              <TrendingUp className="h-3 w-3 text-success" />
-            ) : (
-              <TrendingDown className="h-3 w-3 text-destructive" />
-            )}
-
-            <span className={`text-xs ${isUp ? "text-success" : "text-destructive"}`}>
-              {isUp ? "+" : ""}
-              {stats.percentChange.toFixed(1)}% from last month
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <ThisMonthIncomeCard currentMonthTotal={stats.currentMonthTotal} percentChange={stats.percentChange} formatCurrency={formatCurrency} />
 
       {/* Last Month Income */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Last Month</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-foreground">
-            {formatCurrency(stats.lastMonthTotal)}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{lastMonthLabel}</p>
-        </CardContent>
-      </Card>
+      <LastMonthIncomeCard lastMonthTotal={stats.lastMonthTotal} lastMonthLabel={"Last month total"} formatCurrency={formatCurrency}/>
 
       {/* Average Monthly */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">
-            Average Monthly
-          </CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-foreground">
-            {formatCurrency(stats.avgMonthlyIncome)}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{averageWindowLabel}</p>
-        </CardContent>
-      </Card>
+      <AverageMonthlyCard avgMonthlyIncome={stats.avgMonthlyIncome} averageWindowLabel="Over the last 6 months" formatCurrency={formatCurrency}/>
 
       {/* Top Source */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Top Source</CardTitle>
-          <Wallet className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-foreground">
-            {stats.topSource?.name ?? "—"}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {(stats.topSource?.percentage ?? 0).toFixed(1)}% of total income
-          </p>
-        </CardContent>
-      </Card>
+      <TopSourceCard name={stats.topSource.name} percentage={stats.topSource.percentage}/>
     </div>
   );
 }
