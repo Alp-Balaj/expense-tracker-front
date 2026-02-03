@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
+import { useCallback, useEffect, useState } from "react";
+import type { Currency } from "@/Models/Currency";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import { useAuth } from "@/Authorization/AuthContext";
+import type { AxiosError } from "axios";
 
 interface AccountCardProps {
   account: Account;
@@ -29,26 +34,29 @@ interface AccountCardProps {
 
 // type ColorPair = { bg: string; text: string };
 
-export const amountTypeColors: Record<AmountType, { bg: string; text: string }> = {
-  [AmountType.CheckingAccount]: { 
-    bg: "bg-[#2d3142]", 
-    text: "text-white" 
+export const amountTypeColors: Record<
+  AmountType,
+  { bg: string; text: string }
+> = {
+  [AmountType.CheckingAccount]: {
+    bg: "bg-[#2d3142]",
+    text: "text-white",
   },
-  [AmountType.SavingsAccount]: { 
-    bg: "bg-[#4a5568]", 
-    text: "text-white" 
+  [AmountType.SavingsAccount]: {
+    bg: "bg-[#4a5568]",
+    text: "text-white",
   },
-  [AmountType.Cash]: { 
-    bg: "bg-primary", 
-    text: "text-primary-foreground" 
+  [AmountType.Cash]: {
+    bg: "bg-primary",
+    text: "text-primary-foreground",
   },
-  [AmountType.CreditCard]: { 
-    bg: "bg-[#1a365d]", 
-    text: "text-white" 
+  [AmountType.CreditCard]: {
+    bg: "bg-[#1a365d]",
+    text: "text-white",
   },
-  [AmountType.Investment]: { 
-    bg: "bg-[#2f5f4a]", 
-    text: "text-white" 
+  [AmountType.Investment]: {
+    bg: "bg-[#2f5f4a]",
+    text: "text-white",
   },
 };
 
@@ -85,13 +93,36 @@ export function AccountCard({
   onViewDetails,
 }: AccountCardProps) {
   const colorStyle = amountTypeColors[account.amountType];
-  // const formatCurrency = (amount: number, currency: string) => {
-  //   return new Intl.NumberFormat("en-US", {
-  //     style: "currency",
-  //     currency: currency,
-  //     minimumFractionDigits: 2,
-  //   }).format(amount);
-  // };
+
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(
+    null,
+  );
+
+  const fetchCurrencies = useCallback(async () => {
+    setIsLoadingCurrencies(true);
+    setCurrencyLoadError(null);
+    try {
+      const data = await getAllData<Currency[]>("api/Currency");
+      setCurrencies(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        setCurrencyLoadError("Failed to load currencies.");
+        console.error(currencyLoadError);
+      }
+    } finally {
+      setIsLoadingCurrencies(false);
+    }
+  }, [getAllData]);
+
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    if (!isLoadingCurrencies) fetchCurrencies();
+  }, [fetchCurrencies, isAuthReady, accessToken]);
 
   return (
     <Card
@@ -151,7 +182,13 @@ export function AccountCard({
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            {account.balance}{account.currencyId}
+            {account.balance}
+            <span>
+              {
+                currencies.find(c => c.id === account.currencyId)?.symbol
+                || 'Loading...'
+              }
+            </span>
           </p>
         </div>
 

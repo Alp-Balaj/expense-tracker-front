@@ -47,51 +47,56 @@ export default function AccountPage() {
     }
   }, [getAllData]);
 
-  const handleSaveAccount = useCallback(async (account: AddAccount) => {
-    setIsLoadingAccounts(true);
-    if(account.id === null){
-      try {
-        await postData<AddAccount>("api/Account", account);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setAccountLoadError("Failed to add account.");
+  const handleSaveAccount = useCallback(
+    async (account: AddAccount) => {
+      setIsLoadingAccounts(true);
+      if (account.id === null) {
+        try {
+          await postData<AddAccount>("api/Account", account);
+        } catch (e: unknown) {
+          const err = e as AxiosError;
+          if (err.response?.status !== 401) {
+            console.error(err);
+            setAccountLoadError("Failed to add account.");
+          }
+        } finally {
+          setIsLoadingAccounts(false);
         }
-      } finally {
-        setIsLoadingAccounts(false);
-      }
-      fetchAccounts();
-    } else {
-      try {
-        await putData<AddAccount>("api/Account", account as AddAccount);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setAccountLoadError("Failed to edit account.");
+        fetchAccounts();
+      } else {
+        try {
+          await putData<AddAccount>("api/Account", account as AddAccount);
+        } catch (e: unknown) {
+          const err = e as AxiosError;
+          if (err.response?.status !== 401) {
+            console.error(err);
+            setAccountLoadError("Failed to edit account.");
+          }
+        } finally {
+          setIsLoadingAccounts(false);
         }
-      } finally {
-        setIsLoadingAccounts(false);
+        fetchAccounts();
       }
-      fetchAccounts();
-    }
-    setEditingAccount(null);
-  },[postData, putData, fetchAccounts]);
+      setEditingAccount(null);
+    },
+    [postData, putData, fetchAccounts],
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
 
   const [amountType, setAmountType] = useState<AmountType | "all">("all");
-  const currentType = amountType != "all"? amountType : AmountType.CheckingAccount;
+  const currentType =
+    amountType != "all" ? amountType : AmountType.CheckingAccount;
 
   // Filter accounts based on search and type
   const filteredAccounts = accounts.filter((account) => {
     const matchesSearch = account.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesType = amountType === "all" || account.amountType === amountType;
+    const matchesType =
+      amountType === "all" || account.amountType === amountType;
     return matchesSearch && matchesType;
   });
 
@@ -108,14 +113,13 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
-    if(!isLoadingAccounts)
-      fetchAccounts();
+    if (!isLoadingAccounts) fetchAccounts();
   }, [fetchAccounts, isAuthReady, accessToken]);
 
   const handleAddAccount = () => {
     setEditingAccount(null);
     setAccountDialogOpen(true);
-  }
+  };
 
   const handleEditAccount = (account: Account) => {
     setEditingAccount(account);
@@ -125,7 +129,10 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <PageHeader title="Accounts" icon={<Wallet className="h-5 w-5 text-primary" />} />
+      <PageHeader
+        title="Accounts"
+        icon={<Wallet className="h-5 w-5 text-primary" />}
+      />
 
       <main className="p-6 space-y-8">
         {/* Summary Cards */}
@@ -151,7 +158,8 @@ export default function AccountPage() {
               </div>
 
               {/* Type Filter */}
-              <Select value={amountType === "all" ? "all" : String(amountType)}
+              <Select
+                value={amountType === "all" ? "all" : String(amountType)}
                 onValueChange={(v) =>
                   setAmountType(v === "all" ? "all" : (Number(v) as AmountType))
                 }
@@ -161,12 +169,20 @@ export default function AccountPage() {
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value={String(AmountType.CheckingAccount)}>CheckingAccount</SelectItem>
-                    <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
-                    <SelectItem value={String(AmountType.SavingsAccount)}>SavingsAccount</SelectItem>
-                    <SelectItem value={String(AmountType.CreditCard)}>CreditCard</SelectItem>
-                    <SelectItem value={String(AmountType.Investment)}>Investment</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value={String(AmountType.CheckingAccount)}>
+                    CheckingAccount
+                  </SelectItem>
+                  <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
+                  <SelectItem value={String(AmountType.SavingsAccount)}>
+                    SavingsAccount
+                  </SelectItem>
+                  <SelectItem value={String(AmountType.CreditCard)}>
+                    CreditCard
+                  </SelectItem>
+                  <SelectItem value={String(AmountType.Investment)}>
+                    Investment
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
