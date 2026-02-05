@@ -1,82 +1,90 @@
+import { DataTable } from "../General/DataTable";
+import IncomeForm from "../Forms/IncomeForm";
+import { incomeColumns, type Income } from "@/Models/Income";
+import { useAuth } from "@/Authorization/AuthContext";
 import { useCallback, useEffect, useState } from "react";
-import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
-import { useAuth } from "../../Authorization/AuthContext.js";
-import IncomeForm from "../Forms/IncomeForm.js";
-import type { Income } from "../../Models/Income.tsx";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
-import { Button } from "../ui/button.tsx";
 
-function IncomeList() {
-    const { accessToken, isAuthReady } = useAuth();
-    
-    const [incomes, setIncomes] = useState<Income[]>([]);
-    const { getAllData, postData, putData } = useAuthorizationApi();
-    const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-    const [editingIncome, setEditingIncome] = useState<Income | null>(null);
-    
-    const fetchIncomes = useCallback(async () => {
-        try {
-            const data = await getAllData<Income[]>('api/Income');
-            setIncomes(data);
-        } catch (e: unknown) {
-            const err = e as AxiosError;
-            if (err.response?.status !== 401) {
-            console.error(err);
-            }
-        }
-    }, [getAllData]);
+export default function IncomeList() {
+  const { accessToken, isAuthReady } = useAuth();
+  
+  const [incomes, setIncomes] = useState<Income[]>([]);
+  const { getAllData, postData, putData } = useAuthorizationApi();
+  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
 
-    useEffect(() => {
-        if (!isAuthReady || !accessToken) return;
-        fetchIncomes();
-        return () => {};
-    }, [fetchIncomes, isAuthReady, accessToken]);
+  const fetchIncome = useCallback(async () => {
+    try {
+      const data = await getAllData<Income[]>("api/Income");
+      setIncomes(data);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+      }
+    }
+  }, [getAllData]);
 
-    const addIncome = () => {
-        setEditingIncome(null);
-        setIsFormOpen(true);
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await getAllData<Income[]>("api/Income");
+        if (!cancelled) setIncomes(data);
+      } catch (e: unknown) {
+        const err = e as AxiosError;
+        if (err.response?.status !== 401) console.error(err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
+  }, [isAuthReady, accessToken, getAllData]);
 
-    const editIncome = (Income: Income) => {
-        setEditingIncome(Income);
-        setIsFormOpen(true);
-    };
+  const handleSubmit = async (data: Income) => {
+    if (editingIncome != null) {
+      await putData("api/Income", data);
+    } else {
+      await postData("api/Income", data);
+    }
 
-    const handleSubmit = async (data: Income) => {
-        if (editingIncome != null) {
-            console.log("UPDATE", data);
-            await putData('api/Income', data);
-        } else {
-            console.log("CREATE", data);
-            await postData('api/Income', data);
-        }
+    setEditingIncome(null);
+    setIsFormOpen(false);
+    await fetchIncome();
+  };
 
-        setEditingIncome(null);
-        setIsFormOpen(false);
-        await fetchIncomes();
-    };
+  return (
+    <div className="space-y-4">
+      <DataTable
+        columns={incomeColumns}
+        data={incomes}
+        enableGlobalSearch
+        searchPlaceholder="Search income..."
+        globalSearchKeys={["title", "description", "amount"]}
+        toolbar={{
+          addLabel: "Add Income",
+          onAdd: () => setIsFormOpen(true),
+        }}
+      />
 
-    return (
-        <div style={{backgroundColor: '#fff'}}>
-            <h2>Incomes</h2> <Button onClick={addIncome}>Add Income</Button>
-            <ul>
-                {Array.isArray(incomes) && incomes.map(income => (
-                    <li key={income.id}>
-                        {income.title} - {income.description} - {income.amount} - {income.date.toString()}
-                        <Button onClick={() => editIncome(income)}>Edit</Button>
-                    </li>
-                ))}
-            </ul>
-            {isFormOpen && (
-                <IncomeForm
-                    key={editingIncome?.id ?? "new"}
-                    row={editingIncome}
-                    onSubmit={handleSubmit}
-                    onCancel={() => setIsFormOpen(false)}
-                />
-            )}
-        </div>
-    );
+      <IncomeForm
+        row={editingIncome}
+        onSubmit={handleSubmit}
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setEditingIncome(null);
+        }}
+        onCancel={() => {
+          setIsFormOpen(false);
+          setEditingIncome(null);
+        }}
+      />
+    </div>
+  );
 }
-
-export default IncomeList;

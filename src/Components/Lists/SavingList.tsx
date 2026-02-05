@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
 import { useAuth } from "../../Authorization/AuthContext.js";
-import SavingForm from "../Forms/IncomeForm.js";
+import SavingForm from "../Forms/SavingForm.tsx";
 import type { Saving } from "../../Models/Saving.tsx";
 import type { AxiosError } from "axios";
 import { Button } from "../ui/button.tsx";
