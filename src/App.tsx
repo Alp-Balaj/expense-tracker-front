@@ -15,6 +15,7 @@ import ReportsPage from "./Pages/ReportPage";
 import { UserPreferencesProvider } from "./Authorization/UserPreferencesContext";
 import { ThemeProvider } from "./Components/Layout/ThemeProvider";
 import IncomePage from "./Pages/IncomePage";
+import SavingPage from "./Pages/SavingPage";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
                     <Route path="/account" element={<AccountPage />} />
                     <Route path="/income" element={<IncomePage />} />
                     <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
+                    <Route path="/savings" element={<SavingPage />} />
                     <Route path="/reports" element={<ReportsPage />} />
                   </Route>
                 </Route>
