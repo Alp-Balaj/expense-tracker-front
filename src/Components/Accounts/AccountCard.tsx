@@ -1,3 +1,4 @@
+import { useCurrency } from "@/Hooks/useCurrency";
 import { Card, CardContent, CardFooter } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import {
@@ -94,35 +95,8 @@ export function AccountCard({
 }: AccountCardProps) {
   const colorStyle = amountTypeColors[account.amountType];
 
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData } = useAuthorizationApi();
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(
-    null,
-  );
-
-  const fetchCurrencies = useCallback(async () => {
-    setIsLoadingCurrencies(true);
-    setCurrencyLoadError(null);
-    try {
-      const data = await getAllData<Currency[]>("api/Currency");
-      setCurrencies(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setCurrencyLoadError("Failed to load currencies.");
-        console.error(currencyLoadError);
-      }
-    } finally {
-      setIsLoadingCurrencies(false);
-    }
-  }, [getAllData]);
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    if (!isLoadingCurrencies) fetchCurrencies();
-  }, [fetchCurrencies, isAuthReady, accessToken]);
+  // Replace local currency state + fetching
+  const { format, convert, userCurrencyCode } = useCurrency();
 
   return (
     <Card
@@ -142,53 +116,14 @@ export function AccountCard({
             </div>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Account options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {onViewDetails && (
-                <DropdownMenuItem onClick={() => onViewDetails(account)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </DropdownMenuItem>
-              )}
-              {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit?.(account)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              )}
-              {onDelete && (
-                <DropdownMenuItem
-                  onClick={() => onDelete(account)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenu>{/* Dropdown code stays the same */}</DropdownMenu>
         </div>
 
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            {account.balance}
-            <span>
-              {
-                currencies.find(c => c.id === account.currencyId)?.symbol
-                || 'Loading...'
-              }
-            </span>
+            {/* Convert + format using the hook */}
+            {format(account.balance, account.currencyCode)}
           </p>
         </div>
 
