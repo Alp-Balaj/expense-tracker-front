@@ -1,90 +1,53 @@
-import { DataTable } from "../General/DataTable";
-import IncomeForm from "../Forms/IncomeForm";
-import { incomeColumns, type Income } from "@/Models/Income";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useCallback, useEffect, useState } from "react";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import type { AxiosError } from "axios";
+import { useMemo } from "react"
+import { DataTable } from "../General/DataTable"
+import IncomeFormModal from "../Income/IncomeFormModal"
+import { buildIncomeColumns, type Income } from "@/Models/Income"
+import { useCrudList } from "@/Hooks/useCrudLists"
 
 export default function IncomeList() {
-  const { accessToken, isAuthReady } = useAuth();
-  
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const { getAllData, postData, putData } = useAuthorizationApi();
-  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const {
+    items: incomes,
+    open,
+    setOpen,
+    editing,
+    startCreate,
+    startEdit,
+    closeForm,
+    submit,
+  } = useCrudList<Income>({ endpoint: "api/Income" })
 
-  const fetchIncome = useCallback(async () => {
-    try {
-      const data = await getAllData<Income[]>("api/Income");
-      setIncomes(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        console.error(err);
-      }
-    }
-  }, [getAllData]);
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const data = await getAllData<Income[]>("api/Income");
-        if (!cancelled) setIncomes(data);
-      } catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) console.error(err);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthReady, accessToken, getAllData]);
-
-  const handleSubmit = async (data: Income) => {
-    if (editingIncome != null) {
-      await putData("api/Income", data);
-    } else {
-      await postData("api/Income", data);
-    }
-
-    setEditingIncome(null);
-    setIsFormOpen(false);
-    await fetchIncome();
-  };
+  const columns = useMemo(
+    () =>
+      buildIncomeColumns({
+        onEdit: (row) => startEdit(row),
+      }),
+    [startEdit]
+  )
 
   return (
     <div className="space-y-4">
       <DataTable
-        columns={incomeColumns}
+        columns={columns}
         data={incomes}
         enableGlobalSearch
         searchPlaceholder="Search income..."
         globalSearchKeys={["title", "description", "amount"]}
         toolbar={{
           addLabel: "Add Income",
-          onAdd: () => setIsFormOpen(true),
+          onAdd: startCreate,
         }}
       />
 
-      <IncomeForm
-        row={editingIncome}
-        onSubmit={handleSubmit}
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingIncome(null);
+      <IncomeFormModal
+        row={editing}
+        onSubmit={submit}
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen)
+          if (!isOpen) closeForm()
         }}
-        onCancel={() => {
-          setIsFormOpen(false);
-          setEditingIncome(null);
-        }}
+        onCancel={closeForm}
       />
     </div>
-  );
+  )
 }
