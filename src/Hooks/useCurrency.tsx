@@ -1,19 +1,50 @@
-// import { useCurrency } from "@/Components/Layout/CurrencyProvider";
-// import { useAuthorizationApi } from "./useAuthorizationApi";
+import { useState, useEffect, useMemo } from "react";
+import { usePreferences } from "@/Authorization/UserPreferencesContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { Currency } from "@/Models/Currency";
 
-type UseCurrencyReturn = {
-  formatAndConvert: (amount: number, originalCurrencyId: number) => string;
-  isLoading?: boolean;
-  error?: string | null;
-};
+export function useCurrency() {
+  const { preferences } = usePreferences();
+  const { getAllData } = useAuthorizationApi();
 
-export function useFormatedCurrency(): UseCurrencyReturn {
-  // const { currencyId } = useCurrency();
-  // const { getAllData } = useAuthorizationApi();
+  const [currenciesFromDb, setCurrenciesFromDb] = useState<Currency[]>([]);
+
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      const data = await getAllData<Currency[]>("api/Currencies");
+      if (data) setCurrenciesFromDb(data);
+    };
+    void fetchCurrencies();
+  }, [getAllData]);
+
+  const currenciesMap = useMemo(() => {
+    const map: Record<string, Currency> = {};
+    currenciesFromDb.forEach((c) => (map[c.code] = c));
+    return map;
+  }, [currenciesFromDb]);
+
+  const userCurrencyCode = preferences?.userPreferredCurrencyCode ?? "EUR";
+
+  const convert = (amount: number, fromCode: string) => {
+    const from = currenciesMap[fromCode];
+    const to = currenciesMap[userCurrencyCode];
+    if (!from || !to) return amount;
+    return (amount / from.exchangeRateToBase) * to.exchangeRateToBase;
+  };
+
+  const format = (amount: number, fromCode: string) => {
+    const converted = convert(amount, fromCode);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: userCurrencyCode,
+      minimumFractionDigits: 2,
+    }).format(converted);
+  };
 
   return {
-    formatAndConvert: (amt, currId) => `${amt} ${currId}`,
-    isLoading: false,
-    error: null,
+    userCurrencyCode,
+    currenciesMap,
+    convert,
+    format,
   };
 }

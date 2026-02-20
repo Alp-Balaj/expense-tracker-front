@@ -14,7 +14,8 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 export type UserPreferences = {
   userId?: string;
   theme?: "light" | "dark" | "system";
-  baseCurrency?: string;
+  userBaseCurrencyCode?: string;
+  userPreferredCurrencyCode?: string;
 };
 
 type PreferencesContextValue = {
@@ -25,7 +26,7 @@ type PreferencesContextValue = {
 };
 
 const PreferencesContext = createContext<PreferencesContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 export function UserPreferencesProvider({ children }: { children: ReactNode }) {
@@ -45,7 +46,9 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     if (theme === "dark") root.classList.add("dark");
     if (theme === "light") root.classList.remove("dark");
     if (theme === "system") {
-      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia?.(
+        "(prefers-color-scheme: dark)",
+      ).matches;
       if (prefersDark) root.classList.add("dark");
     }
   }, []);
@@ -80,7 +83,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PreferencesContextValue>(
     () => ({ preferences, isLoading, refresh, setPreferences }),
-    [preferences, isLoading, refresh]
+    [preferences, isLoading, refresh],
   );
 
   return (
@@ -92,6 +95,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
 export function usePreferences() {
   const ctx = useContext(PreferencesContext);
-  if (!ctx) throw new Error("usePreferences must be used within PreferencesProvider");
+  if (!ctx)
+    throw new Error("usePreferences must be used within PreferencesProvider");
   return ctx;
 }
