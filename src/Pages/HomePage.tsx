@@ -1,81 +1,195 @@
-//#region Imports
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/Components/ui/card";
-import ExpenseList from "@/Components/Lists/ExpenseList";
-import {
-  LayoutDashboard,
-  Receipt,
-  TrendingUp,
-  Wallet,
-  PiggyBank,
-} from "lucide-react";
-import { ExpenseCharts } from "@/Components/Dashboard/ExpenseCharts";
-import { SummaryCards } from "@/Components/Dashboard/SummaryCards";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import { PageHeader } from "@/Components/General/PageHeader";
-
-//#endregion
-
-const summaryCards = [
-  {
-    title: "Total Expenses",
-    value: "$2,847.50",
-    change: "+12.5%",
-    changeType: "negative" as const,
-    icon: Receipt,
-  },
-  {
-    title: "Total Income",
-    value: "$5,240.00",
-    change: "+8.2%",
-    changeType: "positive" as const,
-    icon: TrendingUp,
-  },
-  {
-    title: "Net Balance",
-    value: "$2,392.50",
-    change: "+4.1%",
-    changeType: "positive" as const,
-    icon: Wallet,
-  },
-  {
-    title: "Savings Goal",
-    value: "68%",
-    change: "$680 / $1,000",
-    changeType: "neutral" as const,
-    icon: PiggyBank,
-  },
-];
+import { QuickActions } from "@/Components/Dashboard/QuickActions";
+import { BalanceOverview } from "@/Components/Dashboard/BalanceOverview";
+import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
+import { AccountBalances } from "@/Components/Dashboard/AccountBalances";
+import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
+import ExpenseFormModal from "@/Components/Forms/ExpenseForm";
+import IncomeFormModal from "@/Components/Income/IncomeFormModal";
+import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal";
+import FutureExpenseForm from "@/Components/Forms/FutureExpenseForm";
+import { LayoutDashboard } from "lucide-react";
+import type { Account } from "@/Models/Account";
+import type { Expense } from "@/Models/Expense";
+import type { Income } from "@/Models/Income";
+import type { FutureExpense } from "@/Models/FutureExpense";
+import type { Category } from "@/Models/Category";
+import type { AddSavingsGoal } from "@/Models/SavingGoals";
+import type { AxiosError } from "axios";
 
 export default function HomePage() {
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData, postData } = useAuthorizationApi();
+
+  // ── Data state ──────────────────────────────────────────────
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<Income[]>([]);
+  const [futureExpenses, setFutureExpenses] = useState<FutureExpense[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ── Modal state ─────────────────────────────────────────────
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [incomeOpen, setIncomeOpen] = useState(false);
+  const [savingsOpen, setSavingsOpen] = useState(false);
+  const [futureExpenseOpen, setFutureExpenseOpen] = useState(false);
+
+  // ── Fetch helpers ───────────────────────────────────────────
+  const fetchAll = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [accs, exps, incs, fexps, cats] = await Promise.all([
+        getAllData<Account[]>("api/Account"),
+        getAllData<Expense[]>("api/Expense"),
+        getAllData<Income[]>("api/Income"),
+        getAllData<FutureExpense[]>("api/FutureExpense"),
+        getAllData<Category[]>("api/Category"),
+      ]);
+      setAccounts(accs);
+      setExpenses(exps);
+      setIncomes(incs);
+      setFutureExpenses(fexps);
+      setCategories(cats);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAllData]);
+
+  useEffect(() => {
+    if (!isAuthReady || !accessToken) return;
+    let cancelled = false;
+    (async () => {
+      await fetchAll();
+      if (cancelled) return;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthReady, accessToken, fetchAll]);
+
+  // ── Submit handlers ─────────────────────────────────────────
+  const handleExpenseSubmit = async (data: Expense) => {
+    try {
+      await postData("api/Expense", data);
+      setExpenseOpen(false);
+      await fetchAll();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleIncomeSubmit = async (data: Income) => {
+    try {
+      await postData("api/Income", data);
+      setIncomeOpen(false);
+      await fetchAll();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSavingsSubmit = async (data: AddSavingsGoal) => {
+    try {
+      await postData("api/SavingsGoal", data);
+      setSavingsOpen(false);
+      await fetchAll();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleFutureExpenseSubmit = async (data: FutureExpense) => {
+    try {
+      await postData("api/FutureExpense", data);
+      setFutureExpenseOpen(false);
+      await fetchAll();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title="Dashboard" icon={<LayoutDashboard className="h-5 w-5 text-primary" />} />
+      <PageHeader
+        title="Dashboard"
+        icon={<LayoutDashboard className="h-5 w-5 text-primary" />}
+      />
 
-      <main className="p-6 space-y-6 min-h-screen">
-        {/* Summary Cards */}
-        <SummaryCards cards={summaryCards}/>
-        
-        {/* Expense Chart */}
-        <ExpenseCharts />
+      <main className="p-6 space-y-6">
+        {/* Quick Actions */}
+        <QuickActions
+          onAddExpense={() => setExpenseOpen(true)}
+          onAddIncome={() => setIncomeOpen(true)}
+          onAddSavingsGoal={() => setSavingsOpen(true)}
+          onAddFutureExpense={() => setFutureExpenseOpen(true)}
+        />
 
-        {/* Expenses Table Card */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Recent Expenses</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Manage and track your spending across all accounts
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ExpenseList />
-          </CardContent>
-        </Card>
+        {/* Balance Overview Cards */}
+        <BalanceOverview
+          accounts={accounts}
+          expenses={expenses}
+          incomes={incomes}
+          isLoading={isLoading}
+        />
+
+        {/* Main content: Activity + Sidebar */}
+        <div className="grid gap-6 lg:grid-cols-5">
+          {/* Recent Activity - takes 3 columns */}
+          <div className="lg:col-span-3">
+            <RecentActivity
+              expenses={expenses}
+              incomes={incomes}
+              accounts={accounts}
+              categories={categories}
+              isLoading={isLoading}
+            />
+          </div>
+
+          {/* Right sidebar - takes 2 columns */}
+          <div className="lg:col-span-2 space-y-6">
+            <AccountBalances accounts={accounts} isLoading={isLoading} />
+            <UpcomingExpenses
+              futureExpenses={futureExpenses}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
       </main>
+
+      {/* Form Modals */}
+      <ExpenseFormModal
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        onSubmit={handleExpenseSubmit}
+        onCancel={() => setExpenseOpen(false)}
+      />
+
+      <IncomeFormModal
+        open={incomeOpen}
+        onOpenChange={setIncomeOpen}
+        onSubmit={handleIncomeSubmit}
+        onCancel={() => setIncomeOpen(false)}
+      />
+
+      <SavingsGoalFormModal
+        open={savingsOpen}
+        onOpenChange={setSavingsOpen}
+        onSubmit={handleSavingsSubmit}
+        onCancel={() => setSavingsOpen(false)}
+      />
+
+      <FutureExpenseForm
+        open={futureExpenseOpen}
+        onSubmit={handleFutureExpenseSubmit}
+        onCancel={() => setIncomeOpen(false)}
+      />
     </div>
   );
 }

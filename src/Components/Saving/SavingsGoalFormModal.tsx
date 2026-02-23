@@ -1,21 +1,21 @@
-import React, { useCallback, useMemo, useState } from "react"
-import { Button } from "@/Components/ui/button"
-import { Input } from "@/Components/ui/input"
-import { Label } from "@/Components/ui/label"
-import { Textarea } from "@/Components/ui/textarea"
+import React, { useCallback, useMemo, useState } from "react";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import { Label } from "@/Components/ui/label";
+import { Textarea } from "@/Components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/Components/ui/select"
+} from "@/Components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/Components/ui/dialog"
+} from "@/Components/ui/dialog";
 import {
   FileText,
   DollarSign,
@@ -23,33 +23,33 @@ import {
   Wallet,
   Tag,
   Target,
-} from "lucide-react"
+} from "lucide-react";
 
-import type { SavingGoals, AddSavingsGoal } from "@/Models/SavingGoals"
-import { useAuth } from "@/Authorization/AuthContext"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type { Account } from "@/Models/Account"
-import type { Category } from "@/Models/Category"
-import type { AxiosError } from "axios"
+import type { SavingGoals, AddSavingsGoal } from "@/Models/SavingGoals";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { Account } from "@/Models/Account";
+import type { Category } from "@/Models/Category";
+import type { AxiosError } from "axios";
 
 export interface SavingsGoalFormModalProps {
-  row?: SavingGoals | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (data: AddSavingsGoal) => void
-  onCancel?: () => void
+  row?: SavingGoals | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: AddSavingsGoal) => void;
+  onCancel?: () => void;
 }
 
 type FormState = {
-  id: string | null
-  title: string
-  targetAmount: number
-  savedAmount: number
-  deadline: Date
-  description: string
-  accountId: string
-  categoryId: string
-}
+  id: string | null;
+  title: string;
+  targetAmount: number;
+  savedAmount: number;
+  deadline: Date;
+  description: string;
+  accountId: string;
+  categoryId: string;
+};
 
 export default function SavingsGoalFormModal({
   row,
@@ -58,40 +58,40 @@ export default function SavingsGoalFormModal({
   onSubmit,
   onCancel,
 }: SavingsGoalFormModalProps) {
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData } = useAuthorizationApi()
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
 
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const data = await getAllData<Account[]>("api/Account")
-      setAccounts(data)
+      const data = await getAllData<Account[]>("api/Account");
+      setAccounts(data);
     } catch (e: unknown) {
-      const err = e as AxiosError
-      if (err.response?.status !== 401) console.error(err)
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) console.error(err);
     }
-  }, [getAllData])
+  }, [getAllData]);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await getAllData<Category[]>("api/Category")
-      setCategories(data)
+      const data = await getAllData<Category[]>("api/Category");
+      setCategories(data);
     } catch (e: unknown) {
-      const err = e as AxiosError
-      if (err.response?.status !== 401) console.error(err)
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) console.error(err);
     }
-  }, [getAllData])
+  }, [getAllData]);
 
-  const normalizeDate = (value: unknown) => {
-    if (value instanceof Date) return value
+  const normalizeDate = React.useCallback((value: unknown) => {
+    if (value instanceof Date) return value;
     if (typeof value === "string" || typeof value === "number") {
-      const d = new Date(value)
-      return isNaN(d.getTime()) ? new Date() : d
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? new Date() : d;
     }
-    return new Date()
-  }
+    return new Date();
+  }, []);
 
   const initial: FormState = useMemo(
     () => ({
@@ -104,32 +104,32 @@ export default function SavingsGoalFormModal({
       accountId: row?.accountId ?? "",
       categoryId: row?.categoryId ?? "",
     }),
-    [row]
-  )
+    [row, normalizeDate],
+  );
 
-  const [data, setData] = useState<FormState>(initial)
+  const [data, setData] = useState<FormState>(initial);
 
   React.useEffect(() => {
-    setData(initial)
-    if (!isAuthReady || !accessToken) return
-    fetchCategories()
-    fetchAccounts()
-  }, [initial, isAuthReady, accessToken, fetchCategories, fetchAccounts])
+    setData(initial);
+    if (!isAuthReady || !accessToken) return;
+    fetchCategories();
+    fetchAccounts();
+  }, [initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
 
   const toNumber = (v: string) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? n : 0
-  }
-  const toDate = (v: string) => new Date(`${v}T00:00:00`)
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const toDate = (v: string) => new Date(`${v}T00:00:00`);
   const toDateInput = (d: Date) => {
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, "0")
-    const dd = String(d.getDate()).padStart(2, "0")
-    return `${yyyy}-${mm}-${dd}`
-  }
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
     const payload: AddSavingsGoal = {
       id: data.id,
       title: data.title,
@@ -139,18 +139,18 @@ export default function SavingsGoalFormModal({
       description: data.description,
       accountId: data.accountId,
       categoryId: data.categoryId,
-    }
-    onSubmit(payload)
-    onOpenChange(false)
-  }
+    };
+    onSubmit(payload);
+    onOpenChange(false);
+  };
 
   const handleCancel = () => {
-    onCancel?.()
-    onOpenChange(false)
-  }
+    onCancel?.();
+    onOpenChange(false);
+  };
 
   // Filter for Savings categories (CategoryType.Savings = 2)
-  const savingsCategories = categories.filter((c) => c.categoryType === 2)
+  const savingsCategories = categories.filter((c) => c.categoryType === 2);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -164,7 +164,10 @@ export default function SavingsGoalFormModal({
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="goal-title" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="goal-title"
+              className="text-sm font-medium text-foreground"
+            >
               My goal is
             </Label>
             <div className="relative">
@@ -183,7 +186,10 @@ export default function SavingsGoalFormModal({
           {/* Target Amount + Deadline */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="goal-target" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="goal-target"
+                className="text-sm font-medium text-foreground"
+              >
                 Money goal
               </Label>
               <div className="relative">
@@ -205,7 +211,10 @@ export default function SavingsGoalFormModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="goal-deadline" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="goal-deadline"
+                className="text-sm font-medium text-foreground"
+              >
                 Deadline
               </Label>
               <div className="relative">
@@ -227,9 +236,14 @@ export default function SavingsGoalFormModal({
           {/* Initial Saved Amount (only on create) */}
           {!row && (
             <div className="space-y-2">
-              <Label htmlFor="goal-saved" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="goal-saved"
+                className="text-sm font-medium text-foreground"
+              >
                 Already saved
-                <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                <span className="text-muted-foreground font-normal ml-1">
+                  (optional)
+                </span>
               </Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -252,7 +266,9 @@ export default function SavingsGoalFormModal({
           {/* Account + Category */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Account</Label>
+              <Label className="text-sm font-medium text-foreground">
+                Account
+              </Label>
               <div className="relative">
                 <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                 <Select
@@ -274,7 +290,9 @@ export default function SavingsGoalFormModal({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Category</Label>
+              <Label className="text-sm font-medium text-foreground">
+                Category
+              </Label>
               <div className="relative">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                 <Select
@@ -306,11 +324,15 @@ export default function SavingsGoalFormModal({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">
               Description
-              <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+              <span className="text-muted-foreground font-normal ml-1">
+                (optional)
+              </span>
             </Label>
             <Textarea
               value={data.description}
-              onChange={(e) => setData({ ...data, description: e.target.value })}
+              onChange={(e) =>
+                setData({ ...data, description: e.target.value })
+              }
               placeholder="Why is this goal important to you?"
               className="min-h-20 resize-none border-border bg-background"
             />
@@ -336,5 +358,5 @@ export default function SavingsGoalFormModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
