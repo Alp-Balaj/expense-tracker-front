@@ -33,7 +33,7 @@ interface UserSettings {
 
 interface UserPreferences {
   theme: "light" | "dark" | "system";
-  baseCurrency: string;
+  baseCurrency?: string;
 }
 
 interface UserSettingsModalProps {
@@ -150,7 +150,7 @@ export function UserSettingsModal({
       theme,
       baseCurrency,
     });
-    setPreferences({ theme, baseCurrency });
+    setPreferences({ theme, userBaseCurrencyCode: baseCurrency });
     onPreferencesSave?.({ theme, baseCurrency });
     setPreferencesSaved(true);
     setTimeout(() => setPreferencesSaved(false), 2000);

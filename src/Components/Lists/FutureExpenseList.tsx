@@ -73,6 +73,7 @@ function FutureExpenseList() {
                     row={editingFutureExpense}
                     onSubmit={handleSubmit}
                     onCancel={() => setIsFormOpen(false)}
+                    open={isFormOpen}
                 />
             )}
         </div>  
