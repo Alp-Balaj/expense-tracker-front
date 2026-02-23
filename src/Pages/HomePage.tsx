@@ -10,7 +10,7 @@ import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import ExpenseFormModal from "@/Components/Forms/ExpenseForm";
 import IncomeFormModal from "@/Components/Income/IncomeFormModal";
 import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal";
-import FutureExpenseForm from "@/Components/Forms/FutureExpenseForm";
+// import FutureExpenseForm from "@/Components/Forms/FutureExpenseForm";
 import { LayoutDashboard } from "lucide-react";
 import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
@@ -36,7 +36,7 @@ export default function HomePage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [savingsOpen, setSavingsOpen] = useState(false);
-  const [futureExpenseOpen, setFutureExpenseOpen] = useState(false);
+  // const [futureExpenseOpen, setFutureExpenseOpen] = useState(false);
 
   // ── Fetch helpers ───────────────────────────────────────────
   const fetchAll = useCallback(async () => {
@@ -74,7 +74,7 @@ export default function HomePage() {
     };
   }, [isAuthReady, accessToken, fetchAll]);
 
-  // ── Submit handlers ─────────────────────────────────────────
+  // #region ── Submit handlers ─────────────────────────────────────────
   const handleExpenseSubmit = async (data: Expense) => {
     try {
       await postData("api/Expense", data);
@@ -105,16 +105,17 @@ export default function HomePage() {
     }
   };
 
-  const handleFutureExpenseSubmit = async (data: FutureExpense) => {
-    try {
-      await postData("api/FutureExpense", data);
-      setFutureExpenseOpen(false);
-      await fetchAll();
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  // const handleFutureExpenseSubmit = async (data: FutureExpense) => {
+  //   try {
+  //     await postData("api/FutureExpense", data);
+  //     setFutureExpenseOpen(false);
+  //     await fetchAll();
+  //   } catch (e) {
+  //     console.error(e);
+  //   }
+  // };
 
+  // #endregion
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
@@ -128,7 +129,7 @@ export default function HomePage() {
           onAddExpense={() => setExpenseOpen(true)}
           onAddIncome={() => setIncomeOpen(true)}
           onAddSavingsGoal={() => setSavingsOpen(true)}
-          onAddFutureExpense={() => setFutureExpenseOpen(true)}
+          onAddFutureExpense={() => (0)}
         />
 
         {/* Balance Overview Cards */}
@@ -185,11 +186,11 @@ export default function HomePage() {
         onCancel={() => setSavingsOpen(false)}
       />
 
-      <FutureExpenseForm
+      {/* <FutureExpenseForm
         open={futureExpenseOpen}
         onSubmit={handleFutureExpenseSubmit}
         onCancel={() => setIncomeOpen(false)}
-      />
+      /> */}
     </div>
   );
 }
