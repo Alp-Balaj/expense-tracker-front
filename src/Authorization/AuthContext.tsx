@@ -18,14 +18,16 @@ type AuthContextValue = {
 };
 
 const AuthorizationContext = createContext<AuthContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 type AuthorizationProviderProps = {
   children: ReactNode;
 };
 
-export function AuthorizationProvider({ children }: AuthorizationProviderProps) {
+export function AuthorizationProvider({
+  children,
+}: AuthorizationProviderProps) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
 
@@ -47,7 +49,7 @@ export function AuthorizationProvider({ children }: AuthorizationProviderProps) 
 
   const value = useMemo<AuthContextValue>(
     () => ({ accessToken, setToken, logout, isAuthReady }),
-    [accessToken, isAuthReady, logout, setToken]
+    [accessToken, isAuthReady, logout, setToken],
   );
 
   return (

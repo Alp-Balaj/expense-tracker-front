@@ -11,4 +11,5 @@ export type FutureExpenseFormProps = {
   row?: Partial<FutureExpense> | null;
   onSubmit: (data: FutureExpense) => void;
   onCancel?: () => void;
+  open: boolean;
 };
