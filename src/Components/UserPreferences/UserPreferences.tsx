@@ -19,7 +19,12 @@ import {
   SelectValue,
 } from "@/Components/ui/select";
 import { Settings, User, Palette, Eye, EyeOff, Check } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../ui/accordion";
 import type { CurrencyDropdown } from "@/Models/Currency";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -59,18 +64,21 @@ export function UserSettingsModal({
 
   const { setPreferences } = usePreferences();
 
-
   //#region Currency dropdown
   const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(
+    null,
+  );
 
   const fetchCurrencies = useCallback(async () => {
     setIsLoadingCurrencies(true);
     setCurrencyLoadError(null);
 
     try {
-      const data = await getAllData<CurrencyDropdown[]>("api/Currency/Dropdown");
+      const data = await getAllData<CurrencyDropdown[]>(
+        "api/Currency/Dropdown",
+      );
       setCurrencies(data);
     } catch (e: unknown) {
       const err = e as AxiosError;
@@ -81,13 +89,12 @@ export function UserSettingsModal({
     } finally {
       setIsLoadingCurrencies(false);
     }
-  }, [getAllData]);
+  }, [getAllData, currencyLoadError]);
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
-    if(!isLoadingCurrencies)
-        fetchCurrencies();
-  },[fetchCurrencies]);
+    if (!isLoadingCurrencies) fetchCurrencies();
+  }, [fetchCurrencies, isAuthReady, accessToken, isLoadingCurrencies]);
 
   // User Settings State
   const [email, setEmail] = useState(initialSettings.email);
@@ -106,10 +113,10 @@ export function UserSettingsModal({
 
   // User Preferences State
   const [theme, setTheme] = useState<"light" | "dark" | "system">(
-    initialPreferences.theme
+    initialPreferences.theme,
   );
   const [baseCurrency, setBaseCurrency] = useState(
-    initialPreferences.baseCurrency
+    initialPreferences.baseCurrency,
   );
   const [preferencesSaved, setPreferencesSaved] = useState(false);
 
@@ -254,131 +261,139 @@ export function UserSettingsModal({
                 </Button>
               </div>
 
-              <Accordion
-                type="single"
-                collapsible
-                className="max-w-lg"
-              >
+              <Accordion type="single" collapsible className="max-w-lg">
                 <AccordionItem value="password">
-                  <AccordionTrigger className="cursor-pointer">Change password?</AccordionTrigger>
+                  <AccordionTrigger className="cursor-pointer">
+                    Change password?
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div>
-                          <Label htmlFor="currentPassword" className="text-foreground">
-                            Current Password
-                          </Label>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="currentPassword"
-                            type={showCurrentPassword ? "text" : "password"}
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder="Enter current password"
-                            className="bg-background pr-10"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() =>
-                              setShowCurrentPassword(!showCurrentPassword)
-                            }
-                          >
-                            {showCurrentPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
+                    <div className="space-y-2">
+                      <div>
+                        <Label
+                          htmlFor="currentPassword"
+                          className="text-foreground"
+                        >
+                          Current Password
+                        </Label>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                          className="bg-background pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <Label
+                          htmlFor="newPassword"
+                          className="text-foreground"
+                        >
+                          New Password
+                        </Label>
                       </div>
 
-                      <div className="space-y-2">
-                        <div>
-                          <Label htmlFor="newPassword" className="text-foreground">
-                            New Password
-                          </Label>
-                        </div>
+                      <div className="relative">
+                        <Input
+                          id="newPassword"
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                          className="bg-background pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
 
-                        <div className="relative">
-                          <Input
-                            id="newPassword"
-                            type={showNewPassword ? "text" : "password"}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter new password"
-                            className="bg-background pr-10"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
+                    <div className="space-y-2">
+                      <div>
+                        <Label
+                          htmlFor="confirmPassword"
+                          className="text-foreground"
+                        >
+                          Confirm New Password
+                        </Label>
                       </div>
 
-                      <div className="space-y-2">
-                        <div>
-                          <Label htmlFor="confirmPassword" className="text-foreground">
-                            Confirm New Password
-                          </Label>
-
-                        </div>
-
-                        <div className="relative">
-                          <Input
-                            id="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm new password"
-                            className="bg-background pr-10"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                          className="bg-background pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                       </div>
+                    </div>
 
-                      {passwordError && (
-                        <p className="text-sm text-destructive">{passwordError}</p>
+                    {passwordError && (
+                      <p className="text-sm text-destructive">
+                        {passwordError}
+                      </p>
+                    )}
+
+                    <Button
+                      onClick={handlePasswordChange}
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      {passwordChanged ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Password Changed
+                        </>
+                      ) : (
+                        "Change Password"
                       )}
-
-                      <Button
-                        onClick={handlePasswordChange}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        {passwordChanged ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            Password Changed
-                          </>
-                        ) : (
-                          "Change Password"
-                        )}
-                      </Button>
+                    </Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

@@ -1,39 +1,49 @@
-import React, { useCallback, useMemo, useState } from "react"
-import { Button } from "@/Components/ui/button"
-import { Input } from "@/Components/ui/input"
-import { Label } from "@/Components/ui/label"
-import { Textarea } from "@/Components/ui/textarea"
+import React, { useCallback, useMemo, useState } from "react";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import { Label } from "@/Components/ui/label";
+import { Textarea } from "@/Components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/Components/ui/select"
+} from "@/Components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/Components/ui/dialog"
-import { Calendar, DollarSign, FileText, Tag, Wallet } from "lucide-react"
+} from "@/Components/ui/dialog";
+import { Calendar, DollarSign, FileText, Tag, Wallet } from "lucide-react";
 
-import type { Income as ModelIncome } from "@/Models/Income"
-import { useAuth } from "@/Authorization/AuthContext"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type { Account } from "@/Models/Account"
-import type { Category } from "@/Models/Category"
-import type { AxiosError } from "axios"
+import type { Income as ModelIncome } from "@/Models/Income";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import type { Account } from "@/Models/Account";
+import type { Category } from "@/Models/Category";
+import type { AxiosError } from "axios";
+import { CategoryType } from "@/Enums/enums";
 
-type FormState = Omit<ModelIncome, "date"> & { date: Date }
+type FormState = Omit<ModelIncome, "date"> & { date: Date };
 
 export interface IncomeFormModalProps {
-  row?: ModelIncome | null
-  onSubmit: (data: ModelIncome) => void
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onCancel?: () => void
+  row?: ModelIncome | null;
+  onSubmit: (data: ModelIncome) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCancel?: () => void;
 }
+
+const normalizeDate = (value: unknown) => {
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  return new Date();
+};
 
 export default function IncomeFormModal({
   row,
@@ -42,51 +52,47 @@ export default function IncomeFormModal({
   onOpenChange,
   onCancel,
 }: IncomeFormModalProps) {
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData } = useAuthorizationApi()
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
 
   // Accounts
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false)
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
-    setIsLoadingAccounts(true)
+    setIsLoadingAccounts(true);
     try {
-      const data = await getAllData<Account[]>("api/Account")
-      setAccounts(data)
+      const data = await getAllData<Account[]>("api/Account");
+      setAccounts(data);
     } catch (e: unknown) {
-      const err = e as AxiosError
-      if (err.response?.status !== 401) console.error("Failed to load accounts", err)
+      const err = e as AxiosError;
+      if (err.response?.status !== 401)
+        console.error("Failed to load accounts", err);
     } finally {
-      setIsLoadingAccounts(false)
+      setIsLoadingAccounts(false);
     }
-  }, [getAllData])
+  }, [getAllData]);
 
   // Categories
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
   const fetchCategories = useCallback(async () => {
-    setIsLoadingCategories(true)
+    setIsLoadingCategories(true);
     try {
-      const data = await getAllData<Category[]>("api/Category")
-      setCategories(data)
+      const data = await getAllData<Category[]>("api/Category");
+      const incomeCategories = data.filter(
+        (a) => a.categoryType === CategoryType.Income,
+      );
+      setCategories(incomeCategories);
     } catch (e: unknown) {
-      const err = e as AxiosError
-      if (err.response?.status !== 401) console.error("Failed to load categories", err)
+      const err = e as AxiosError;
+      if (err.response?.status !== 401)
+        console.error("Failed to load categories", err);
     } finally {
-      setIsLoadingCategories(false)
+      setIsLoadingCategories(false);
     }
-  }, [getAllData])
-
-  const normalizeDate = (value: unknown) => {
-    if (value instanceof Date) return value
-    if (typeof value === "string" || typeof value === "number") {
-      const d = new Date(value)
-      return isNaN(d.getTime()) ? new Date() : d
-    }
-    return new Date()
-  }
+  }, [getAllData]);
 
   const initial: FormState = useMemo(
     () => ({
@@ -100,46 +106,54 @@ export default function IncomeFormModal({
       }),
       date: normalizeDate((row as ModelIncome)?.date ?? new Date()),
     }),
-    [row]
-  )
+    [row],
+  );
 
-  const [data, setData] = useState<FormState>(initial)
+  const [data, setData] = useState<FormState>(initial);
 
   React.useEffect(() => {
-    setData(initial)
-    if (!isAuthReady || !accessToken) return
-    if (!isLoadingCategories) fetchCategories()
-    if (!isLoadingAccounts) fetchAccounts()
-  }, [fetchCategories, fetchAccounts, initial, isAuthReady, accessToken])
+    setData(initial);
+    if (!isAuthReady || !accessToken) return;
+    if (!isLoadingCategories) fetchCategories();
+    if (!isLoadingAccounts) fetchAccounts();
+  }, [
+    fetchCategories,
+    fetchAccounts,
+    initial,
+    isAuthReady,
+    accessToken,
+    isLoadingAccounts,
+    isLoadingCategories,
+  ]);
 
   const toNumber = (value: string) => {
-    const n = Number(value)
-    return Number.isFinite(n) ? n : 0
-  }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
 
-  const toDate = (value: string) => new Date(`${value}T00:00:00`)
+  const toDate = (value: string) => new Date(`${value}T00:00:00`);
 
   const toDateInputValue = (d: Date) => {
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, "0")
-    const dd = String(d.getDate()).padStart(2, "0")
-    return `${yyyy}-${mm}-${dd}`
-  }
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
     const payload: ModelIncome = {
       ...(data as ModelIncome),
       date: data.date.toISOString() as unknown as Date,
-    }
-    onSubmit(payload)
-    onOpenChange(false)
-  }
+    };
+    onSubmit(payload);
+    onOpenChange(false);
+  };
 
   const handleCancel = () => {
-    onCancel?.()
-    onOpenChange(false)
-  }
+    onCancel?.();
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,7 +165,10 @@ export default function IncomeFormModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="income-title" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="income-title"
+              className="text-sm font-medium text-foreground"
+            >
               Title
             </Label>
             <div className="relative">
@@ -159,7 +176,9 @@ export default function IncomeFormModal({
               <Input
                 id="income-title"
                 value={data.title}
-                onChange={(e) => setData({ ...data, title: e.target.value } as FormState)}
+                onChange={(e) =>
+                  setData({ ...data, title: e.target.value } as FormState)
+                }
                 placeholder="e.g., Monthly salary"
                 className="pl-10 h-11 border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
@@ -169,7 +188,10 @@ export default function IncomeFormModal({
           {/* Amount + Date */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="income-amount" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="income-amount"
+                className="text-sm font-medium text-foreground"
+              >
                 Amount
               </Label>
               <div className="relative">
@@ -181,7 +203,10 @@ export default function IncomeFormModal({
                   min="0"
                   value={data.amount}
                   onChange={(e) =>
-                    setData({ ...data, amount: toNumber(e.target.value) } as FormState)
+                    setData({
+                      ...data,
+                      amount: toNumber(e.target.value),
+                    } as FormState)
                   }
                   placeholder="0.00"
                   className="pl-10 h-11 border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -190,7 +215,10 @@ export default function IncomeFormModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="income-date" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="income-date"
+                className="text-sm font-medium text-foreground"
+              >
                 Date
               </Label>
               <div className="relative">
@@ -200,7 +228,10 @@ export default function IncomeFormModal({
                   type="date"
                   value={toDateInputValue(data.date)}
                   onChange={(e) =>
-                    setData({ ...data, date: toDate(e.target.value) } as FormState)
+                    setData({
+                      ...data,
+                      date: toDate(e.target.value),
+                    } as FormState)
                   }
                   className="pl-10 h-11 border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
@@ -211,7 +242,10 @@ export default function IncomeFormModal({
           {/* Account + Category */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="income-account" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="income-account"
+                className="text-sm font-medium text-foreground"
+              >
                 Account
               </Label>
               <div className="relative">
@@ -237,7 +271,10 @@ export default function IncomeFormModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="income-category" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="income-category"
+                className="text-sm font-medium text-foreground"
+              >
                 Category
               </Label>
               <div className="relative">
@@ -265,9 +302,14 @@ export default function IncomeFormModal({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="income-description" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="income-description"
+              className="text-sm font-medium text-foreground"
+            >
               Description
-              <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+              <span className="text-muted-foreground font-normal ml-1">
+                (optional)
+              </span>
             </Label>
             <Textarea
               id="income-description"
@@ -300,5 +342,5 @@ export default function IncomeFormModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
