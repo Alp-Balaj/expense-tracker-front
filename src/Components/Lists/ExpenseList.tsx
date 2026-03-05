@@ -1,90 +1,53 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import { expenseColumns, type Expense } from "@/Models/Expense";
-import type { AxiosError } from "axios";
-import ExpenseForm from "../Forms/ExpenseForm";
-import { DataTable } from "../General/DataTable";
+import { useMemo } from "react"
+import { DataTable } from "../General/DataTable"
+import ExpenseForm from "../Forms/ExpenseForm"
+import { buildExpenseColumns, type Expense } from "@/Models/Expense"
+import { useCrudList } from "@/Hooks/useCrudLists"
 
 export default function ExpenseList() {
-  const { accessToken, isAuthReady } = useAuth();
+  const {
+    items: expenses,
+    open,
+    setOpen,
+    editing,
+    startCreate,
+    startEdit,
+    closeForm,
+    submit,
+  } = useCrudList<Expense>({ endpoint: "api/Expense" })
 
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const { getAllData, postData, putData } = useAuthorizationApi();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-
-  const fetchExpenses = useCallback(async () => {
-    try {
-      const data = await getAllData<Expense[]>("api/Expense");
-      setExpenses(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        console.error(err);
-      }
-    }
-  }, [getAllData]);
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const data = await getAllData<Expense[]>("api/Expense");
-        if (!cancelled) setExpenses(data);
-      } catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) console.error(err);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthReady, accessToken, getAllData]);
-
-  const handleSubmit = async (data: Expense) => {
-    if (editingExpense != null) {
-      await putData("api/Expense", data);
-    } else {
-      await postData("api/Expense", data);
-    }
-
-    setEditingExpense(null);
-    setIsFormOpen(false);
-    await fetchExpenses();
-  };
+  const columns = useMemo(
+    () =>
+      buildExpenseColumns({
+        onEdit: (row) => startEdit(row),
+      }),
+    [startEdit]
+  )
 
   return (
     <div className="space-y-4">
       <DataTable
-        columns={expenseColumns}
+        columns={columns}
         data={expenses}
         enableGlobalSearch
         searchPlaceholder="Search expenses..."
         globalSearchKeys={["title", "description", "amount"]}
         toolbar={{
           addLabel: "Add Expense",
-          onAdd: () => setIsFormOpen(true),
+          onAdd: startCreate,
         }}
       />
 
       <ExpenseForm
-        row={editingExpense}
-        onSubmit={handleSubmit}
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingExpense(null);
+        row={editing}
+        onSubmit={submit}
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen)
+          if (!isOpen) closeForm()
         }}
-        onCancel={() => {
-          setIsFormOpen(false);
-          setEditingExpense(null);
-        }}
+        onCancel={closeForm}
       />
     </div>
-  );
+  )
 }

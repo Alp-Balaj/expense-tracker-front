@@ -21,25 +21,36 @@ export type ExpenseFormProps = {
   onCancel?: () => void;
 };
 
-export const expenseColumns = [
-  sortableColumn<Expense>("title", "Title"),
-  currencyColumn<Expense>("amount", "Amount", {
-    locale: "de-DE",
-    currency: "EUR",
-  }),
-  textColumn<Expense>("date", "Date"),
-  textColumn<Expense>("description", "Description"),
-  textColumn<Expense>("accountId", "Account"),
-  textColumn<Expense>("categoryId", "Category"),
-  actionsColumn<Expense>([
-    {
-      label: "Copy Expense ID",
-      onClick: (e) =>
-        navigator.clipboard.writeText(e.id ?? ""),
-    },
-    {
-      label: "Edit",
-      onClick: (e) => console.log(e),
-    },
-  ]),
-]
+export function buildExpenseColumns(handlers?: {
+  onEdit?: (row: Expense) => void
+  onDelete?: (row: Expense) => void
+}) {
+  return [
+    sortableColumn<Expense>("title", "Title"),
+    currencyColumn<Expense>("amount", "Amount", {
+      locale: "de-DE",
+      currency: "EUR",
+    }),
+    textColumn<Expense>("date", "Date"),
+    textColumn<Expense>("description", "Description"),
+    textColumn<Expense>("accountId", "Account"),
+    textColumn<Expense>("categoryId", "Category"),
+    actionsColumn<Expense>([
+      {
+        label: "Copy Expense ID",
+        onClick: (e) => navigator.clipboard.writeText(e.id ?? ""),
+      },
+      {
+        label: "Edit",
+        onClick: (e) => handlers?.onEdit?.(e),
+      },
+      {
+        label: "Delete",
+        onClick: (e) => handlers?.onDelete?.(e),
+      },
+    ]),
+  ]
+}
+
+/** @deprecated Use buildExpenseColumns() for action wiring */
+export const expenseColumns = buildExpenseColumns()
