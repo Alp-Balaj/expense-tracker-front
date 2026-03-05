@@ -31,6 +31,7 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
+import { CategoryType } from "@/Enums/enums";
 
 export interface SavingsGoalFormModalProps {
   row?: SavingGoals | null;
@@ -77,7 +78,10 @@ export default function SavingsGoalFormModal({
   const fetchCategories = useCallback(async () => {
     try {
       const data = await getAllData<Category[]>("api/Category");
-      setCategories(data);
+      const savingCategories = data.filter(
+                    (a) => a.categoryType === CategoryType.Savings,
+                  );
+      setCategories(savingCategories);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) console.error(err);

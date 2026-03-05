@@ -24,6 +24,7 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
+import { CategoryType } from "@/Enums/enums";
 
 type FormState = Omit<ModelExpense, "date"> & { date: Date };
 
@@ -78,7 +79,10 @@ export default function ExpenseFormModal({
     setCategoryLoadError(null);
     try {
       const data = await getAllData<Category[]>("api/Category");
-      setCategories(data);
+      const expenseCategories = data.filter(
+              (a) => a.categoryType === CategoryType.Expense,
+            );
+      setCategories(expenseCategories);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
