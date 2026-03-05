@@ -30,6 +30,7 @@ import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import { usePreferences } from "@/Authorization/UserPreferencesContext";
+import { Spinner } from "../ui/spinner";
 
 interface UserSettings {
   email: string;
@@ -67,34 +68,30 @@ export function UserSettingsModal({
   //#region Currency dropdown
   const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(
-    null,
-  );
+  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
 
   const fetchCurrencies = useCallback(async () => {
     setIsLoadingCurrencies(true);
     setCurrencyLoadError(null);
 
     try {
-      const data = await getAllData<CurrencyDropdown[]>(
-        "api/Currency/Dropdown",
-      );
+      const data = await getAllData<CurrencyDropdown[]>("api/Currency/Dropdown");
       setCurrencies(data);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setCurrencyLoadError("Failed to load currencies.");
-        console.error(currencyLoadError);
+        console.error(e);
       }
     } finally {
       setIsLoadingCurrencies(false);
     }
-  }, [getAllData, currencyLoadError]);
+  }, [getAllData]);
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
-    if (!isLoadingCurrencies) fetchCurrencies();
-  }, [fetchCurrencies, isAuthReady, accessToken, isLoadingCurrencies]);
+    fetchCurrencies();
+  }, [fetchCurrencies, isAuthReady, accessToken]);
 
   // User Settings State
   const [email, setEmail] = useState(initialSettings.email);
@@ -475,6 +472,12 @@ export function UserSettingsModal({
                       <SelectValue placeholder="Select a currency" />
                     </SelectTrigger>
                     <SelectContent>
+                      {isLoadingCurrencies && <Spinner />}
+                      {currencyLoadError && (
+                        <p className="text-sm text-destructive px-4">
+                          {currencyLoadError}
+                        </p>
+                      )}
                       {currencies.map((currency) => (
                         <SelectItem key={currency.id} value={currency.id}>
                           <span className="flex items-center gap-2">

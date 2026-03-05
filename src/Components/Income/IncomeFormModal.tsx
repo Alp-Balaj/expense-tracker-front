@@ -25,6 +25,7 @@ import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { CategoryType } from "@/Enums/enums";
+import { Spinner } from "../ui/spinner";
 
 type FormState = Omit<ModelIncome, "date"> & { date: Date };
 
@@ -113,17 +114,17 @@ export default function IncomeFormModal({
 
   React.useEffect(() => {
     setData(initial);
+
     if (!isAuthReady || !accessToken) return;
-    if (!isLoadingCategories) fetchCategories();
-    if (!isLoadingAccounts) fetchAccounts();
+
+    fetchCategories();
+    fetchAccounts();
   }, [
     fetchCategories,
     fetchAccounts,
     initial,
     isAuthReady,
     accessToken,
-    isLoadingAccounts,
-    isLoadingCategories,
   ]);
 
   const toNumber = (value: string) => {
@@ -260,6 +261,7 @@ export default function IncomeFormModal({
                     <SelectValue placeholder="Select account" />
                   </SelectTrigger>
                   <SelectContent>
+                    {isLoadingAccounts && <Spinner />}
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         {account.name}
@@ -289,6 +291,7 @@ export default function IncomeFormModal({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
+                    {isLoadingCategories && <Spinner />}
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}

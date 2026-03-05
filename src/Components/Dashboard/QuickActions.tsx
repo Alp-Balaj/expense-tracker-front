@@ -32,7 +32,7 @@ const actions = [
   },
   {
     key: "future",
-    label: "Plan Expense",
+    label: "Plan Expense - Coming soon",
     icon: CalendarClock,
     color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     hoverColor: "hover:bg-amber-500/20",

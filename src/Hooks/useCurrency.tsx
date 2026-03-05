@@ -11,7 +11,7 @@ export function useCurrency() {
 
   useEffect(() => {
     const fetchCurrencies = async () => {
-      const data = await getAllData<Currency[]>("api/Currencies");
+      const data = await getAllData<Currency[]>("api/Currency");
       if (data) setCurrenciesFromDb(data);
     };
     void fetchCurrencies();
