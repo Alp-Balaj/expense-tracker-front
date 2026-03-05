@@ -9,77 +9,128 @@ import {
   PieChart,
   Cell,
   Legend,
-} from "recharts";
+} from "recharts"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/Components/ui/card";
+} from "@/Components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/Components/ui/chart";
+} from "@/Components/ui/chart"
+import type { Expense } from "@/Models/Expense"
+import type { Category } from "@/Models/Category"
 
-const expenseTrendData = [
-  { month: "Aug", expenses: 2100, income: 4800 },
-  { month: "Sep", expenses: 2450, income: 5100 },
-  { month: "Oct", expenses: 2200, income: 4950 },
-  { month: "Nov", expenses: 2680, income: 5300 },
-  { month: "Dec", expenses: 3100, income: 5500 },
-  { month: "Jan", expenses: 2848, income: 5240 },
-];
+interface ExpenseChartsProps {
+  expenses: Expense[]
+  categories: Category[]
+}
 
-// Fake data for expense categories
-const expenseCategoryData = [
-  { name: "Housing", value: 1200, fill: "#c96442" },
-  { name: "Food", value: 580, fill: "#d4845f" },
-  { name: "Transport", value: 420, fill: "#e0a57c" },
-  { name: "Utilities", value: 280, fill: "#ecc699" },
-  { name: "Entertainment", value: 220, fill: "#f5d9b3" },
-  { name: "Other", value: 148, fill: "#faecd0" },
-];
+const FALLBACK_COLORS = [
+  "#c96442",
+  "#d4845f",
+  "#e0a57c",
+  "#ecc699",
+  "#f5d9b3",
+  "#faecd0",
+  "#8b5cf6",
+  "#14b8a6",
+]
 
-const lineChartConfig = {
-  expenses: {
-    label: "Expenses",
-    color: "#c96442",
-  },
-  income: {
-    label: "Income",
-    color: "#22c55e",
-  },
-};
+function formatEur(value: number): string {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value)
+}
 
-const pieChartConfig = {
-  Housing: { label: "Housing", color: "#c96442" },
-  Food: { label: "Food", color: "#d4845f" },
-  Transport: { label: "Transport", color: "#e0a57c" },
-  Utilities: { label: "Utilities", color: "#ecc699" },
-  Entertainment: { label: "Entertainment", color: "#f5d9b3" },
-  Other: { label: "Other", color: "#faecd0" },
-};
+export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
+  // Build monthly trend data for the last 6 months
+  const now = new Date()
+  const monthLabels: string[] = []
+  const monthKeys: string[] = []
 
-export function ExpenseCharts() {
-  const total = expenseCategoryData.reduce((sum, item) => sum + item.value, 0);
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    monthLabels.push(d.toLocaleDateString("en-US", { month: "short" }))
+    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`)
+  }
+
+  const trendData = monthLabels.map((label, idx) => {
+    const key = monthKeys[idx]
+    const total = expenses
+      .filter((exp) => {
+        const d = exp.date instanceof Date ? exp.date : new Date(exp.date as string)
+        return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}` === key
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0)
+
+    return { month: label, expenses: total }
+  })
+
+  const lineChartConfig = {
+    expenses: {
+      label: "Expenses",
+      color: "#c96442",
+    },
+  }
+
+  // Build category breakdown for current month
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+
+  const currentMonthExpenses = expenses.filter((exp) => {
+    const d = exp.date instanceof Date ? exp.date : new Date(exp.date as string)
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+  })
+
+  const categoryMap = new Map(categories.map((c) => [c.id, c]))
+
+  const categoryTotals: Record<string, { name: string; value: number; fill: string }> = {}
+  let colorIdx = 0
+  for (const exp of currentMonthExpenses) {
+    const cat = categoryMap.get(exp.categoryId)
+    const catName = cat?.name ?? "Uncategorized"
+    const catColor = cat?.color || FALLBACK_COLORS[colorIdx % FALLBACK_COLORS.length]
+
+    if (!categoryTotals[exp.categoryId]) {
+      categoryTotals[exp.categoryId] = {
+        name: catName,
+        value: 0,
+        fill: catColor,
+      }
+      colorIdx++
+    }
+    categoryTotals[exp.categoryId].value += exp.amount
+  }
+
+  const pieData = Object.values(categoryTotals).sort((a, b) => b.value - a.value)
+  const pieTotal = pieData.reduce((sum, d) => sum + d.value, 0)
+
+  const pieChartConfig: Record<string, { label: string; color: string }> = {}
+  for (const entry of pieData) {
+    pieChartConfig[entry.name] = { label: entry.name, color: entry.fill }
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-5">
-      {/* Line Chart - Takes 3 columns */}
+      {/* Line Chart - 3 columns */}
       <Card className="bg-card border-border lg:col-span-3">
         <CardHeader>
           <CardTitle className="text-foreground">Expense Trends</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Monthly expenses vs income over the past 6 months
+            Monthly expenses over the past 6 months
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={lineChartConfig} className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={expenseTrendData}
+                data={trendData}
                 margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -92,7 +143,7 @@ export function ExpenseCharts() {
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => formatEur(value)}
                   className="text-muted-foreground"
                 />
                 <ChartTooltip
@@ -100,19 +151,11 @@ export function ExpenseCharts() {
                     <ChartTooltipContent
                       formatter={(value) => (
                         <span className="font-medium">
-                          ${Number(value).toLocaleString()}
+                          {formatEur(Number(value))}
                         </span>
                       )}
                     />
                   }
-                />
-                <Line
-                  type="monotone"
-                  dataKey="income"
-                  stroke="var(--color-income)"
-                  strokeWidth={2}
-                  dot={{ fill: "var(--color-income)", strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
                 />
                 <Line
                   type="monotone"
@@ -128,7 +171,7 @@ export function ExpenseCharts() {
         </CardContent>
       </Card>
 
-      {/* Pie Chart - Takes 2 columns */}
+      {/* Pie Chart - 2 columns */}
       <Card className="bg-card border-border lg:col-span-2">
         <CardHeader>
           <CardTitle className="text-foreground">Expenses by Category</CardTitle>
@@ -137,49 +180,57 @@ export function ExpenseCharts() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={pieChartConfig} className="h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => (
-                        <span className="font-medium">
-                          ${Number(value).toLocaleString()} (
-                          {((Number(value) / total) * 100).toFixed(1)}%)
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <Pie
-                  data={expenseCategoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="value"
-                  nameKey="name"
-                >
-                  {expenseCategoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Legend
-                  layout="vertical"
-                  verticalAlign="middle"
-                  align="right"
-                  wrapperStyle={{ paddingLeft: "20px" }}
-                  formatter={(value) => (
-                    <span className="text-xs text-muted-foreground">{value}</span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          {pieData.length === 0 ? (
+            <div className="flex items-center justify-center h-[280px]">
+              <p className="text-sm text-muted-foreground">
+                No expense data for this month.
+              </p>
+            </div>
+          ) : (
+            <ChartContainer config={pieChartConfig} className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value) => (
+                          <span className="font-medium">
+                            {formatEur(Number(value))} (
+                            {((Number(value) / pieTotal) * 100).toFixed(1)}%)
+                          </span>
+                        )}
+                      />
+                    }
+                  />
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Legend
+                    layout="vertical"
+                    verticalAlign="middle"
+                    align="right"
+                    wrapperStyle={{ paddingLeft: "20px" }}
+                    formatter={(value) => (
+                      <span className="text-xs text-muted-foreground">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

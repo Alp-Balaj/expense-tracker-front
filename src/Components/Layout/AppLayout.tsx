@@ -1,9 +1,11 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import {
+  Home,
   Receipt,
   Wallet,
   TrendingUp,
+  TrendingDown,
   Tags,
   PiggyBank,
   Paperclip,
@@ -15,7 +17,7 @@ export default function AppLayout() {
 
   const menuItems = [
     {
-      icon: Receipt,
+      icon: Home,
       label: "Home",
       isActive: location.pathname === "/",
       onClick: () => navigate("/"),
@@ -27,23 +29,33 @@ export default function AppLayout() {
       onClick: () => navigate("/account"),
     },
     {
+      icon: TrendingDown,
+      label: "Expenses",
+      isActive: location.pathname.startsWith("/expenses"),
+      onClick: () => navigate("/expenses"),
+    },
+    {
       icon: TrendingUp,
       label: "Income",
+      isActive: location.pathname.startsWith("/income"),
       onClick: () => navigate("/income"),
     },
     {
       icon: Tags,
       label: "Categories & Currencies",
+      isActive: location.pathname.startsWith("/categoryAndCurrency"),
       onClick: () => navigate("/categoryAndCurrency"),
     },
     {
       icon: PiggyBank,
       label: "Savings",
+      isActive: location.pathname.startsWith("/savings"),
       onClick: () => navigate("/savings"),
     },
     {
       icon: Paperclip,
       label: "Reports",
+      isActive: location.pathname.startsWith("/reports"),
       onClick: () => navigate("/reports"),
     },
   ];
