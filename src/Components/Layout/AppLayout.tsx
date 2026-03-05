@@ -2,7 +2,6 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import {
   Home,
-  Receipt,
   Wallet,
   TrendingUp,
   TrendingDown,
