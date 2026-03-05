@@ -20,7 +20,7 @@ import {
   HelpCircle,
   DollarSign,
 } from "lucide-react";
-import { UserSettingsModal } from "../UserPreferences/UserPreferences";
+import { UserSettingsModal } from "../UserPreferences/UserSettingsModal";
 
 export type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
@@ -100,25 +100,7 @@ export function AppSidebar({
           </div>
 
           <div className="flex gap-1">
-            <UserSettingsModal
-              initialSettings={{
-                email: "john.doe@example.com",
-                username: "johndoe",
-              }}
-              initialPreferences={{
-                theme: "light",
-                baseCurrency: "USD",
-              }}
-              onSettingsSave={(settings) =>
-                console.log("Settings saved:", settings)
-              }
-              onPreferencesSave={(preferences) =>
-                console.log("Preferences saved:", preferences)
-              }
-              onPasswordChange={(current, newPass) =>
-                console.log("Password change requested",current,newPass)
-              }
-            />
+            <UserSettingsModal/>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Help</span>
