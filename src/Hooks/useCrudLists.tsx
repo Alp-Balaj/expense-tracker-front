@@ -14,11 +14,13 @@ type EntityWithId = { id: string | null };
 
 export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOptions<T>) {
   const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData } = useAuthorizationApi();
+  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
 
   const [items, setItems] = useState<T[]>([]);
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<T | null>(null);
+  const [deleting, setDeleting] = useState<T | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -60,10 +62,20 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
     setOpen(true);
   };
 
+  const startDelete = (row: T) => {
+    setDeleting(row);
+    setDialogOpen(true);
+  }
+
   const closeForm = () => {
     setOpen(false);
     setEditing(null);
   };
+
+  const closeModal = () => {
+    setDialogOpen(false);
+    setDeleting(null);
+  }
 
   const submit = async (data: T) => {
     const mode: CrudMode = editing ? "update" : "create";
@@ -75,6 +87,15 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
     await fetchAll();
   };
 
+  const confirmDelete = async () => {
+    if (!deleting) return;
+
+    await deleteData(endpoint, deleting);
+    setDialogOpen(false);
+    setDeleting(null);
+    await fetchAll();
+  }
+
   return {
     items,
     setItems,
@@ -82,12 +103,19 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
 
     open,
     setOpen,
+    dialogOpen,
+    setDialogOpen,
     editing,
     setEditing,
+    deleting,
+    setDeleting,
 
     startCreate,
     startEdit,
+    startDelete,
     closeForm,
+    closeModal,
     submit,
+    confirmDelete
   };
 }
