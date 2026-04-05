@@ -24,26 +24,6 @@ export default function IncomePage() {
   const [incomes, setIncomes] = useState<Income[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
-  // const fetchIncomes = useCallback(async () => {
-  //   try {
-  //     const data = await getAllData<Income[]>("api/Income")
-  //     setIncomes(data)
-  //   } catch (e: unknown) {
-  //     const err = e as AxiosError
-  //     if (err.response?.status !== 401) console.error(err)
-  //   }
-  // }, [getAllData])
-
-  // const fetchCategories = useCallback(async () => {
-  //   try {
-  //     const data = await getAllData<Category[]>("api/Category")
-  //     setCategories(data)
-  //   } catch (e: unknown) {
-  //     const err = e as AxiosError
-  //     if (err.response?.status !== 401) console.error(err)
-  //   }
-  // }, [getAllData])
-
   useEffect(() => {
     if (!isAuthReady || !accessToken) return
 

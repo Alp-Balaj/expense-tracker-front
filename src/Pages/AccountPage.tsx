@@ -26,21 +26,18 @@ export default function AccountPage() {
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-  const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     setIsLoadingAccounts(true);
-    setAccountLoadError(null);
     try {
       const data = await getAllData<Account[]>("api/Account");
       setAccounts(data);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
-        setAccountLoadError("Failed to load accounts.");
-        console.error(accountLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingAccounts(false);
@@ -57,7 +54,6 @@ export default function AccountPage() {
           const err = e as AxiosError;
           if (err.response?.status !== 401) {
             console.error(err);
-            setAccountLoadError("Failed to add account.");
           }
         } finally {
           setIsLoadingAccounts(false);
@@ -70,7 +66,6 @@ export default function AccountPage() {
           const err = e as AxiosError;
           if (err.response?.status !== 401) {
             console.error(err);
-            setAccountLoadError("Failed to edit account.");
           }
         } finally {
           setIsLoadingAccounts(false);
@@ -106,10 +101,7 @@ export default function AccountPage() {
     setDeletingAccount(null);
   };
 
-  const handleViewDetails = (account: Account) => {
-    // In production, this would navigate to a details page or open a details modal
-    console.log("View details for:", account.name);
-  };
+  const handleViewDetails = (_account: Account) => {};
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;

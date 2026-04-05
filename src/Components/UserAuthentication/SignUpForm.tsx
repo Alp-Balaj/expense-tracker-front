@@ -78,9 +78,8 @@ export function SignUpForm({
 
       await signup(payload);
       navigate("/", { replace: true });
-    } catch (error) {
+    } catch {
       setServerError("Registering user failed");
-      console.error("Registering user failed:", error);
     }
   };
 
@@ -89,7 +88,7 @@ export function SignUpForm({
   const password = watch("password");
 
   return (
-    <div style={{minWidth: '400px'}} className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 min-w-[400px]", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
@@ -186,7 +185,7 @@ export function SignUpForm({
               )}
 
               <div className="pt-2">
-                <Button style={{width: '100%'}} type="submit" disabled={isSubmitting}>
+                <Button className="w-full" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Spinner />

@@ -52,5 +52,3 @@ export function buildExpenseColumns(handlers?: {
   ]
 }
 
-/** @deprecated Use buildExpenseColumns() for action wiring */
-export const expenseColumns = buildExpenseColumns()

@@ -1,25 +1,14 @@
-import { AxiosError } from "axios";
 import { api } from "./api";
 import type { LoginRequest, SignUpRequest, AuthResponse } from "../Models/UserAuth";
 
 export async function loginApi(data: LoginRequest): Promise<AuthResponse> {
-  try {
-    const response = await api.post<AuthResponse>("/api/User/login", data);
-    return response.data;
-  } catch (error) {
-    console.error("Login failed:", error as AxiosError);
-    throw error;
-  }
+  const response = await api.post<AuthResponse>("/api/User/login", data);
+  return response.data;
 }
 
 export async function signupApi(data: SignUpRequest): Promise<AuthResponse> {
-  try {
-    const response = await api.post<AuthResponse>("/api/User/signup", data);
-    return response.data;
-  } catch (error) {
-    console.error("Registering user failed:", error as AxiosError);
-    throw error;
-  }
+  const response = await api.post<AuthResponse>("/api/User/signup", data);
+  return response.data;
 }
 
 export async function checkLoginApi(token: string | null): Promise<boolean> {

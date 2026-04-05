@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
-import { useAuth } from "../../Authorization/AuthContext.js";
-import SavingForm from "../Forms/SavingForm.tsx";
-import type { Saving } from "../../Models/Saving.tsx";
+import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi";
+import { useAuth } from "../../Authorization/AuthContext";
+import SavingForm from "../Forms/SavingForm";
+import type { Saving } from "../../Models/Saving";
 import type { AxiosError } from "axios";
-import { Button } from "../ui/button.tsx";
+import { Button } from "../ui/button";
 
 function SavingList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -29,7 +29,6 @@ function SavingList() {
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchSaving();
-        return () => {};
     }, [fetchSaving, isAuthReady, accessToken]);
 
     const addSaving = () => {
@@ -37,8 +36,8 @@ function SavingList() {
         setIsFormOpen(true);
     };
 
-    const editSaving = (Saving: Saving) => {
-        setEditingSaving(Saving);
+    const editSaving = (saving: Saving) => {
+        setEditingSaving(saving);
         setIsFormOpen(true);
     };
 
@@ -55,7 +54,7 @@ function SavingList() {
     };
 
     return (
-        <div style={{backgroundColor: '#fff'}}>
+        <div className="bg-white">
             <h2>Savings</h2> <Button onClick={addSaving}>Add Saving</Button>
             <ul>
                 {Array.isArray(savings) && savings.map(saving => (

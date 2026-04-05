@@ -5,7 +5,6 @@ import { SavingsHeroCard } from "@/Components/Saving/SavingsHeroCard"
 import { SavingsAchievementCard } from "@/Components/Saving/SavingsAchievementCard"
 import { SavingsGoalGrid } from "@/Components/Saving/SavingsGoalGrid"
 import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal"
-// import { useAuth } from "@/Authorization/AuthContext"
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
 import type {
   SavingGoals,
@@ -14,100 +13,6 @@ import type {
 } from "@/Models/SavingGoals"
 import { useAuth } from "@/Authorization/AuthContext"
 import type { AxiosError } from "axios"
-// import type { AxiosError } from "axios"
-
-// -------------------------------------------------------------------
-// Local demo data used when the API is not yet wired up.
-// Replace with real API calls once the backend endpoints exist.
-// -------------------------------------------------------------------
-
-// const DEMO_GOALS: SavingGoals[] = [
-//   {
-//     id: "demo-1",
-//     title: "Emergency Fund",
-//     targetAmount: 10000,
-//     savedAmount: 5000,
-//     deadline: new Date(2026, 11, 31),
-//     description: "6 months of living expenses",
-//     accountId: "",
-//     categoryId: "",
-//     contributions: [
-//       {
-//         id: "c1",
-//         goalId: "demo-1",
-//         amount: 2000,
-//         date: new Date(2026, 0, 15),
-//         note: "January deposit",
-//       },
-//       {
-//         id: "c2",
-//         goalId: "demo-1",
-//         amount: 1500,
-//         date: new Date(2025, 11, 1),
-//         note: "December deposit",
-//       },
-//       {
-//         id: "c3",
-//         goalId: "demo-1",
-//         amount: 1500,
-//         date: new Date(2025, 10, 1),
-//         note: "November deposit",
-//       },
-//     ],
-//   },
-//   {
-//     id: "demo-2",
-//     title: "Vacation to Japan",
-//     targetAmount: 4000,
-//     savedAmount: 4000,
-//     deadline: new Date(2026, 5, 15),
-//     description: "Two-week trip in summer",
-//     accountId: "",
-//     categoryId: "",
-//     contributions: [
-//       {
-//         id: "c4",
-//         goalId: "demo-2",
-//         amount: 2000,
-//         date: new Date(2026, 0, 1),
-//         note: "Final deposit",
-//       },
-//       {
-//         id: "c5",
-//         goalId: "demo-2",
-//         amount: 2000,
-//         date: new Date(2025, 9, 1),
-//         note: "Initial deposit",
-//       },
-//     ],
-//   },
-//   {
-//     id: "demo-3",
-//     title: "New Laptop",
-//     targetAmount: 2500,
-//     savedAmount: 800,
-//     deadline: new Date(2026, 8, 1),
-//     description: "MacBook Pro for work",
-//     accountId: "",
-//     categoryId: "",
-//     contributions: [
-//       {
-//         id: "c6",
-//         goalId: "demo-3",
-//         amount: 500,
-//         date: new Date(2026, 1, 10),
-//         note: "February savings",
-//       },
-//       {
-//         id: "c7",
-//         goalId: "demo-3",
-//         amount: 300,
-//         date: new Date(2026, 0, 10),
-//         note: "January savings",
-//       },
-//     ],
-//   },
-// ]
 
 function SavingPage() {
   const { accessToken, isAuthReady } = useAuth()
@@ -154,7 +59,6 @@ function SavingPage() {
       } else {
         await postData("api/SavingGoal", data)
       }
-    //   await fetchGoals()
     } catch {
       if (editingGoal) {
         setGoals((prev) =>
@@ -181,7 +85,6 @@ function SavingPage() {
   const handleDeleteGoal = async (goal: SavingGoals) => {
     try {
       await deleteData("api/SavingsGoal", goal as SavingGoals & { id: string })
-    //   await fetchGoals()
     } catch {
       setGoals((prev) => prev.filter((g) => g.id !== goal.id))
     }

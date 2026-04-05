@@ -52,8 +52,6 @@ export function buildIncomeColumns(handlers?: {
   ]
 }
 
-/** @deprecated Use buildIncomeColumns() for action wiring */
-export const incomeColumns = buildIncomeColumns()
 
 export type IncomeFrequency = "weekly" | "biweekly" | "monthly" | "yearly"
 

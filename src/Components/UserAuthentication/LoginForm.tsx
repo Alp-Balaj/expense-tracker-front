@@ -59,16 +59,15 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
     try {
       await login(formData)
       navigate("/", { replace: true })
-    } catch (error) {
+    } catch {
       setServerError("Login failed")
-      console.error("Login failed:", error)
     }
   }
 
   if (accessToken) return <Navigate to="/" replace />
 
   return (
-    <div style={{minWidth: '400px'}} className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 min-w-[400px]", className)} {...props}>
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
