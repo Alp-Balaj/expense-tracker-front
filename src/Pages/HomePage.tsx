@@ -10,7 +10,6 @@ import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import ExpenseFormModal from "@/Components/Forms/ExpenseForm";
 import IncomeFormModal from "@/Components/Income/IncomeFormModal";
 import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal";
-// import FutureExpenseForm from "@/Components/Forms/FutureExpenseForm";
 import { LayoutDashboard } from "lucide-react";
 import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
@@ -36,7 +35,6 @@ export default function HomePage() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [savingsOpen, setSavingsOpen] = useState(false);
-  // const [futureExpenseOpen, setFutureExpenseOpen] = useState(false);
 
   // ── Fetch helpers ───────────────────────────────────────────
   const fetchAll = useCallback(async () => {
@@ -105,16 +103,6 @@ export default function HomePage() {
     }
   };
 
-  // const handleFutureExpenseSubmit = async (data: FutureExpense) => {
-  //   try {
-  //     await postData("api/FutureExpense", data);
-  //     setFutureExpenseOpen(false);
-  //     await fetchAll();
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // };
-
   // #endregion
   return (
     <div className="min-h-screen bg-background">
@@ -124,21 +112,23 @@ export default function HomePage() {
       />
 
       <main className="p-6 space-y-6">
-        {/* Quick Actions */}
-        <QuickActions
-          onAddExpense={() => setExpenseOpen(true)}
-          onAddIncome={() => setIncomeOpen(true)}
-          onAddSavingsGoal={() => setSavingsOpen(true)}
-          onAddFutureExpense={() => (0)}
-        />
-
-        {/* Balance Overview Cards */}
-        <BalanceOverview
-          accounts={accounts}
-          expenses={expenses}
-          incomes={incomes}
-          isLoading={isLoading}
-        />
+        {/* Quick Actions + Balance Overview */}
+        <div className="grid gap-4 lg:grid-cols-5 items-stretch">
+          <QuickActions
+            onAddExpense={() => setExpenseOpen(true)}
+            onAddIncome={() => setIncomeOpen(true)}
+            onAddSavingsGoal={() => setSavingsOpen(true)}
+            onAddFutureExpense={() => 0}
+          />
+          <div className="lg:col-span-4 h-full">
+            <BalanceOverview
+              accounts={accounts}
+              expenses={expenses}
+              incomes={incomes}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
 
         {/* Main content: Activity + Sidebar */}
         <div className="grid gap-6 lg:grid-cols-5">
@@ -185,12 +175,6 @@ export default function HomePage() {
         onSubmit={handleSavingsSubmit}
         onCancel={() => setSavingsOpen(false)}
       />
-
-      {/* <FutureExpenseForm
-        open={futureExpenseOpen}
-        onSubmit={handleFutureExpenseSubmit}
-        onCancel={() => setIncomeOpen(false)}
-      /> */}
     </div>
   );
 }

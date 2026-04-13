@@ -100,9 +100,9 @@ export function BalanceOverview({
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 h-full">
         {skeletonItems.map((id) => (
-          <Card key={id} className="bg-card border-border animate-pulse">
+          <Card key={id} className="bg-card border-border animate-pulse h-full">
             <CardContent className="pt-6">
               <div className="h-4 w-24 rounded bg-muted mb-3" />
               <div className="h-7 w-32 rounded bg-muted" />
@@ -114,9 +114,9 @@ export function BalanceOverview({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 h-full">
       {cards.map((card) => (
-        <Card key={card.title} className="bg-card border-border">
+        <Card key={card.title} className="bg-card border-border h-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {card.title}

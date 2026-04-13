@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi.tsx";
-import { useAuth } from "../../Authorization/AuthContext.js";
-import FutureExpenseForm from "../Forms/FutureExpenseForm.js";
-import type { FutureExpense } from "../../Models/FutureExpense.tsx";
+import { useAuthorizationApi } from "../../Hooks/useAuthorizationApi";
+import { useAuth } from "../../Authorization/AuthContext";
+import FutureExpenseForm from "../Forms/FutureExpenseForm";
+import type { FutureExpense } from "../../Models/FutureExpense";
 import type { AxiosError } from "axios";
-import { Button } from "../ui/button.tsx";
+import { Button } from "../ui/button";
 
 function FutureExpenseList() {
   const { accessToken, isAuthReady } = useAuth();
@@ -29,7 +29,6 @@ function FutureExpenseList() {
     useEffect(() => {
         if (!isAuthReady || !accessToken) return;
         fetchFutureExpense();
-        return () => {};
     }, [fetchFutureExpense, isAuthReady, accessToken]);
 
     const addFutureExpense = () => {
@@ -44,10 +43,8 @@ function FutureExpenseList() {
 
     const handleSubmit = async (data: FutureExpense) => {
         if (editingFutureExpense != null) {
-            console.log("UPDATE", data);
             await putData('api/FutureExpense', data);
         } else {
-            console.log("CREATE", data);
             await postData('api/FutureExpense', data);
         }
 
@@ -57,7 +54,7 @@ function FutureExpenseList() {
     };
 
     return (
-        <div style={{backgroundColor: '#fff'}}>
+        <div className="bg-white">
             <h2>Future Expenses</h2> <Button onClick={addFutureExpense}>Add Future Expense</Button>
             <ul>
                 {Array.isArray(futureExpense) && futureExpense.map(futureExpense => (

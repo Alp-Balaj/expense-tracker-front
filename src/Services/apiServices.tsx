@@ -1,8 +1,5 @@
 import { api } from "./api";
 
-export const getDataApi = async <T = unknown>(url: string): Promise<T> =>
-  (await api.get<T>(url)).data;
-
 export const getAllDataApi = async <T = unknown>(url: string): Promise<T> =>
   (await api.get<T>(url)).data;
 

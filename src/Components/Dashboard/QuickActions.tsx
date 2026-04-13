@@ -1,4 +1,10 @@
+import { Card, CardContent } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/Components/ui/tooltip";
 import { Receipt, TrendingUp, PiggyBank, CalendarClock } from "lucide-react";
 
 export interface QuickActionsProps {
@@ -53,24 +59,29 @@ export function QuickActions({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {actions.map((action) => (
-        <Button
-          key={action.key}
-          variant="outline"
-          onClick={handlers[action.key]}
-          className={`flex h-auto flex-col items-center gap-2 border-border py-5 ${action.hoverColor} transition-colors`}
-        >
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.color}`}
-          >
-            <action.icon className="h-5 w-5" />
-          </div>
-          <span className="text-xs font-medium text-foreground">
-            {action.label}
-          </span>
-        </Button>
-      ))}
-    </div>
+    <Card className="bg-card border-border h-full">
+      <CardContent className="h-full">
+        <div className="grid grid-cols-2 gap-3 h-full">
+          {actions.map((action) => (
+            <Tooltip key={action.key}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={handlers[action.key]}
+                  className={`flex h-full w-full items-center justify-center border-border ${action.hoverColor} transition-colors cursor-pointer`}
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.color}`}
+                  >
+                    <action.icon className="h-5 w-5" />
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{action.label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
