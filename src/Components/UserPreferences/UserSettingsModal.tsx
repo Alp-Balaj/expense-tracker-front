@@ -34,7 +34,11 @@ export function UserSettingsModal() {
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
     const fetchUserData = async () => {
-      const user = await getAllData<UserSettings>("/api/User");
+      // const user = await getAllData<UserSettings>("/api/User");
+      const user = {
+        email: "alpbalaj1203@gmail.com",
+        username: "AlpBalaj"
+      };
       setUserSettings(user);
       const preferences = await getAllData<UserPreferences>("/api/UserPreferences");
       setUserPreferences(preferences);
