@@ -24,19 +24,13 @@ import {
 import type { SavingGoals, SavingContributions } from "@/Models/SavingGoals"
 import { SavingsGoalProgressRing } from "./SavingsGoalProgressRing"
 import SavingContributionsModal from "./SavingContributionsModal"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface SavingsGoalCardProps {
   goal: SavingGoals
   onEdit: (goal: SavingGoals) => void
   onDelete: (goal: SavingGoals) => void
   onAddContribution: (goalId: string, contribution: SavingContributions) => void
-}
-
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
 }
 
 function formatDate(d: Date): string {
@@ -55,6 +49,7 @@ export function SavingsGoalCard({
   onAddContribution,
 }: SavingsGoalCardProps) {
   const [contribOpen, setContribOpen] = useState(false)
+  const { format, userCurrencyCode } = useCurrency()
   
   const percentage =
     goal.targetAmount > 0
@@ -158,10 +153,10 @@ export function SavingsGoalCard({
               <div>
                 <p className="text-xs text-muted-foreground">You have reached</p>
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {formatEur(goal.savedAmount)}
+                  {format(goal.savedAmount, userCurrencyCode)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  of your {formatEur(goal.targetAmount)} goal
+                  of your {format(goal.targetAmount, userCurrencyCode)} goal
                 </p>
               </div>
 
@@ -170,7 +165,7 @@ export function SavingsGoalCard({
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Remaining</span>
                 <span className="font-medium text-foreground">
-                  {formatEur(remaining)}
+                  {format(remaining, userCurrencyCode)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -233,7 +228,7 @@ export function SavingsGoalCard({
                         )}
                       </div>
                       <span className="text-xs font-semibold text-green-600 dark:text-green-400 shrink-0">
-                        + {formatEur(c.amount)}
+                        + {format(c.amount, userCurrencyCode)}
                       </span>
                     </div>
                   )

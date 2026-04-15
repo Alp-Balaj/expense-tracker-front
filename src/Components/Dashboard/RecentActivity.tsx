@@ -14,6 +14,7 @@ import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/Components/ui/button";
+import { useCurrency } from "@/Hooks/useCurrency";
 
 type UnifiedEntry = {
   id: string;
@@ -31,13 +32,6 @@ interface RecentActivityProps {
   accounts: Account[];
   categories: Category[];
   isLoading: boolean;
-}
-
-function formatEur(amount: number) {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
 }
 
 function formatDate(date: Date) {
@@ -86,6 +80,7 @@ export function RecentActivity({
   isLoading,
 }: RecentActivityProps) {
   const navigate = useNavigate();
+  const { format, userCurrencyCode } = useCurrency();
 
   const accountMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -236,7 +231,7 @@ export function RecentActivity({
                     className={`text-sm font-semibold tabular-nums ${colors.text}`}
                   >
                     {colors.sign}
-                    {formatEur(entry.amount)}
+                    {format(entry.amount, userCurrencyCode)}
                   </span>
                 </div>
               </div>

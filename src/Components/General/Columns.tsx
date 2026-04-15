@@ -55,10 +55,11 @@ export function currencyColumn<T>(
   header: string,
   options: {
     locale?: string
-    currency: string
+    currency?: string
+    formatter?: (value: number) => string
   }
 ): ColumnDef<T> {
-  const { locale = "en-US", currency } = options
+  const { locale = "en-US", currency = "EUR", formatter } = options
 
   return {
     accessorKey,
@@ -77,10 +78,12 @@ export function currencyColumn<T>(
       const raw = row.getValue(accessorKey)
       const value = typeof raw === "number" ? raw : Number(raw)
 
-      const formatted = new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-      }).format(value)
+      const formatted = formatter
+        ? formatter(value)
+        : new Intl.NumberFormat(locale, {
+            style: "currency",
+            currency,
+          }).format(value)
 
       return <div className="text-left font-medium">{formatted}</div>
     },

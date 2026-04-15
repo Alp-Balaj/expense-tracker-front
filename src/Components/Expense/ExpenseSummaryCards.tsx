@@ -1,19 +1,14 @@
 import { TrendingDown, Wallet, Calendar, DollarSign } from "lucide-react"
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards"
 import type { Expense } from "@/Models/Expense"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface ExpenseSummaryCardsProps {
   expenses: Expense[]
 }
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
-}
-
 export function ExpenseSummaryCards({ expenses }: ExpenseSummaryCardsProps) {
+  const { format, userCurrencyCode } = useCurrency()
   const now = new Date()
   const currentMonth = now.getMonth()
   const currentYear = now.getFullYear()
@@ -63,7 +58,7 @@ export function ExpenseSummaryCards({ expenses }: ExpenseSummaryCardsProps) {
   const cards = [
     {
       title: "Monthly Expenses",
-      value: formatEur(currentTotal),
+      value: format(currentTotal, userCurrencyCode),
       change: `${changePrefix}${percentChange}%`,
       changeType,
       icon: TrendingDown,
@@ -77,14 +72,14 @@ export function ExpenseSummaryCards({ expenses }: ExpenseSummaryCardsProps) {
     },
     {
       title: "Avg. per Entry",
-      value: formatEur(avgPerEntry),
+      value: format(avgPerEntry, userCurrencyCode),
       change: `from ${entryCount} entries`,
       changeType: "neutral" as const,
       icon: Wallet,
     },
     {
       title: "Year-to-Date",
-      value: formatEur(ytdTotal),
+      value: format(ytdTotal, userCurrencyCode),
       change: `${currentYear} total`,
       changeType: "neutral" as const,
       icon: DollarSign,

@@ -29,14 +29,14 @@ export function buildExpenseColumns(handlers?: {
   onDelete?: (row: Expense) => void
   accounts?: Account[]
   categories?: Category[]
+  formatter?: (value: number) => string
 }) {
-  const { onEdit, onDelete, accounts = [], categories = [] } = handlers ?? {}
+  const { onEdit, onDelete, accounts = [], categories = [], formatter } = handlers ?? {}
 
   return [
     sortableColumn<Expense>("title", "Title"),
     currencyColumn<Expense>("amount", "Amount", {
-      locale: "de-DE",
-      currency: "EUR",
+      formatter,
     }),
     textColumn<Expense>("date", "Date"),
     textColumn<Expense>("description", "Description"),

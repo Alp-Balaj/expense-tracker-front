@@ -1,19 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Star, Target, CheckCircle, Wallet, PiggyBank } from "lucide-react"
 import type { SavingGoals } from "@/Models/SavingGoals"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface SavingsAchievementCardProps {
   goals: SavingGoals[]
 }
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
-}
-
 export function SavingsAchievementCard({ goals }: SavingsAchievementCardProps) {
+  const { format, userCurrencyCode } = useCurrency()
   const totalGoals = goals.length
   const completed = goals.filter(
     (g) => g.savedAmount >= g.targetAmount
@@ -34,12 +29,12 @@ export function SavingsAchievementCard({ goals }: SavingsAchievementCardProps) {
     },
     {
       label: "Total Target",
-      value: formatEur(totalTarget),
+      value: format(totalTarget, userCurrencyCode),
       icon: Wallet,
     },
     {
       label: "Total Saved",
-      value: formatEur(totalSaved),
+      value: format(totalSaved, userCurrencyCode),
       icon: PiggyBank,
     },
   ]
