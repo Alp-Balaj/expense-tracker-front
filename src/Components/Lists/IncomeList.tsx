@@ -1,9 +1,12 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { DataTable } from "../General/DataTable"
 import IncomeFormModal from "../Income/IncomeFormModal"
 import { buildIncomeColumns, type Income } from "@/Models/Income"
 import { useCrudList } from "@/Hooks/useCrudLists"
 import ConfirmDelete from "../General/ConfirmDelete"
+import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
+import type { Account } from "@/Models/Account"
+import type { Category } from "@/Models/Category"
 
 export default function IncomeList() {
   const {
@@ -23,13 +26,24 @@ export default function IncomeList() {
     confirmDelete
   } = useCrudList<Income>({ endpoint: "api/Income" })
 
+  const { getAllData } = useAuthorizationApi()
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    getAllData<Account[]>("api/Account").then(setAccounts)
+    getAllData<Category[]>("api/Category").then(setCategories)
+  }, [getAllData])
+
   const columns = useMemo(
     () =>
       buildIncomeColumns({
         onEdit: (row) => startEdit(row),
         onDelete: (row) => startDelete(row),
+        accounts,
+        categories,
       }),
-    [startEdit]
+    [startEdit, accounts, categories]
   )
 
   return (
