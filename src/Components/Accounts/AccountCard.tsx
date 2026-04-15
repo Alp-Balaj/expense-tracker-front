@@ -20,11 +20,6 @@ import {
 } from "lucide-react";
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
-import { useCallback, useEffect, useState } from "react";
-import type { Currency } from "@/Models/Currency";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import { useAuth } from "@/Authorization/AuthContext";
-import type { AxiosError } from "axios";
 
 interface AccountCardProps {
   account: Account;
@@ -95,7 +90,7 @@ export function AccountCard({
 }: AccountCardProps) {
   const colorStyle = amountTypeColors[account.amountType];
 
-  const { format, convert, userCurrencyCode } = useCurrency();
+  const { format } = useCurrency();
 
   return (
     <Card

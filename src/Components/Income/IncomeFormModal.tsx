@@ -120,6 +120,7 @@ export default function IncomeFormModal({
     fetchCategories();
     fetchAccounts();
   }, [
+    open,
     fetchCategories,
     fetchAccounts,
     initial,

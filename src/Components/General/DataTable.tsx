@@ -12,7 +12,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/Components/ui/table";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Filter, Plus, Search } from "lucide-react";
@@ -38,29 +45,45 @@ interface DataTableProps<TData, TValue> {
 }
 
 const makeGlobalIncludes = <TData,>(
-  keys?: (keyof TData)[]
+  keys?: (keyof TData)[],
 ): FilterFn<TData> => {
   return (row, _columnId, filterValue) => {
-    const q = String(filterValue ?? "").trim().toLowerCase();
+    const q = String(filterValue ?? "")
+      .trim()
+      .toLowerCase();
     if (!q) return true;
 
     const values = keys?.length
       ? keys.map((k) => row.original?.[k])
       : Object.values(row.original as Record<string, unknown>);
 
-    return values.some((v) => String(v ?? "").toLowerCase().includes(q));
+    return values.some((v) =>
+      String(v ?? "")
+        .toLowerCase()
+        .includes(q),
+    );
   };
 };
 
-export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = true, searchPlaceholder = "Search...", globalSearchKeys, toolbar }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([{ id: "date", desc: false }]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  enableGlobalSearch = true,
+  searchPlaceholder = "Search...",
+  globalSearchKeys,
+  toolbar,
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "date", desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
 
   // const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
   // const [accountFilter, setAccountFilter] = React.useState<string>("all");
-
 
   const table = useReactTable({
     data,
@@ -135,13 +158,22 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
           {toolbar && (
             <div className="flex gap-2">
               {toolbar.onAdd && (
-                <Button onClick={toolbar.onAdd} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button
+                  onClick={toolbar.onAdd}
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{toolbar.addLabel ?? "Add"}</span>
+                  <span className="hidden sm:inline">
+                    {toolbar.addLabel ?? "Add"}
+                  </span>
                 </Button>
               )}
 
-              <Button variant="outline" size="icon" className="shrink-0 bg-transparent border-border">
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 bg-transparent border-border"
+              >
                 <Filter className="h-4 w-4" />
                 <span className="sr-only">Filter</span>
               </Button>
@@ -159,7 +191,12 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -169,15 +206,26 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -186,10 +234,18 @@ export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = t
         </Table>
 
         <div className="flex items-center justify-end space-x-2 py-4 pr-5">
-          <Button size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          <Button
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
             Previous
           </Button>
-          <Button size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
             Next
           </Button>
         </div>

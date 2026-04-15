@@ -118,7 +118,7 @@ export default function SavingsGoalFormModal({
     if (!isAuthReady || !accessToken) return;
     fetchCategories();
     fetchAccounts();
-  }, [initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
+  }, [open, initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
 
   const toNumber = (v: string) => {
     const n = Number(v);

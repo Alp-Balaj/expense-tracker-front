@@ -128,7 +128,7 @@ export default function ExpenseFormModal({
       fetchCategories();
     if(!isLoadingAccounts)
       fetchAccounts();
-  }, [fetchCategories, fetchAccounts, initial, isAuthReady, accessToken]);
+  }, [open, fetchCategories, fetchAccounts, initial, isAuthReady, accessToken]);
 
   const toNumber = (value: string) => {
     const n = Number(value);
