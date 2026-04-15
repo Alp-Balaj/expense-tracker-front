@@ -13,6 +13,7 @@ import { AccountCard } from "@/Components/Accounts/AccountCard";
 import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
+import { AccountDetailsDialog } from "@/Components/Accounts/AccountDetailsDialog";
 import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -22,7 +23,7 @@ import { PageHeader } from "@/Components/General/PageHeader";
 
 export default function AccountPage() {
   const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData } = useAuthorizationApi();
+  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
@@ -80,6 +81,7 @@ export default function AccountPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
+  const [viewingAccount, setViewingAccount] = useState<Account | null>(null);
 
   const [amountType, setAmountType] = useState<AmountType | "all">("all");
   const currentType =
@@ -95,13 +97,24 @@ export default function AccountPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = useCallback(async () => {
     if (!deletingAccount) return;
-    setAccounts(accounts.filter((acc) => acc.id !== deletingAccount.id));
-    setDeletingAccount(null);
-  };
+    try {
+      await deleteData("api/Account", deletingAccount);
+      setAccounts((prev) => prev.filter((acc) => acc.id !== deletingAccount.id));
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+      }
+    } finally {
+      setDeletingAccount(null);
+    }
+  }, [deletingAccount, deleteData]);
 
-  const handleViewDetails = (_account: Account) => {};
+  const handleViewDetails = (account: Account) => {
+    setViewingAccount(account);
+  };
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
@@ -236,6 +249,13 @@ export default function AccountPage() {
         onOpenChange={(open) => !open && setDeletingAccount(null)}
         account={deletingAccount}
         onConfirm={handleDeleteAccount}
+      />
+
+      {/* Account Details Dialog */}
+      <AccountDetailsDialog
+        open={!!viewingAccount}
+        onOpenChange={(open) => !open && setViewingAccount(null)}
+        account={viewingAccount}
       />
     </div>
   );

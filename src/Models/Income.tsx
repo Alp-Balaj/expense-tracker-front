@@ -1,9 +1,12 @@
+import type { ColumnDef } from "@tanstack/react-table"
 import {
   textColumn,
   sortableColumn,
   currencyColumn,
   actionsColumn,
 } from "@/Components/General/Columns"
+import type { Account } from "@/Models/Account"
+import type { Category } from "@/Models/Category"
 
 export type Income = {
   id: string | null;
@@ -24,7 +27,11 @@ export type IncomeFormProps = {
 export function buildIncomeColumns(handlers?: {
   onEdit?: (row: Income) => void
   onDelete?: (row: Income) => void
+  accounts?: Account[]
+  categories?: Category[]
 }) {
+  const { onEdit, onDelete, accounts = [], categories = [] } = handlers ?? {}
+
   return [
     sortableColumn<Income>("title", "Title"),
     currencyColumn<Income>("amount", "Amount", {
@@ -33,8 +40,22 @@ export function buildIncomeColumns(handlers?: {
     }),
     textColumn<Income>("date", "Date"),
     textColumn<Income>("description", "Description"),
-    textColumn<Income>("accountId", "Account"),
-    textColumn<Income>("categoryId", "Category"),
+    {
+      accessorKey: "accountId",
+      header: "Account",
+      cell: ({ row }) => {
+        const id = row.getValue("accountId") as string
+        return accounts.find(a => a.id === id)?.name ?? id
+      },
+    } as ColumnDef<Income>,
+    {
+      accessorKey: "categoryId",
+      header: "Category",
+      cell: ({ row }) => {
+        const id = row.getValue("categoryId") as string
+        return categories.find(c => c.id === id)?.name ?? id
+      },
+    } as ColumnDef<Income>,
     actionsColumn<Income>([
       {
         label: "Copy Income ID",
@@ -42,11 +63,11 @@ export function buildIncomeColumns(handlers?: {
       },
       {
         label: "Edit",
-        onClick: (e) => handlers?.onEdit?.(e),
+        onClick: (e) => onEdit?.(e),
       },
       {
         label: "Delete",
-        onClick: (e) => handlers?.onDelete?.(e),
+        onClick: (e) => onDelete?.(e),
       },
     ]),
   ]

@@ -53,7 +53,7 @@ const makeGlobalIncludes = <TData,>(
 };
 
 export function DataTable<TData, TValue>({ columns, data, enableGlobalSearch = true, searchPlaceholder = "Search...", globalSearchKeys, toolbar }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: "date", desc: false }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
