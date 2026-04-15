@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/Components/ui/button";
 import { Label } from "@/Components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
@@ -15,10 +15,17 @@ interface PreferencesProps {
 export function Preferences({ initialPreferences, currencies, onSave }: PreferencesProps) {
   const [theme, setTheme] = useState(initialPreferences.theme);
   const [baseCurrency, setBaseCurrency] = useState(initialPreferences.baseCurrency);
+  const [preferredCurrency, setPreferredCurrency] = useState(initialPreferences.preferredCurrency);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    setTheme(initialPreferences.theme);
+    setBaseCurrency(initialPreferences.baseCurrency);
+    setPreferredCurrency(initialPreferences.preferredCurrency);
+  }, [initialPreferences]);
+
   const handleSave = () => {
-    onSave?.({ theme, baseCurrency });
+    onSave?.({ theme, baseCurrency, preferredCurrency });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -38,11 +45,25 @@ export function Preferences({ initialPreferences, currencies, onSave }: Preferen
 
       <div className="space-y-2 pt-4 border-t border-border">
         <Label>Base Currency</Label>
+        <p className="text-xs text-muted-foreground">The currency exchange rates are calculated against.</p>
         <Select value={baseCurrency} onValueChange={setBaseCurrency}>
           <SelectTrigger className="w-full"><SelectValue placeholder="Select a currency"/></SelectTrigger>
           <SelectContent>
             {currencies.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2 pt-4 border-t border-border">
+        <Label>Preferred Display Currency</Label>
+        <p className="text-xs text-muted-foreground">All amounts across the app will be converted and shown in this currency.</p>
+        <Select value={preferredCurrency} onValueChange={setPreferredCurrency}>
+          <SelectTrigger className="w-full"><SelectValue placeholder="Select a currency"/></SelectTrigger>
+          <SelectContent>
+            {currencies.map((c) => (
+              <SelectItem key={c.id} value={c.code}>{c.code} - {c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

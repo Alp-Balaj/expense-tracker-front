@@ -6,4 +6,5 @@ export interface UserSettings {
 export interface UserPreferences {
   theme: "light" | "dark" | "system";
   baseCurrency: string;
+  preferredCurrency: string;
 }
