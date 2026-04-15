@@ -16,7 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/Components/ui/dialog";
-import { Calendar, DollarSign, FileText, Tag, Wallet } from "lucide-react";
+import { Calendar, DollarSign, FileText, PlusCircle, Tag, Wallet } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import type { Expense as ModelExpense } from "@/Models/Expense";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -47,6 +48,7 @@ export default function ExpenseFormModal({
 }: ExpenseFormModalProps) {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData } = useAuthorizationApi();
+  const navigate = useNavigate();
 
   // #region Accounts and Categories for dropdown
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -252,6 +254,17 @@ export default function ExpenseFormModal({
                         {account.name}
                       </SelectItem>
                     ))}
+                    <div className="border-t mt-1 pt-1">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => { onOpenChange(false); navigate("/account"); }}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        Add new account
+                      </button>
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
@@ -278,6 +291,17 @@ export default function ExpenseFormModal({
                         {category.name}
                       </SelectItem>
                     ))}
+                    <div className="border-t mt-1 pt-1">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => { onOpenChange(false); navigate("/categoryAndCurrency"); }}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        Add new category
+                      </button>
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
