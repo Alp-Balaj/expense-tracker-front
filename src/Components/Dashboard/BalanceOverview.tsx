@@ -4,19 +4,13 @@ import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
 import type { Income } from "@/Models/Income";
 import { useMemo } from "react";
+import { useCurrency } from "@/Hooks/useCurrency";
 
 interface BalanceOverviewProps {
   accounts: Account[];
   expenses: Expense[];
   incomes: Income[];
   isLoading: boolean;
-}
-
-function formatEur(amount: number) {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
 }
 
 function getMonthEntries<T extends { date: Date }>(items: T[]) {
@@ -35,8 +29,11 @@ export function BalanceOverview({
   incomes,
   isLoading,
 }: BalanceOverviewProps) {
+  const { format, convert, userCurrencyCode } = useCurrency();
+
   const totalBalance = useMemo(
-    () => accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0),
+    () => accounts.reduce((sum, a) => sum + convert(a.balance ?? 0, a.currencyCode), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [accounts],
   );
 
@@ -55,7 +52,7 @@ export function BalanceOverview({
   const cards = [
     {
       title: "Total Balance",
-      value: formatEur(totalBalance),
+      value: format(totalBalance, userCurrencyCode),
       icon: Wallet,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
@@ -64,7 +61,7 @@ export function BalanceOverview({
     },
     {
       title: "Income this Month",
-      value: formatEur(monthlyIncome),
+      value: format(monthlyIncome, userCurrencyCode),
       icon: TrendingUp,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -73,7 +70,7 @@ export function BalanceOverview({
     },
     {
       title: "Expenses this Month",
-      value: formatEur(monthlyExpenses),
+      value: format(monthlyExpenses, userCurrencyCode),
       icon: TrendingDown,
       iconBg: "bg-red-500/10",
       iconColor: "text-red-600 dark:text-red-400",
@@ -82,7 +79,7 @@ export function BalanceOverview({
     },
     {
       title: "Net this Month",
-      value: formatEur(netThisMonth),
+      value: format(netThisMonth, userCurrencyCode),
       icon: Scale,
       iconBg: netThisMonth >= 0 ? "bg-emerald-500/10" : "bg-red-500/10",
       iconColor:

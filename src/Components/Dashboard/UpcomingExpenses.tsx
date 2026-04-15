@@ -9,17 +9,11 @@ import {
 import { Badge } from "@/Components/ui/badge";
 import { CalendarClock } from "lucide-react";
 import type { FutureExpense } from "@/Models/FutureExpense";
+import { useCurrency } from "@/Hooks/useCurrency";
 
 interface UpcomingExpensesProps {
   futureExpenses: FutureExpense[];
   isLoading: boolean;
-}
-
-function formatEur(amount: number) {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
 }
 
 function daysUntil(date: Date) {
@@ -59,6 +53,8 @@ export function UpcomingExpenses({
   futureExpenses,
   isLoading,
 }: UpcomingExpensesProps) {
+  const { format, userCurrencyCode } = useCurrency();
+
   const sorted = useMemo(
     () =>
       [...futureExpenses]
@@ -121,7 +117,7 @@ export function UpcomingExpenses({
             <CardTitle className="text-foreground">Upcoming Expenses</CardTitle>
             <CardDescription className="text-muted-foreground">
               {futureExpenses.length} planned &middot;{" "}
-              {formatEur(totalUpcoming)} total
+              {format(totalUpcoming, userCurrencyCode)} total
             </CardDescription>
           </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
@@ -159,7 +155,7 @@ export function UpcomingExpenses({
                   {badge.label}
                 </Badge>
                 <span className="text-sm font-semibold tabular-nums text-foreground">
-                  {formatEur(item.amount)}
+                  {format(item.amount, userCurrencyCode)}
                 </span>
               </div>
             );

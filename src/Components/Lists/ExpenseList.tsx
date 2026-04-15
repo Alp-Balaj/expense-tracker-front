@@ -7,6 +7,7 @@ import ConfirmDelete from "../General/ConfirmDelete"
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
 import type { Account } from "@/Models/Account"
 import type { Category } from "@/Models/Category"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 export default function ExpenseList() {
   const {
@@ -27,6 +28,7 @@ export default function ExpenseList() {
   } = useCrudList<Expense>({ endpoint: "api/Expense" })
 
   const { getAllData } = useAuthorizationApi()
+  const { format, userCurrencyCode } = useCurrency()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
@@ -42,8 +44,9 @@ export default function ExpenseList() {
         onDelete: (row) => startDelete(row),
         accounts,
         categories,
+        formatter: (value) => format(value, userCurrencyCode),
       }),
-    [startEdit, accounts, categories]
+    [startEdit, accounts, categories, format, userCurrencyCode]
   )
 
   return (

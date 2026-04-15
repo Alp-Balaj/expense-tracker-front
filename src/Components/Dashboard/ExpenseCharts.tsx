@@ -24,6 +24,7 @@ import {
 } from "@/Components/ui/chart"
 import type { Expense } from "@/Models/Expense"
 import type { Category } from "@/Models/Category"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface ExpenseChartsProps {
   expenses: Expense[]
@@ -41,14 +42,8 @@ const FALLBACK_COLORS = [
   "#14b8a6",
 ]
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
-}
-
 export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
+  const { format, userCurrencyCode } = useCurrency()
   // Build monthly trend data for the last 6 months
   const now = new Date()
   const monthLabels: string[] = []
@@ -143,7 +138,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => formatEur(value)}
+                  tickFormatter={(value) => format(value, userCurrencyCode)}
                   className="text-muted-foreground"
                 />
                 <ChartTooltip
@@ -151,7 +146,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
                     <ChartTooltipContent
                       formatter={(value) => (
                         <span className="font-medium">
-                          {formatEur(Number(value))}
+                          {format(Number(value), userCurrencyCode)}
                         </span>
                       )}
                     />
@@ -195,7 +190,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
                       <ChartTooltipContent
                         formatter={(value) => (
                           <span className="font-medium">
-                            {formatEur(Number(value))} (
+                            {format(Number(value), userCurrencyCode)} (
                             {((Number(value) / pieTotal) * 100).toFixed(1)}%)
                           </span>
                         )}

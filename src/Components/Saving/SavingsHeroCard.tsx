@@ -3,20 +3,15 @@ import { Button } from "@/Components/ui/button"
 import { PiggyBank, Plus, Trophy } from "lucide-react"
 import { SavingsGoalProgressRing } from "./SavingsGoalProgressRing"
 import type { SavingGoals } from "@/Models/SavingGoals"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface SavingsHeroCardProps {
   goals: SavingGoals[]
   onNewGoal: () => void
 }
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
-}
-
 export function SavingsHeroCard({ goals, onNewGoal }: SavingsHeroCardProps) {
+  const { format, userCurrencyCode } = useCurrency()
   const totalSaved = goals.reduce((sum, g) => sum + g.savedAmount, 0)
   const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0)
   const overallPercentage = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0
@@ -46,10 +41,10 @@ export function SavingsHeroCard({ goals, onNewGoal }: SavingsHeroCardProps) {
               </p>
             </div>
             <p className="text-4xl font-bold tracking-tight">
-              {formatEur(totalSaved)}
+              {format(totalSaved, userCurrencyCode)}
             </p>
             <p className="text-sm text-white/70">
-              of {formatEur(totalTarget)} total goal across {goals.length}{" "}
+              of {format(totalTarget, userCurrencyCode)} total goal across {goals.length}{" "}
               {goals.length === 1 ? "goal" : "goals"}
             </p>
 

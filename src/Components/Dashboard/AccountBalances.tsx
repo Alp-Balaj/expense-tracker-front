@@ -17,17 +17,11 @@ import {
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { useNavigate } from "react-router-dom";
+import { useCurrency } from "@/Hooks/useCurrency";
 
 interface AccountBalancesProps {
   accounts: Account[];
   isLoading: boolean;
-}
-
-function formatEur(amount: number) {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount);
 }
 
 const accountTypeIcon: Record<number, typeof Wallet> = {
@@ -48,6 +42,7 @@ const accountTypeName: Record<number, string> = {
 
 export function AccountBalances({ accounts, isLoading }: AccountBalancesProps) {
   const navigate = useNavigate();
+  const { format } = useCurrency();
   const skeletonItems = ["a", "b", "c"];
 
   if (isLoading) {
@@ -147,7 +142,7 @@ export function AccountBalances({ accounts, isLoading }: AccountBalancesProps) {
                       : "text-foreground"
                   }`}
                 >
-                  {formatEur(account.balance)}
+                  {format(account.balance, account.currencyCode)}
                 </span>
               </div>
             );

@@ -1,19 +1,14 @@
 import { TrendingUp, Wallet, Calendar, DollarSign } from "lucide-react"
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards"
 import type { Income } from "@/Models/Income"
+import { useCurrency } from "@/Hooks/useCurrency"
 
 interface IncomeSummaryCardsProps {
   incomes: Income[]
 }
 
-function formatEur(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value)
-}
-
 export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
+  const { format, userCurrencyCode } = useCurrency()
   const now = new Date()
   const currentMonth = now.getMonth()
   const currentYear = now.getFullYear()
@@ -62,7 +57,7 @@ export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
   const cards = [
     {
       title: "Monthly Income",
-      value: formatEur(currentTotal),
+      value: format(currentTotal, userCurrencyCode),
       change: `${changePrefix}${percentChange}%`,
       changeType: Number(percentChange) >= 0 ? ("positive" as const) : ("negative" as const),
       icon: TrendingUp,
@@ -76,14 +71,14 @@ export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
     },
     {
       title: "Avg. per Entry",
-      value: formatEur(avgPerEntry),
+      value: format(avgPerEntry, userCurrencyCode),
       change: `from ${entryCount} entries`,
       changeType: "neutral" as const,
       icon: Wallet,
     },
     {
       title: "Year-to-Date",
-      value: formatEur(ytdTotal),
+      value: format(ytdTotal, userCurrencyCode),
       change: `${currentYear} total`,
       changeType: "neutral" as const,
       icon: DollarSign,
