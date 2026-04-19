@@ -29,26 +29,34 @@ export function UserSettingsModal() {
   useEffect(() => { if (isAuthReady && accessToken) fetchCurrencies(); }, [fetchCurrencies, isAuthReady, accessToken]);
 
   const [userSettings, setUserSettings] = useState<UserSettings>({ email: "", username: "" });
-  const [userPreferences, setUserPreferences] = useState<UserPreferences>({ theme: "light", baseCurrency: "USD" });
+  const [userPreferences, setUserPreferences] = useState<UserPreferences>({ theme: "light", baseCurrency: "USD", preferredCurrency: "EUR" });
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
     const fetchUserData = async () => {
-      // const user = await getAllData<UserSettings>("/api/User");
       const user = {
         email: "alpbalaj1203@gmail.com",
         username: "AlpBalaj"
       };
       setUserSettings(user);
-      const preferences = await getAllData<UserPreferences>("/api/UserPreferences");
-      setUserPreferences(preferences);
+      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; userBaseCurrencyCode?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
+      setUserPreferences({
+        theme: apiPrefs?.theme ?? "light",
+        baseCurrency: apiPrefs?.userBaseCurrencyCode ?? "USD",
+        preferredCurrency: apiPrefs?.userPreferredCurrencyCode ?? "EUR",
+      });
     };
     fetchUserData();
   }, [isAuthReady, accessToken, getAllData]);
 
   const handlePreferencesSave = async (prefs: UserPreferences) => {
-    await putDataNoId("/api/UserPreferences", prefs);
-    setPreferences(prefs);
+    const apiPayload = {
+      theme: prefs.theme,
+      userBaseCurrencyCode: prefs.baseCurrency,
+      userPreferredCurrencyCode: prefs.preferredCurrency,
+    };
+    await putDataNoId("/api/UserPreferences", apiPayload);
+    setPreferences(apiPayload);
     setUserPreferences(prefs);
   };
 

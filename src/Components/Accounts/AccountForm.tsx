@@ -1,5 +1,7 @@
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +45,7 @@ export function AccountForm({
 }: AddAccountDialogProps) {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData } = useAuthorizationApi();
-
+  const navigate = useNavigate();
 
   const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
@@ -189,6 +191,17 @@ export function AccountForm({
                       {c.code} - {c.symbol}
                     </SelectItem>
                   ))}
+                  <div className="border-t mt-1 pt-1">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
+                      onPointerDown={(e) => e.preventDefault()}
+                      onClick={() => { onOpenChange(false); navigate("/categoryAndCurrency"); }}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      Add new currency
+                    </button>
+                  </div>
                 </SelectContent>
               </Select>
 

@@ -20,10 +20,12 @@ import {
   FileText,
   DollarSign,
   Calendar,
+  PlusCircle,
   Wallet,
   Tag,
   Target,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import type { SavingGoals, AddSavingsGoal } from "@/Models/SavingGoals";
 import { useAuth } from "@/Authorization/AuthContext";
@@ -61,6 +63,7 @@ export default function SavingsGoalFormModal({
 }: SavingsGoalFormModalProps) {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData } = useAuthorizationApi();
+  const navigate = useNavigate();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -118,7 +121,7 @@ export default function SavingsGoalFormModal({
     if (!isAuthReady || !accessToken) return;
     fetchCategories();
     fetchAccounts();
-  }, [initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
+  }, [open, initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
 
   const toNumber = (v: string) => {
     const n = Number(v);
@@ -288,6 +291,17 @@ export default function SavingsGoalFormModal({
                         {a.name}
                       </SelectItem>
                     ))}
+                    <div className="border-t mt-1 pt-1">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => { onOpenChange(false); navigate("/account"); }}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        Add new account
+                      </button>
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
@@ -318,6 +332,17 @@ export default function SavingsGoalFormModal({
                             {c.name}
                           </SelectItem>
                         ))}
+                    <div className="border-t mt-1 pt-1">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
+                        onPointerDown={(e) => e.preventDefault()}
+                        onClick={() => { onOpenChange(false); navigate("/categoryAndCurrency"); }}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        Add new category
+                      </button>
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
