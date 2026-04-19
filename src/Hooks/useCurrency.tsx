@@ -41,10 +41,19 @@ export function useCurrency() {
     }).format(converted);
   };
 
+  const formatOriginal = (amount: number, fromCode: string) => {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: fromCode,
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
   return {
     userCurrencyCode,
     currenciesMap,
     convert,
     format,
+    formatOriginal,
   };
 }

@@ -12,7 +12,7 @@ import {
   accountTypeLabels,
   AmountTypeIcon,
 } from "@/Components/Accounts/AccountCard";
-import { useCurrency } from "@/Hooks/useCurrency";
+import { ConvertedAmount } from "@/Components/General/ConvertedAmount";
 
 interface AccountDetailsDialogProps {
   open: boolean;
@@ -25,8 +25,6 @@ export function AccountDetailsDialog({
   onOpenChange,
   account,
 }: AccountDetailsDialogProps) {
-  const { format } = useCurrency();
-
   if (!account) return null;
 
   const colorStyle = amountTypeColors[account.amountType];
@@ -60,8 +58,8 @@ export function AccountDetailsDialog({
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Balance</span>
-              <span className="font-semibold text-base">
-                {format(account.balance, account.currencyCode)}
+              <span className="font-semibold text-base text-right">
+                <ConvertedAmount amount={account.balance} fromCode={account.currencyCode} />
               </span>
             </div>
 
