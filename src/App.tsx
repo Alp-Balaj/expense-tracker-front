@@ -23,7 +23,7 @@ function App() {
     <BrowserRouter>
       <AuthorizationProvider>
         <UserPreferencesProvider>
-          <ThemeProvider>
+          <ThemeProvider defaultTheme="light">
             <SidebarProvider>
               <AxiosAuthBridge />
               <Routes>
