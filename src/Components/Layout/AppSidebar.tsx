@@ -19,8 +19,11 @@ import {
   PiggyBank,
   HelpCircle,
   DollarSign,
+  LogOut,
 } from "lucide-react";
 import { UserSettingsModal } from "../UserPreferences/UserSettingsModal";
+import { useAuthenticationApi } from "@/Hooks/useAuthenticationApi";
+import { useNavigate } from "react-router-dom";
 
 export type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
@@ -52,6 +55,14 @@ export function AppSidebar({
   planName = "Free Plan",
   menuItems = DEFAULT_MENU_ITEMS,
 }: AppSidebarProps) {
+  const { logout } = useAuthenticationApi();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   return (
     <Sidebar className="border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -104,6 +115,15 @@ export function AppSidebar({
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Help</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Logout</span>
             </Button>
           </div>
         </div>
