@@ -10,11 +10,27 @@ import {
 
 const STORAGE_KEY = "accessToken";
 
+type JwtPayload = {
+  email?: string;
+  unique_name?: string;
+};
+
+function decodeJwtPayload(token: string): JwtPayload {
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(base64)) as JwtPayload;
+  } catch {
+    return {};
+  }
+}
+
 type AuthContextValue = {
   accessToken: string | null;
   setToken: (token: string | null) => void;
   logout: () => void;
   isAuthReady: boolean;
+  email: string;
+  username: string;
 };
 
 const AuthorizationContext = createContext<AuthContextValue | undefined>(
@@ -47,9 +63,15 @@ export function AuthorizationProvider({
     setToken(null);
   }, [setToken]);
 
+  const { email, username } = useMemo(() => {
+    if (!accessToken) return { email: "", username: "" };
+    const payload = decodeJwtPayload(accessToken);
+    return { email: payload.email ?? "", username: payload.unique_name ?? "" };
+  }, [accessToken]);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ accessToken, setToken, logout, isAuthReady }),
-    [accessToken, isAuthReady, logout, setToken],
+    () => ({ accessToken, setToken, logout, isAuthReady, email, username }),
+    [accessToken, isAuthReady, logout, setToken, email, username],
   );
 
   return (
