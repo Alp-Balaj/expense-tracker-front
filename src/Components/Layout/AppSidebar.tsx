@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { UserSettingsModal } from "../UserPreferences/UserSettingsModal";
 import { useAuthenticationApi } from "@/Hooks/useAuthenticationApi";
+import { useAuth } from "@/Authorization/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export type MenuItem = {
@@ -35,7 +36,6 @@ export type MenuItem = {
 export type AppSidebarProps = {
   appName?: string;
   appSubtitle?: string;
-  userName?: string;
   planName?: string;
   menuItems?: MenuItem[];
 };
@@ -51,11 +51,11 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
 export function AppSidebar({
   appName = "Finance Tracker",
   appSubtitle = "Expense Manager",
-  userName = "John Doe",
   planName = "Free Plan",
   menuItems = DEFAULT_MENU_ITEMS,
 }: AppSidebarProps) {
   const { logout } = useAuthenticationApi();
+  const { username } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -106,7 +106,7 @@ export function AppSidebar({
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-sidebar-foreground">{userName}</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{username || "User"}</p>
             <p className="text-xs text-muted-foreground">{planName}</p>
           </div>
 
