@@ -36,6 +36,6 @@ export async function refreshTokenApi(): Promise<string | null> {
 }
 
 export async function logOutApi(): Promise<boolean> {
-  const response = await api.get("/api/account/logout");
+  const response = await api.post("/api/User/logout");
   return response.status === 200;
 }
