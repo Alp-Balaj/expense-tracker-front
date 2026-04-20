@@ -35,10 +35,10 @@ export function UserSettingsModal() {
     if (!isAuthReady || !accessToken) return;
     const fetchUserData = async () => {
       setUserSettings({ email: authEmail, username: authUsername });
-      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; userBaseCurrencyCode?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
+      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; baseCurrency?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
       setUserPreferences({
         theme: apiPrefs?.theme ?? "light",
-        baseCurrency: apiPrefs?.userBaseCurrencyCode ?? "USD",
+        baseCurrency: apiPrefs?.baseCurrency ?? "USD",
         preferredCurrency: apiPrefs?.userPreferredCurrencyCode ?? "EUR",
       });
     };
@@ -48,7 +48,7 @@ export function UserSettingsModal() {
   const handlePreferencesSave = async (prefs: UserPreferences) => {
     const apiPayload = {
       theme: prefs.theme,
-      userBaseCurrencyCode: prefs.baseCurrency,
+      baseCurrency: prefs.baseCurrency,
       userPreferredCurrencyCode: prefs.preferredCurrency,
     };
     await putDataNoId("/api/UserPreferences", apiPayload);
