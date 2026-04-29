@@ -13,7 +13,7 @@ import type { UserSettings, UserPreferences } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
 export function UserSettingsModal() {
-  const { accessToken, isAuthReady } = useAuth();
+  const { accessToken, isAuthReady, email: authEmail, username: authUsername } = useAuth();
   const { getAllData, putDataNoId } = useAuthorizationApi();
   const { setPreferences } = usePreferences();
 
@@ -28,31 +28,27 @@ export function UserSettingsModal() {
 
   useEffect(() => { if (isAuthReady && accessToken) fetchCurrencies(); }, [fetchCurrencies, isAuthReady, accessToken]);
 
-  const [userSettings, setUserSettings] = useState<UserSettings>({ email: "", username: "" });
+  const [userSettings, setUserSettings] = useState<UserSettings>({ email: authEmail, username: authUsername });
   const [userPreferences, setUserPreferences] = useState<UserPreferences>({ theme: "light", baseCurrency: "USD", preferredCurrency: "EUR" });
 
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
     const fetchUserData = async () => {
-      const user = {
-        email: "alpbalaj1203@gmail.com",
-        username: "AlpBalaj"
-      };
-      setUserSettings(user);
-      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; userBaseCurrencyCode?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
+      setUserSettings({ email: authEmail, username: authUsername });
+      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; baseCurrency?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
       setUserPreferences({
         theme: apiPrefs?.theme ?? "light",
-        baseCurrency: apiPrefs?.userBaseCurrencyCode ?? "USD",
+        baseCurrency: apiPrefs?.baseCurrency ?? "USD",
         preferredCurrency: apiPrefs?.userPreferredCurrencyCode ?? "EUR",
       });
     };
     fetchUserData();
-  }, [isAuthReady, accessToken, getAllData]);
+  }, [isAuthReady, accessToken, authEmail, authUsername, getAllData]);
 
   const handlePreferencesSave = async (prefs: UserPreferences) => {
     const apiPayload = {
       theme: prefs.theme,
-      userBaseCurrencyCode: prefs.baseCurrency,
+      baseCurrency: prefs.baseCurrency,
       userPreferredCurrencyCode: prefs.preferredCurrency,
     };
     await putDataNoId("/api/UserPreferences", apiPayload);

@@ -19,8 +19,12 @@ import {
   PiggyBank,
   HelpCircle,
   DollarSign,
+  LogOut,
 } from "lucide-react";
 import { UserSettingsModal } from "../UserPreferences/UserSettingsModal";
+import { useAuthenticationApi } from "@/Hooks/useAuthenticationApi";
+import { useAuth } from "@/Authorization/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export type MenuItem = {
   icon: React.ComponentType<{ className?: string }>;
@@ -32,7 +36,6 @@ export type MenuItem = {
 export type AppSidebarProps = {
   appName?: string;
   appSubtitle?: string;
-  userName?: string;
   planName?: string;
   menuItems?: MenuItem[];
 };
@@ -48,10 +51,18 @@ const DEFAULT_MENU_ITEMS: MenuItem[] = [
 export function AppSidebar({
   appName = "Finance Tracker",
   appSubtitle = "Expense Manager",
-  userName = "John Doe",
   planName = "Free Plan",
   menuItems = DEFAULT_MENU_ITEMS,
 }: AppSidebarProps) {
+  const { logout } = useAuthenticationApi();
+  const { username } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   return (
     <Sidebar className="border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -95,7 +106,7 @@ export function AppSidebar({
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-sidebar-foreground">{userName}</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{username || "User"}</p>
             <p className="text-xs text-muted-foreground">{planName}</p>
           </div>
 
@@ -104,6 +115,15 @@ export function AppSidebar({
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Help</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Logout</span>
             </Button>
           </div>
         </div>

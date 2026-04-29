@@ -17,7 +17,7 @@ import {
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { useNavigate } from "react-router-dom";
-import { useCurrency } from "@/Hooks/useCurrency";
+import { ConvertedAmount } from "@/Components/General/ConvertedAmount";
 
 interface AccountBalancesProps {
   accounts: Account[];
@@ -42,7 +42,6 @@ const accountTypeName: Record<number, string> = {
 
 export function AccountBalances({ accounts, isLoading }: AccountBalancesProps) {
   const navigate = useNavigate();
-  const { format } = useCurrency();
   const skeletonItems = ["a", "b", "c"];
 
   if (isLoading) {
@@ -136,13 +135,13 @@ export function AccountBalances({ accounts, isLoading }: AccountBalancesProps) {
                   <p className="text-xs text-muted-foreground">{typeName}</p>
                 </div>
                 <span
-                  className={`text-sm font-semibold tabular-nums ${
+                  className={`text-sm font-semibold tabular-nums text-right ${
                     isNegative
                       ? "text-red-600 dark:text-red-400"
                       : "text-foreground"
                   }`}
                 >
-                  {format(account.balance, account.currencyCode)}
+                  <ConvertedAmount amount={account.balance} fromCode={account.currencyCode} />
                 </span>
               </div>
             );

@@ -1,4 +1,4 @@
-import { useCurrency } from "@/Hooks/useCurrency";
+import { ConvertedAmount } from "@/Components/General/ConvertedAmount";
 import { Card, CardContent, CardFooter } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import {
@@ -90,8 +90,6 @@ export function AccountCard({
 }: AccountCardProps) {
   const colorStyle = amountTypeColors[account.amountType];
 
-  const { format } = useCurrency();
-
   return (
     <Card
       className={`${colorStyle.bg} ${colorStyle.text} border-0 overflow-hidden py-0 gap-0`}
@@ -143,8 +141,7 @@ export function AccountCard({
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            {/* Convert + format using the hook */}
-            {format(account.balance, account.currencyCode)}
+            <ConvertedAmount amount={account.balance} fromCode={account.currencyCode} />
           </p>
         </div>
 
