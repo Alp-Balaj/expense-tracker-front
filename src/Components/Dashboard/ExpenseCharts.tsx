@@ -42,6 +42,12 @@ const FALLBACK_COLORS = [
   "#14b8a6",
 ]
 
+function compactNumber(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`
+  return String(Math.round(value))
+}
+
 export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
   const { format, userCurrencyCode } = useCurrency()
   // Build monthly trend data for the last 6 months
@@ -138,8 +144,9 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => format(value, userCurrencyCode)}
+                  tickFormatter={(value: number) => compactNumber(value)}
                   className="text-muted-foreground"
+                  width={40}
                 />
                 <ChartTooltip
                   content={

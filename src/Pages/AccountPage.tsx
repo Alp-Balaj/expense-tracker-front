@@ -139,7 +139,7 @@ export default function AccountPage() {
         icon={<Wallet className="h-5 w-5 text-primary" />}
       />
 
-      <main className="p-6 space-y-8">
+      <main className="p-3 sm:p-6 space-y-6 sm:space-y-8">
         {/* Summary Cards */}
         <AccountSummary accounts={accounts} />
 

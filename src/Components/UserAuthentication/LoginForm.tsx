@@ -67,7 +67,7 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
   if (accessToken) return <Navigate to="/" replace />
 
   return (
-    <div className={cn("flex flex-col gap-6 min-w-[400px]", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 w-full max-w-md px-4 sm:px-0", className)} {...props}>
       <Card className="border-border">
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>

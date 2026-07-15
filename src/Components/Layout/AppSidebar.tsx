@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/Components/ui/sidebar";
 import { Button } from "@/Components/ui/button";
 import {
@@ -57,6 +58,7 @@ export function AppSidebar({
   const { logout } = useAuthenticationApi();
   const { username } = useAuth();
   const navigate = useNavigate();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const handleLogout = async () => {
     await logout();
@@ -92,7 +94,10 @@ export function AppSidebar({
                 <SidebarMenuButton
                   isActive={Boolean(item.isActive)}
                   className="gap-3 px-4"
-                  onClick={item.onClick}
+                  onClick={() => {
+                    item.onClick?.();
+                    if (isMobile) setOpenMobile(false);
+                  }}
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>

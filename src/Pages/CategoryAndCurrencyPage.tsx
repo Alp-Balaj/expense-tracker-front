@@ -207,7 +207,7 @@ export default function CategoryAndCurrencyPage() {
       {/* Header */}
       <PageHeader title="Categories And Currencies" icon={<Tags className="h-5 w-5 text-primary" />} />
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Categories Section - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">

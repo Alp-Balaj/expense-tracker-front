@@ -118,7 +118,7 @@ function SavingPage() {
         icon={<PiggyBank className="h-5 w-5 text-green-600 dark:text-green-400" />}
       />
 
-      <main className="p-6 space-y-6">
+      <main className="p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Hero + Achievement row */}
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">

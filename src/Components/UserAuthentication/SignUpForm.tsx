@@ -88,7 +88,7 @@ export function SignUpForm({
   const password = watch("password");
 
   return (
-    <div className={cn("flex flex-col gap-6 min-w-[400px]", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 w-full max-w-md px-4 sm:px-0", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>

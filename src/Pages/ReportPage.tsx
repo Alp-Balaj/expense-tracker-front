@@ -99,21 +99,25 @@ const { accessToken, isAuthReady } = useAuth();
     {
       value: "transactions" as ReportType,
       label: "Transaction Report",
+      shortLabel: "Transactions",
       icon: FileBarChart,
     },
     {
       value: "summary" as ReportType,
       label: "Summary Report",
+      shortLabel: "Summary",
       icon: FileText,
     },
     {
       value: "budget" as ReportType,
       label: "Budget Report",
+      shortLabel: "Budget",
       icon: PieChart,
     },
     {
       value: "trends" as ReportType,
       label: "Trends Report",
+      shortLabel: "Trends",
       icon: TrendingUp,
     },
   ];
@@ -122,7 +126,7 @@ const { accessToken, isAuthReady } = useAuth();
     <div className="min-h-screen bg-background">
       <PageHeader title="Reports" icon={<Paperclip className="h-5 w-5 text-primary" />} />
       
-      <main className="p-6 space-y-8">
+      <main className="p-3 sm:p-6 space-y-4 sm:space-y-8">
         {/* Report Type Tabs */}
         <Tabs
           value={activeTab}
@@ -134,10 +138,11 @@ const { accessToken, isAuthReady } = useAuth();
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 rounded-lg border border-border bg-card px-4 py-2.5 data-[state=active]:border-primary"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 rounded-lg border border-border bg-card px-3 py-2.5 data-[state=active]:border-primary"
               >
                 <tab.icon className="h-4 w-4" />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </TabsTrigger>
             ))}
           </TabsList>

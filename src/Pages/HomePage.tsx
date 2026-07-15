@@ -111,7 +111,7 @@ export default function HomePage() {
         icon={<LayoutDashboard className="h-5 w-5 text-primary" />}
       />
 
-      <main className="p-6 space-y-6">
+      <main className="p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Quick Actions + Balance Overview */}
         <div className="grid gap-4 lg:grid-cols-5 items-stretch">
           <QuickActions
