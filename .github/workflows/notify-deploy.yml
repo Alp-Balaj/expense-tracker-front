@@ -3,8 +3,11 @@ name: Notify deploy
 # Frontend half of the single-origin deploy pipeline (see ExpenseTracker/DEPLOY.md):
 # every push to master pings the backend repo with a repository_dispatch, whose
 # deploy.yml rebuilds the combined image (this SPA + API) and redeploys Railway.
-# Requires the BACKEND_DISPATCH_TOKEN secret — a fine-grained PAT for ExpenseTracker
-# with Contents: read-write.
+#
+# DISPATCH_TO_BACKEND_REPO: a PAT that can DISPATCH TO the ExpenseTracker repo. It is stored
+# here (on the frontend repo) because this is where the workflow runs, but it is scoped to
+# the OTHER repo — the name says what it opens, not where it lives. repository_dispatch is a
+# mutating call, so it needs Contents: Read and write, not just read.
 on:
   push:
     branches: [master]
@@ -15,7 +18,7 @@ jobs:
     steps:
       - name: Trigger backend deploy
         env:
-          GH_TOKEN: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.DISPATCH_TO_BACKEND_REPO }}
         run: |
           gh api "repos/${{ github.repository_owner }}/ExpenseTracker/dispatches" \
             -f event_type=frontend-updated
