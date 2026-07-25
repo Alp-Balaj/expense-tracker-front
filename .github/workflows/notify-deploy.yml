@@ -1,0 +1,21 @@
+name: Notify deploy
+
+# Frontend half of the single-origin deploy pipeline (see ExpenseTracker/DEPLOY.md):
+# every push to master pings the backend repo with a repository_dispatch, whose
+# deploy.yml rebuilds the combined image (this SPA + API) and redeploys Railway.
+# Requires the BACKEND_DISPATCH_TOKEN secret — a fine-grained PAT for ExpenseTracker
+# with Contents: read-write.
+on:
+  push:
+    branches: [master]
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backend deploy
+        env:
+          GH_TOKEN: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository_owner }}/ExpenseTracker/dispatches" \
+            -f event_type=frontend-updated
