@@ -17,6 +17,7 @@ import type { Income } from "@/Models/Income";
 import type { FutureExpense } from "@/Models/FutureExpense";
 import type { Category } from "@/Models/Category";
 import type { AddSavingsGoal } from "@/Models/SavingGoals";
+import { SAVING_GOAL_API } from "@/Services/api";
 import type { AxiosError } from "axios";
 
 export default function HomePage() {
@@ -95,7 +96,7 @@ export default function HomePage() {
 
   const handleSavingsSubmit = async (data: AddSavingsGoal) => {
     try {
-      await postData("api/SavingsGoal", data);
+      await postData(SAVING_GOAL_API, data);
       setSavingsOpen(false);
       await fetchAll();
     } catch (e) {

@@ -12,6 +12,7 @@ import type {
   SavingContributions,
 } from "@/Models/SavingGoals"
 import { useAuth } from "@/Authorization/AuthContext"
+import { SAVING_GOAL_API } from "@/Services/api"
 import type { AxiosError } from "axios"
 
 function SavingPage() {
@@ -24,10 +25,8 @@ function SavingPage() {
 
   const fetchGoals = useCallback(async () => {
     try {
-      const data = await getAllData<SavingGoals[]>("api/SavingGoal")
-      if (data && Array.isArray(data) && data.length > 0) {
-        setGoals(data)
-      }
+      const data = await getAllData<SavingGoals[]>(SAVING_GOAL_API)
+      setGoals(Array.isArray(data) ? data : [])
     } catch (e: unknown) {
       const err = e as AxiosError
       if (err.response?.status !== 401 && err.response?.status !== 404) {
@@ -55,38 +54,25 @@ function SavingPage() {
   const handleSubmitGoal = async (data: AddSavingsGoal) => {
     try {
       if (editingGoal) {
-        await putData("api/SavingGoal", data as SavingGoals)
+        await putData(SAVING_GOAL_API, data as SavingGoals)
       } else {
-        await postData("api/SavingGoal", data)
+        await postData(SAVING_GOAL_API, data)
       }
-    } catch {
-      if (editingGoal) {
-        setGoals((prev) =>
-          prev.map((g) =>
-            g.id === editingGoal.id
-              ? { ...g, ...data, contributions: g.contributions }
-              : g
-          )
-        )
-      } else {
-        const newGoal: SavingGoals = {
-          ...data,
-          id: crypto.randomUUID(),
-          savedAmount: data.savedAmount ?? 0,
-          contributions: [],
-        }
-        setGoals((prev) => [...prev, newGoal])
-      }
+      await fetchGoals()
+      setFormOpen(false)
+      setEditingGoal(null)
+    } catch (e) {
+      // Keep the dialog open so the user can retry
+      console.error(e)
     }
-    setFormOpen(false)
-    setEditingGoal(null)
   }
 
   const handleDeleteGoal = async (goal: SavingGoals) => {
     try {
-      await deleteData("api/SavingsGoal", goal as SavingGoals & { id: string })
-    } catch {
+      await deleteData(SAVING_GOAL_API, goal as SavingGoals & { id: string })
       setGoals((prev) => prev.filter((g) => g.id !== goal.id))
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -97,17 +83,8 @@ function SavingPage() {
     try {
       await postData(`api/SavingContribution/${goalId}`, contribution)
       await fetchGoals()
-    } catch {
-      setGoals((prev) =>
-        prev.map((g) => {
-          if (g.id !== goalId) return g
-          return {
-            ...g,
-            savedAmount: g.savedAmount + contribution.amount,
-            contributions: [...(g.contributions ?? []), contribution],
-          }
-        })
-      )
+    } catch (e) {
+      console.error(e)
     }
   }
 
