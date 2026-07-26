@@ -31,23 +31,27 @@ import { Badge } from "@/Components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { TransactionReportResult } from "@/Models/Report";
 import { TransactionKind } from "@/Enums/enums";
+import { useCurrency } from "@/Hooks/useCurrency";
 
 interface TransactionReportViewerProps {
   report: TransactionReportResult | null;
   isLoading?: boolean;
-  currencySymbol?: string;
 }
 
 type SortField = "date" | "amount" | "category" | "account" | "kind";
 type SortDirection = "asc" | "desc";
 
+const csvCell = (value: string | number) =>
+  `"${String(value).replace(/"/g, '""')}"`;
+
 export function TransactionReportViewer({
   report,
   isLoading = false,
-  currencySymbol = "€",
 }: TransactionReportViewerProps) {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const { convert, format: formatCurrency, formatOriginal, userCurrencyCode } =
+    useCurrency();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -58,6 +62,16 @@ export function TransactionReportViewer({
     }
   };
 
+  const sortIcon = (field: SortField) => {
+    if (sortField !== field)
+      return <ArrowUpDown className="h-3 w-3 opacity-50" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="h-3 w-3" />
+    ) : (
+      <ArrowDown className="h-3 w-3" />
+    );
+  };
+
   const sortedRows = report?.rows
     ? [...report.rows].sort((a, b) => {
         let comparison = 0;
@@ -66,7 +80,8 @@ export function TransactionReportViewer({
             comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
             break;
           case "amount":
-            comparison = a.amount - b.amount;
+            comparison =
+              convert(a.amount, a.currency) - convert(b.amount, b.currency);
             break;
           case "category":
             comparison = a.category.localeCompare(b.category);
@@ -82,35 +97,38 @@ export function TransactionReportViewer({
       })
     : [];
 
+  // Totals are converted into the user's preferred currency so that rows in
+  // different currencies aren't added together raw.
   const totalExpenses = report?.rows
     .filter((row) => row.kind === TransactionKind.Expense)
-    .reduce((sum, row) => sum + row.amount, 0) ?? 0;
+    .reduce((sum, row) => sum + convert(row.amount, row.currency), 0) ?? 0;
 
   const totalIncomes = report?.rows
     .filter((row) => row.kind === TransactionKind.Income)
-    .reduce((sum, row) => sum + row.amount, 0) ?? 0;
+    .reduce((sum, row) => sum + convert(row.amount, row.currency), 0) ?? 0;
 
-  const netAmount = totalIncomes + totalExpenses;
+  const netAmount = totalIncomes - totalExpenses;
 
   const downloadCSV = () => {
     if (!report?.rows.length) return;
 
-    const headers = ["Date", "Type", "Category", "Account", "Amount"];
+    const headers = ["Date", "Type", "Category", "Account", "Amount", "Currency"];
     const csvContent = [
       headers.join(","),
       ...sortedRows.map((row) =>
         [
           format(new Date(row.date), "yyyy-MM-dd"),
-          row.kind,
-          `"${row.category}"`,
-          `"${row.account}"`,
+          row.kind === TransactionKind.Expense ? "Expense" : "Income",
+          csvCell(row.category),
+          csvCell(row.account),
           row.kind === TransactionKind.Expense ? -row.amount : row.amount,
+          row.currency,
         ].join(",")
       ),
       "",
-      `Total Expenses,,,,${-totalExpenses}`,
-      `Total Incomes,,,,${totalIncomes}`,
-      `Net Amount,,,,${netAmount}`,
+      `Total Expenses,,,,${(-totalExpenses).toFixed(2)},${userCurrencyCode}`,
+      `Total Incomes,,,,${totalIncomes.toFixed(2)},${userCurrencyCode}`,
+      `Net Amount,,,,${netAmount.toFixed(2)},${userCurrencyCode}`,
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -126,9 +144,10 @@ export function TransactionReportViewer({
     const exportData = {
       generatedAt: new Date().toISOString(),
       summary: {
-        totalExpenses,
-        totalIncomes,
-        netAmount,
+        totalExpenses: Number(totalExpenses.toFixed(2)),
+        totalIncomes: Number(totalIncomes.toFixed(2)),
+        netAmount: Number(netAmount.toFixed(2)),
+        currency: userCurrencyCode,
         transactionCount: report.rows.length,
       },
       transactions: sortedRows,
@@ -193,11 +212,7 @@ export function TransactionReportViewer({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">
-              {totalExpenses.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              {currencySymbol}
+              {formatCurrency(totalExpenses, userCurrencyCode)}
             </p>
           </CardContent>
         </Card>
@@ -211,11 +226,7 @@ export function TransactionReportViewer({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-success">
-              {totalIncomes.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              {currencySymbol}
+              {formatCurrency(totalIncomes, userCurrencyCode)}
             </p>
           </CardContent>
         </Card>
@@ -238,12 +249,7 @@ export function TransactionReportViewer({
                 netAmount >= 0 ? "text-success" : "text-destructive"
               )}
             >
-              {netAmount < 0 ? "-" : ""}
-              {Math.abs(netAmount).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              {currencySymbol}
+              {formatCurrency(netAmount, userCurrencyCode)}
             </p>
           </CardContent>
         </Card>
@@ -294,9 +300,7 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("date")}
                 >
                   Date
-                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
-                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
-                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+                  {sortIcon("date")}
                 </Button>
               </TableHead>
               <TableHead>
@@ -307,9 +311,7 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("kind")}
                 >
                   Type
-                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
-                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
-                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+                  {sortIcon("kind")}
                 </Button>
               </TableHead>
               <TableHead>
@@ -320,9 +322,7 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("category")}
                 >
                   Category
-                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
-                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
-                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+                  {sortIcon("category")}
                 </Button>
               </TableHead>
               <TableHead>
@@ -333,9 +333,7 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("account")}
                 >
                   Account
-                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
-                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
-                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+                  {sortIcon("account")}
                 </Button>
               </TableHead>
               <TableHead className="text-right">
@@ -346,9 +344,7 @@ export function TransactionReportViewer({
                   onClick={() => handleSort("amount")}
                 >
                   Amount
-                  {sortDirection === "asc" && <ArrowUp className="h-3 w-3" />}
-                  {sortDirection === "desc" && <ArrowDown className="h-3 w-3" />}
-                  {!sortDirection && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+                  {sortIcon("amount")}
                 </Button>
               </TableHead>
             </TableRow>
@@ -372,11 +368,7 @@ export function TransactionReportViewer({
                     row.kind === TransactionKind.Expense ? "text-destructive" : "text-success"
                   )}
                 >
-                  {row.amount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                  {currencySymbol}
+                  {formatOriginal(row.amount, row.currency)}
                 </TableCell>
               </TableRow>
             ))}

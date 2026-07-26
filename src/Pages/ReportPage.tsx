@@ -169,7 +169,6 @@ const { accessToken, isAuthReady } = useAuth();
                 <TransactionReportViewer
                   report={report}
                   isLoading={isLoading}
-                  currencySymbol="€"
                 />
               </div>
             </div>
