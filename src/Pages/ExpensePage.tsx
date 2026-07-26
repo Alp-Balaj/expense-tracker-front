@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { TrendingDown } from "lucide-react"
 import {
   Card,
@@ -11,44 +10,12 @@ import { PageHeader } from "@/Components/General/PageHeader"
 import { ExpenseSummaryCards } from "@/Components/Expense/ExpenseSummaryCards"
 import { ExpenseCharts } from "@/Components/Dashboard/ExpenseCharts"
 import ExpenseList from "@/Components/Lists/ExpenseList"
-import { useAuth } from "@/Authorization/AuthContext"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type { Expense } from "@/Models/Expense"
-import type { Category } from "@/Models/Category"
-import type { AxiosError } from "axios"
+import { useExpensesQuery } from "@/Hooks/queries/useExpenses"
+import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
 export default function ExpensePage() {
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData } = useAuthorizationApi()
-
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return
-
-    let cancelled = false
-
-    ;(async () => {
-      try {
-        const [expenseData, categoryData] = await Promise.all([
-          getAllData<Expense[]>("api/Expense"),
-          getAllData<Category[]>("api/Category"),
-        ])
-        if (!cancelled) {
-          setExpenses(expenseData)
-          setCategories(categoryData)
-        }
-      } catch (e: unknown) {
-        const err = e as AxiosError
-        if (err.response?.status !== 401) console.error(err)
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [isAuthReady, accessToken, getAllData])
+  const { data: expenses = [] } = useExpensesQuery()
+  const { data: categories = [] } = useCategoriesQuery()
 
   return (
     <div className="min-h-screen bg-background">

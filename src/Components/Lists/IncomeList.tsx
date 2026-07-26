@@ -1,22 +1,21 @@
-import { useEffect, useMemo, useState } from "react"
-import type { AxiosError } from "axios"
+import { useMemo } from "react"
+import { toast } from "sonner"
 import { DataTable } from "../General/DataTable"
 import IncomeFormModal from "../Income/IncomeFormModal"
 import { buildIncomeColumns, type Income } from "@/Models/Income"
-import { useCrudList } from "@/Hooks/useCrudLists"
+import { useCrudDialogs } from "@/Hooks/useCrudLists"
 import ConfirmDelete from "../General/ConfirmDelete"
-import { useAuth } from "@/Authorization/AuthContext"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type { Account } from "@/Models/Account"
-import type { Category } from "@/Models/Category"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { getApiErrorMessage } from "@/lib/errors"
+import { useIncomesQuery, useCreateIncome, useUpdateIncome, useDeleteIncome } from "@/Hooks/queries/useIncomes"
+import { useAccountsQuery } from "@/Hooks/queries/useAccounts"
+import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
 export default function IncomeList() {
   const {
-    items: incomes,
     open,
-    dialogOpen,
     setOpen,
+    dialogOpen,
     setDialogOpen,
     editing,
     deleting,
@@ -25,40 +24,40 @@ export default function IncomeList() {
     startDelete,
     closeForm,
     closeModal,
-    submit,
-    confirmDelete
-  } = useCrudList<Income>({ endpoint: "api/Income" })
+  } = useCrudDialogs<Income>()
 
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData } = useAuthorizationApi()
+  const { data: incomes = [] } = useIncomesQuery()
+  const { data: accounts = [] } = useAccountsQuery()
+  const { data: categories = [] } = useCategoriesQuery()
   const { format, userCurrencyCode } = useCurrency()
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
 
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return
+  const createIncome = useCreateIncome()
+  const updateIncome = useUpdateIncome()
+  const deleteIncome = useDeleteIncome()
 
-    let cancelled = false
-
-    ;(async () => {
-      try {
-        const [accs, cats] = await Promise.all([
-          getAllData<Account[]>("api/Account"),
-          getAllData<Category[]>("api/Category"),
-        ])
-        if (cancelled) return
-        setAccounts(accs)
-        setCategories(cats)
-      } catch (e: unknown) {
-        const err = e as AxiosError
-        if (err.response?.status !== 401) console.error(err)
-      }
-    })()
-
-    return () => {
-      cancelled = true
+  const submit = async (data: Income) => {
+    try {
+      if (editing) await updateIncome.mutateAsync(data)
+      else await createIncome.mutateAsync(data)
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, "Saving failed."))
+      throw e // callers keep their form open
     }
-  }, [isAuthReady, accessToken, getAllData])
+    toast.success(editing ? "Changes saved" : "Added")
+    closeForm()
+  }
+
+  const confirmDelete = async () => {
+    if (!deleting) return
+    try {
+      await deleteIncome.mutateAsync(deleting)
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, "Delete failed."))
+      return // keep the confirm dialog open for retry/cancel
+    }
+    toast.success("Deleted")
+    closeModal()
+  }
 
   const columns = useMemo(
     () =>
@@ -69,7 +68,7 @@ export default function IncomeList() {
         categories,
         formatter: (value) => format(value, userCurrencyCode),
       }),
-    [startEdit, accounts, categories, format, userCurrencyCode]
+    [startEdit, startDelete, accounts, categories, format, userCurrencyCode]
   )
 
   return (

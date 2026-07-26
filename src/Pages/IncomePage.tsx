@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { TrendingUp } from "lucide-react"
 import {
   Card,
@@ -11,44 +10,12 @@ import { PageHeader } from "@/Components/General/PageHeader"
 import { IncomeSummaryCards } from "@/Components/Income/IncomeSummaryCards"
 import { IncomeCharts } from "@/Components/Income/IncomeCharts"
 import IncomeList from "@/Components/Lists/IncomeList"
-import { useAuth } from "@/Authorization/AuthContext"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type { Income } from "@/Models/Income"
-import type { Category } from "@/Models/Category"
-import type { AxiosError } from "axios"
+import { useIncomesQuery } from "@/Hooks/queries/useIncomes"
+import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
 export default function IncomePage() {
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData } = useAuthorizationApi()
-
-  const [incomes, setIncomes] = useState<Income[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return
-
-    let cancelled = false
-
-    ;(async () => {
-      try {
-        const [incomeData, categoryData] = await Promise.all([
-          getAllData<Income[]>("api/Income"),
-          getAllData<Category[]>("api/Category"),
-        ])
-        if (!cancelled) {
-          setIncomes(incomeData)
-          setCategories(categoryData)
-        }
-      } catch (e: unknown) {
-        const err = e as AxiosError
-        if (err.response?.status !== 401) console.error(err)
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [isAuthReady, accessToken, getAllData])
+  const { data: incomes = [] } = useIncomesQuery()
+  const { data: categories = [] } = useCategoriesQuery()
 
   return (
     <div className="min-h-screen bg-background">

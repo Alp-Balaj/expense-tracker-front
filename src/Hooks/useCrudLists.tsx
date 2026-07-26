@@ -1,43 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
-import type { AxiosError } from "axios";
-import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/errors";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-
-type CrudMode = "create" | "update";
-
-type UseCrudListOptions = {
-  endpoint: string;
-};
+import { useState } from "react";
 
 type EntityWithId = { id: string | null };
 
-export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOptions) {
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
-
-  const [items, setItems] = useState<T[]>([]);
+// Dialog/editing-state plumbing shared by list pages backed by a React Query
+// resource hook. Fetching and mutating now live in Hooks/queries/*; this
+// hook only tracks which row is being created/edited/deleted and which
+// dialogs are open.
+export function useCrudDialogs<T extends EntityWithId>() {
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<T | null>(null);
   const [deleting, setDeleting] = useState<T | null>(null);
-
-  const fetchAll = useCallback(async () => {
-    try {
-      const data = await getAllData<T[]>(endpoint);
-      setItems(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) console.error(err);
-    }
-  }, [getAllData, endpoint]);
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-
-    fetchAll();
-  }, [isAuthReady, accessToken, fetchAll]);
 
   const startCreate = () => {
     setEditing(null);
@@ -52,7 +25,7 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
   const startDelete = (row: T) => {
     setDeleting(row);
     setDialogOpen(true);
-  }
+  };
 
   const closeForm = () => {
     setOpen(false);
@@ -62,45 +35,9 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
   const closeModal = () => {
     setDialogOpen(false);
     setDeleting(null);
-  }
-
-  const submit = async (data: T) => {
-    const mode: CrudMode = editing ? "update" : "create";
-
-    try {
-      if (mode === "update") await putData(endpoint, data);
-      else await postData(endpoint, data);
-    } catch (e: unknown) {
-      toast.error(getApiErrorMessage(e, "Saving failed."));
-      throw e; // callers keep their form open
-    }
-
-    toast.success(mode === "update" ? "Changes saved" : "Added");
-    closeForm();
-    await fetchAll();
   };
 
-  const confirmDelete = async () => {
-    if (!deleting) return;
-
-    try {
-      await deleteData(endpoint, deleting);
-    } catch (e: unknown) {
-      toast.error(getApiErrorMessage(e, "Delete failed."));
-      return; // keep the confirm dialog open for retry/cancel
-    }
-
-    toast.success("Deleted");
-    setDialogOpen(false);
-    setDeleting(null);
-    await fetchAll();
-  }
-
   return {
-    items,
-    setItems,
-    fetchAll,
-
     open,
     setOpen,
     dialogOpen,
@@ -115,7 +52,5 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
     startDelete,
     closeForm,
     closeModal,
-    submit,
-    confirmDelete
   };
 }
