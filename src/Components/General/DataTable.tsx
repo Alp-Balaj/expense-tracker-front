@@ -22,7 +22,7 @@ import {
 } from "@/Components/ui/table";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Filter, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 type DataTableToolbarProps = {
   searchPlaceholder?: string;
@@ -80,10 +80,14 @@ export function DataTable<TData, TValue>({
     [],
   );
   const [globalFilter, setGlobalFilter] = React.useState("");
+  // searchQuery holds the raw input; globalFilter follows it after a short
+  // debounce so large lists don't re-filter on every keystroke.
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  // const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
-  // const [accountFilter, setAccountFilter] = React.useState<string>("all");
+  React.useEffect(() => {
+    const timeout = setTimeout(() => setGlobalFilter(searchQuery), 200);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   const table = useReactTable({
     data,
@@ -126,32 +130,6 @@ export function DataTable<TData, TValue>({
                   className="pl-9 bg-primary/5 border-primary/20 focus:border-primary"
                 />
               </div>
-              {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Sources" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  {incomeCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={accountFilter} onValueChange={setAccountFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Accounts" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Accounts</SelectItem>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
             </div>
           )}
 
@@ -169,15 +147,7 @@ export function DataTable<TData, TValue>({
                 </Button>
               )}
 
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0 bg-transparent border-border"
-              >
-                <Filter className="h-4 w-4" />
-                <span className="sr-only">Filter</span>
-              </Button>
-
+              {/* TODO: column filters (category/account selects, date ranges) — see Suggestion-5 */}
               {toolbar.rightSlot}
             </div>
           )}
