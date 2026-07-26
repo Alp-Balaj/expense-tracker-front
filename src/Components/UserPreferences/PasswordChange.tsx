@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 import { Eye, EyeOff, Check } from "lucide-react";
 
 interface PasswordChangeProps {
-  onPasswordChange?: (current: string, next: string) => void;
+  onPasswordChange: (current: string, next: string) => Promise<void>;
 }
 
 export function PasswordChange({ onPasswordChange }: PasswordChangeProps) {
@@ -18,17 +18,25 @@ export function PasswordChange({ onPasswordChange }: PasswordChangeProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [changed, setChanged] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleChange = () => {
+  const handleChange = async () => {
     setError("");
     if (!currentPassword || !newPassword || !confirmPassword) return setError("All fields required");
     if (newPassword.length < 8) return setError("Password must be at least 8 chars");
     if (newPassword !== confirmPassword) return setError("Passwords do not match");
 
-    onPasswordChange?.(currentPassword, newPassword);
-    setChanged(true);
-    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
-    setTimeout(() => setChanged(false), 2000);
+    setSaving(true);
+    try {
+      await onPasswordChange(currentPassword, newPassword);
+      setChanged(true);
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      setTimeout(() => setChanged(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Password change failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderInput = (label: string, value: string, setValue: any, show: boolean, toggleShow: any) => (
@@ -52,8 +60,8 @@ export function PasswordChange({ onPasswordChange }: PasswordChangeProps) {
           {renderInput("New Password", newPassword, setNewPassword, showNew, () => setShowNew(!showNew))}
           {renderInput("Confirm Password", confirmPassword, setConfirmPassword, showConfirm, () => setShowConfirm(!showConfirm))}
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button onClick={handleChange} className="w-full bg-primary text-primary-foreground">
-            {changed ? <><Check className="h-4 w-4 mr-2"/> Changed</> : "Change Password"}
+          <Button onClick={handleChange} disabled={saving} className="w-full bg-primary text-primary-foreground">
+            {changed ? <><Check className="h-4 w-4 mr-2"/> Changed</> : saving ? "Changing..." : "Change Password"}
           </Button>
         </AccordionContent>
       </AccordionItem>

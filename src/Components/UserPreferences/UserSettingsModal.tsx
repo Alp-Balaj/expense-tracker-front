@@ -5,6 +5,7 @@ import { Button } from "@/Components/ui/button";
 import { Settings } from "lucide-react";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import { changePasswordApi, updateProfileApi } from "@/Services/loginServices";
 import { usePreferences, type UserPreferences } from "@/Authorization/UserPreferencesContext";
 import { AccountSettings } from "./AccountSettings";
 import { PasswordChange } from "./PasswordChange";
@@ -13,7 +14,7 @@ import type { UserSettings } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
 export function UserSettingsModal() {
-  const { accessToken, isAuthReady, email: authEmail, username: authUsername } = useAuth();
+  const { accessToken, setToken, isAuthReady, email: authEmail, username: authUsername } = useAuth();
   const { getAllData } = useAuthorizationApi();
   const { preferences, updatePreferences } = usePreferences();
 
@@ -43,6 +44,17 @@ export function UserSettingsModal() {
     await updatePreferences(prefs);
   };
 
+  const handlePasswordChange = async (current: string, next: string) => {
+    await changePasswordApi(current, next);
+  };
+
+  // The server answers with a fresh access token whose unique_name claim carries
+  // the new username; storing it updates the sidebar and survives reloads.
+  const handleAccountSave = async (settings: UserSettings) => {
+    const token = await updateProfileApi(settings.username);
+    if (token) setToken(token);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -61,8 +73,8 @@ export function UserSettingsModal() {
           </TabsList>
 
           <TabsContent value="settings" className="p-6">
-            <AccountSettings initialSettings={userSettings} onSave={setUserSettings} />
-            <PasswordChange />
+            <AccountSettings initialSettings={userSettings} onSave={handleAccountSave} />
+            <PasswordChange onPasswordChange={handlePasswordChange} />
           </TabsContent>
 
           <TabsContent value="preferences" className="p-6">
