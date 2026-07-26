@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
@@ -24,11 +24,21 @@ import {
   Tags,
 } from "lucide-react";
 
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
-import { useAuth } from "@/Authorization/AuthContext";
 import { PageHeader } from "@/Components/General/PageHeader";
 import ConfirmDelete from "@/Components/General/ConfirmDelete";
+import {
+  useCategoriesQuery,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "@/Hooks/queries/useCategories";
+import {
+  useCurrenciesQuery,
+  useCreateCurrency,
+  useUpdateCurrency,
+  useDeleteCurrency,
+} from "@/Hooks/queries/useCurrencies";
 
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
@@ -37,33 +47,25 @@ const tabConfig = [
   { value: "future", label: "Future Expenses", icon: Calendar, categoryType: CategoryType.FutureExpense },
 ];
 
-export default function CategoryAndCurrencyPage() {
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
+// 400/409/500 on delete generally means the row is still referenced by
+// existing transactions (FK constraint) — surface that instead of a
+// generic failure message.
+function deleteFailureMessage(e: unknown, resource: string): string {
+  const err = e as AxiosError;
+  if (err.response && [400, 409, 500].includes(err.response.status)) {
+    return `This ${resource} is used by existing transactions and can't be deleted.`;
+  }
+  return `Failed to delete ${resource}.`;
+}
 
+export default function CategoryAndCurrencyPage() {
   //#region Category
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const { data: categories = [] } = useCategoriesQuery();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
   const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
 
-  const fetchCategories = useCallback(async () => {
-    setIsLoadingCategories(true);
-    setCategoryLoadError(null);
-    try {
-      const data = await getAllData<Category[]>("api/Category");
-      setCategories(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setCategoryLoadError("Failed to load categories.");
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingCategories(false);
-    }
-  }, [getAllData]);
-
-  
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -78,58 +80,36 @@ export default function CategoryAndCurrencyPage() {
     setDeletingCategory(category);
   };
 
-  const confirmDeleteCategory = useCallback(async () => {
+  const confirmDeleteCategory = async () => {
     if (!deletingCategory) return;
     setCategoryLoadError(null);
     try {
-      await deleteData("api/Category", deletingCategory);
-      setCategories((prev) => prev.filter((c) => c.id !== deletingCategory.id));
+      await deleteCategoryMutation.mutateAsync(deletingCategory);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         console.error(err);
-        setCategoryLoadError(
-          err.response && [400, 409, 500].includes(err.response.status)
-            ? "This category is used by existing transactions and can't be deleted."
-            : "Failed to delete category."
-        );
+        setCategoryLoadError(deleteFailureMessage(e, "category"));
       }
     } finally {
       setDeletingCategory(null);
     }
-  }, [deleteData, deletingCategory]);
+  };
 
-  const handleSaveCategory = useCallback(async (category: AddCategory) => {
-    setIsLoadingCategories(true);
-    if(category.id === null){
-      try {
-        await postData<Category>("api/Category", category);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setCategoryLoadError("Failed to add category.");
-        }
-      } finally {
-        setIsLoadingCategories(false);
+  const handleSaveCategory = async (category: AddCategory) => {
+    setCategoryLoadError(null);
+    try {
+      if (category.id === null) await createCategory.mutateAsync(category);
+      else await updateCategory.mutateAsync(category);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCategoryLoadError(category.id === null ? "Failed to add category." : "Failed to edit category.");
       }
-      fetchCategories();
-    } else {
-      try {
-        await putData<Category>("api/Category", category);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setCategoryLoadError("Failed to edit category.");
-        }
-      } finally {
-        setIsLoadingCategories(false);
-      }
-      fetchCategories();
     }
     setEditingCategory(null);
-  },[postData, putData, fetchCategories]);
+  };
 
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -139,64 +119,30 @@ export default function CategoryAndCurrencyPage() {
   //#endregion
 
   //#region Currency
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
+  const { data: currencies = [] } = useCurrenciesQuery();
+  const createCurrency = useCreateCurrency();
+  const updateCurrency = useUpdateCurrency();
+  const deleteCurrencyMutation = useDeleteCurrency();
   const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
-
-
-  const fetchCurrencies = useCallback(async () => {
-    setIsLoadingCurrencies(true);
-    setCurrencyLoadError(null);
-
-    try {
-      const data = await getAllData<Currency[]>("api/Currency");
-      setCurrencies(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setCurrencyLoadError("Failed to load currencies.");
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingCurrencies(false);
-    }
-  }, [getAllData]);
 
   const [currencyDialogOpen, setCurrencyDialogOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
 
-  const handleSaveCurrency = useCallback(async (currency: Currency) => {
-    setIsLoadingCurrencies(true);
-    if(currency.id === null){
-      try {
-        await postData<Currency>("api/Currency", currency);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setCurrencyLoadError("Failed to add currency.");
-        }
-      } finally {
-        setIsLoadingCurrencies(false);
+  const handleSaveCurrency = async (currency: Currency) => {
+    setCurrencyLoadError(null);
+    try {
+      if (currency.id === null) await createCurrency.mutateAsync(currency);
+      else await updateCurrency.mutateAsync(currency);
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCurrencyLoadError(currency.id === null ? "Failed to add currency." : "Failed to edit currency.");
       }
-      fetchCurrencies();
-    } else {
-      try {
-        await putData<Currency>("api/Currency", currency);
-      }  catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) {
-          console.error(err);
-          setCurrencyLoadError("Failed to edit currency.");
-        }
-      } finally {
-        setIsLoadingCurrencies(false);
-      }
-      fetchCurrencies();
     }
     setEditingCurrency(null);
-  },[postData, putData, fetchCurrencies]);
-  
+  };
+
   const handleEditCurrency = (currency: Currency) => {
     setEditingCurrency(currency);
     setCurrencyDialogOpen(true);
@@ -208,42 +154,29 @@ export default function CategoryAndCurrencyPage() {
     setDeletingCurrency(currency);
   };
 
-  const confirmDeleteCurrency = useCallback(async () => {
+  const confirmDeleteCurrency = async () => {
     if (!deletingCurrency) return;
     setCurrencyLoadError(null);
     try {
-      await deleteData("api/Currency", deletingCurrency);
-      setCurrencies((prev) => prev.filter((c) => c.id !== deletingCurrency.id));
+      await deleteCurrencyMutation.mutateAsync(deletingCurrency);
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         console.error(err);
-        setCurrencyLoadError(
-          err.response && [400, 409, 500].includes(err.response.status)
-            ? "This currency is used by existing transactions and can't be deleted."
-            : "Failed to delete currency."
-        );
+        setCurrencyLoadError(deleteFailureMessage(e, "currency"));
       }
     } finally {
       setDeletingCurrency(null);
     }
-  }, [deleteData, deletingCurrency]);
+  };
 
   const handleAddCurrency = () => {
     setEditingCurrency(null);
     setCurrencyDialogOpen(true);
   };
-  
+
   //#endregion
-  
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    if(!isLoadingCategories)
-      fetchCategories();
-    if(!isLoadingCurrencies)
-      fetchCurrencies();
-  }, [fetchCategories, fetchCurrencies, isAuthReady, accessToken]);
-  
+
   const [activeTab, setActiveTab] = useState("expenses");
   const currentTabConfig = tabConfig.find((t) => t.value === activeTab);
   const currentType = currentTabConfig?.categoryType || CategoryType.Expense;
@@ -292,7 +225,7 @@ export default function CategoryAndCurrencyPage() {
                   {tabConfig.map((tab) => (
                     <TabsContent key={tab.value} value={tab.value} className="mt-6 space-y-6">
                       {/* Chart */}
-                      <CategoryChart 
+                      <CategoryChart
                         categories={categories.filter((c) => c.categoryType === tab.categoryType)}
                         type={tab.categoryType}
                       />

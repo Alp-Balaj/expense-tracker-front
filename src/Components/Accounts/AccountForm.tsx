@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
@@ -23,10 +23,7 @@ import {
 import { Textarea } from "@/Components/ui/textarea";
 import type { AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
-import type { CurrencyDropdown } from "@/Models/Currency";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import type { AxiosError } from "axios";
+import { useCurrenciesQuery } from "@/Hooks/queries/useCurrencies";
 
 interface AddAccountDialogProps {
   open: boolean;
@@ -43,31 +40,10 @@ export function AccountForm({
   onSave,
   defaultType = AmountType.CheckingAccount,
 }: AddAccountDialogProps) {
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData } = useAuthorizationApi();
   const navigate = useNavigate();
 
-  const [currencies, setCurrencies] = useState<CurrencyDropdown[]>([]);
-  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [currencyLoadError, setCurrencyLoadError] = useState<string | null>(null);
-
-  const fetchCurrencies = useCallback(async () => {
-    setIsLoadingCurrencies(true);
-    setCurrencyLoadError(null);
-
-    try {
-      const data = await getAllData<CurrencyDropdown[]>("api/Currency");
-      setCurrencies(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setCurrencyLoadError("Failed to load currencies.");
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingCurrencies(false);
-    }
-  }, [getAllData]);
+  const { data: currencies = [], isLoading: isLoadingCurrencies, isError: currenciesFailed } = useCurrenciesQuery();
+  const currencyLoadError = currenciesFailed ? "Failed to load currencies." : null;
 
   const [name, setName] = useState("");
   const [amountType, setAmountType] = useState<AmountType>(defaultType);
@@ -83,10 +59,6 @@ export function AccountForm({
   const isEditing = !!account;
 
   useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    if(!isLoadingCurrencies)
-        fetchCurrencies();
-
     if (account) {
       setName(account.name);
       setAmountType(account.amountType);
@@ -192,7 +164,7 @@ export function AccountForm({
 
                 <SelectContent>
                   {currencies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <SelectItem key={c.id} value={c.id ?? ""}>
                       {c.code} - {c.symbol}
                     </SelectItem>
                   ))}

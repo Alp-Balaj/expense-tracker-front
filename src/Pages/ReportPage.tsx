@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   FileBarChart,
   FileText,
@@ -16,76 +16,23 @@ import type {
   TransactionReportResult,
   ReportType,
 } from "@/Models/Report";
-import type { Account } from "@/Models/Account";
-import type { Category } from "@/Models/Category";
-import type { AxiosError } from "axios";
-import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import { PageHeader } from "@/Components/General/PageHeader";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/errors";
+import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
+import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportType>("transactions");
   const [report, setReport] = useState<TransactionReportResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData } = useAuthorizationApi();
+  const { postData } = useAuthorizationApi();
 
-  //#region Accounts
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-  const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
-
-  const fetchAccounts = useCallback(async () => {
-    setIsLoadingAccounts(true);
-    setAccountLoadError(null);
-    try {
-      const data = await getAllData<Account[]>("api/Account");
-      setAccounts(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setAccountLoadError("Failed to load accounts.");
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingAccounts(false);
-    }
-  }, [getAllData]);
-  //#endregion
-
-  //#region Categories
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
-
-  const fetchCategories = useCallback(async () => {
-    setIsLoadingCategories(true);
-    setCategoryLoadError(null);
-    try {
-      const data = await getAllData<Category[]>("api/Category");
-      setCategories(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        setCategoryLoadError("Failed to load categories.");
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingCategories(false);
-    }
-  }, [getAllData]);
-  //#endregion
-  
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    if(!isLoadingCategories)
-      fetchCategories();
-    if(!isLoadingAccounts)
-      fetchAccounts();
-  }, [fetchCategories, fetchAccounts, isAuthReady, accessToken]);
-
+  const { data: accounts = [], isError: accountsFailed } = useAccountsQuery();
+  const { data: categories = [], isError: categoriesFailed } = useCategoriesQuery();
+  const accountLoadError = accountsFailed ? "Failed to load accounts." : null;
+  const categoryLoadError = categoriesFailed ? "Failed to load categories." : null;
 
   const handleGenerateReport = async (filters: TransactionReportRequest) => {
     setIsLoading(true);

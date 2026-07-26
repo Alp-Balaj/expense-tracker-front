@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
@@ -28,11 +28,8 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import type { SavingGoals, AddSavingsGoal } from "@/Models/SavingGoals";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import type { Account } from "@/Models/Account";
-import type { Category } from "@/Models/Category";
-import type { AxiosError } from "axios";
+import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
+import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
 import { CategoryType } from "@/Enums/enums";
 import { toISODate } from "@/lib/dates";
 
@@ -62,35 +59,14 @@ export default function SavingsGoalFormModal({
   onSubmit,
   onCancel,
 }: SavingsGoalFormModalProps) {
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData } = useAuthorizationApi();
   const navigate = useNavigate();
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  const fetchAccounts = useCallback(async () => {
-    try {
-      const data = await getAllData<Account[]>("api/Account");
-      setAccounts(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) console.error(err);
-    }
-  }, [getAllData]);
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await getAllData<Category[]>("api/Category");
-      const savingCategories = data.filter(
-                    (a) => a.categoryType === CategoryType.Savings,
-                  );
-      setCategories(savingCategories);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) console.error(err);
-    }
-  }, [getAllData]);
+  const { data: accounts = [] } = useAccountsQuery();
+  const { data: allCategories = [] } = useCategoriesQuery();
+  const categories = useMemo(
+    () => allCategories.filter((c) => c.categoryType === CategoryType.Savings),
+    [allCategories]
+  );
 
   const initial: FormState = useMemo(
     () => ({
@@ -110,10 +86,7 @@ export default function SavingsGoalFormModal({
 
   React.useEffect(() => {
     setData(initial);
-    if (!isAuthReady || !accessToken) return;
-    fetchCategories();
-    fetchAccounts();
-  }, [open, initial, isAuthReady, accessToken, fetchCategories, fetchAccounts]);
+  }, [open, initial]);
 
   const toNumber = (v: string) => {
     const n = Number(v);

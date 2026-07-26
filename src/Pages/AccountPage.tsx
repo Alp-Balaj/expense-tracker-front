@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Wallet, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -16,73 +16,40 @@ import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
 import { AccountDetailsDialog } from "@/Components/Accounts/AccountDetailsDialog";
 import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import type { AxiosError } from "axios";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/errors";
 import { PageHeader } from "@/Components/General/PageHeader";
+import {
+  useAccountsQuery,
+  useCreateAccount,
+  useUpdateAccount,
+  useDeleteAccount,
+} from "@/Hooks/queries/useAccounts";
 
 export default function AccountPage() {
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
-
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const { data: accounts = [] } = useAccountsQuery();
+  const createAccount = useCreateAccount();
+  const updateAccount = useUpdateAccount();
+  const deleteAccountMutation = useDeleteAccount();
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
-  const fetchAccounts = useCallback(async () => {
-    setIsLoadingAccounts(true);
+  const handleSaveAccount = async (account: AddAccount) => {
     try {
-      const data = await getAllData<Account[]>("api/Account");
-      setAccounts(data);
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        console.error(err);
-      }
-    } finally {
-      setIsLoadingAccounts(false);
-    }
-  }, [getAllData]);
-
-  const handleSaveAccount = useCallback(
-    async (account: AddAccount) => {
-      setIsLoadingAccounts(true);
       if (account.id === null) {
-        try {
-          await postData<AddAccount>("api/Account", account);
-          toast.success("Account added");
-        } catch (e: unknown) {
-          const err = e as AxiosError;
-          if (err.response?.status !== 401) {
-            console.error(err);
-            toast.error(getApiErrorMessage(e, "Failed to add account."));
-          }
-        } finally {
-          setIsLoadingAccounts(false);
-        }
-        fetchAccounts();
+        await createAccount.mutateAsync(account);
+        toast.success("Account added");
       } else {
-        try {
-          await putData<AddAccount>("api/Account", account as AddAccount);
-          toast.success("Account updated");
-        } catch (e: unknown) {
-          const err = e as AxiosError;
-          if (err.response?.status !== 401) {
-            console.error(err);
-            toast.error(getApiErrorMessage(e, "Failed to update account."));
-          }
-        } finally {
-          setIsLoadingAccounts(false);
-        }
-        fetchAccounts();
+        await updateAccount.mutateAsync(account);
+        toast.success("Account updated");
       }
-      setEditingAccount(null);
-    },
-    [postData, putData, fetchAccounts],
-  );
+    } catch (e: unknown) {
+      toast.error(
+        getApiErrorMessage(e, account.id === null ? "Failed to add account." : "Failed to update account.")
+      );
+    }
+    setEditingAccount(null);
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -103,31 +70,21 @@ export default function AccountPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleDeleteAccount = useCallback(async () => {
+  const handleDeleteAccount = async () => {
     if (!deletingAccount) return;
     try {
-      await deleteData("api/Account", deletingAccount);
-      setAccounts((prev) => prev.filter((acc) => acc.id !== deletingAccount.id));
+      await deleteAccountMutation.mutateAsync(deletingAccount);
       toast.success("Account deleted");
     } catch (e: unknown) {
-      const err = e as AxiosError;
-      if (err.response?.status !== 401) {
-        console.error(err);
-        toast.error(getApiErrorMessage(e, "Failed to delete account."));
-      }
+      toast.error(getApiErrorMessage(e, "Failed to delete account."));
     } finally {
       setDeletingAccount(null);
     }
-  }, [deletingAccount, deleteData]);
+  };
 
   const handleViewDetails = (account: Account) => {
     setViewingAccount(account);
   };
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    if (!isLoadingAccounts) fetchAccounts();
-  }, [fetchAccounts, isAuthReady, accessToken]);
 
   const handleAddAccount = () => {
     setEditingAccount(null);

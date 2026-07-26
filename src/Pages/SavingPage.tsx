@@ -1,46 +1,30 @@
-import { useCallback, useEffect, useState } from "react"
+import { useState } from "react"
 import { PiggyBank } from "lucide-react"
 import { PageHeader } from "@/Components/General/PageHeader"
 import { SavingsHeroCard } from "@/Components/Saving/SavingsHeroCard"
 import { SavingsAchievementCard } from "@/Components/Saving/SavingsAchievementCard"
 import { SavingsGoalGrid } from "@/Components/Saving/SavingsGoalGrid"
 import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal"
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi"
-import type {
-  SavingGoals,
-  AddSavingsGoal,
-  SavingContributions,
-} from "@/Models/SavingGoals"
-import { useAuth } from "@/Authorization/AuthContext"
-import { SAVING_GOAL_API } from "@/Services/api"
-import type { AxiosError } from "axios"
+import type { SavingGoals, AddSavingsGoal, SavingContributions } from "@/Models/SavingGoals"
 import { toast } from "sonner"
 import { getApiErrorMessage } from "@/lib/errors"
+import {
+  useSavingGoalsQuery,
+  useCreateSavingGoal,
+  useUpdateSavingGoal,
+  useDeleteSavingGoal,
+  useAddSavingContribution,
+} from "@/Hooks/queries/useSavingGoals"
 
 function SavingPage() {
-  const { accessToken, isAuthReady } = useAuth()
-  const { getAllData, postData, putData, deleteData } = useAuthorizationApi()
+  const { data: goals = [] } = useSavingGoalsQuery()
+  const createGoal = useCreateSavingGoal()
+  const updateGoal = useUpdateSavingGoal()
+  const deleteGoalMutation = useDeleteSavingGoal()
+  const addContribution = useAddSavingContribution()
 
-  const [goals, setGoals] = useState<SavingGoals[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<SavingGoals | null>(null)
-
-  const fetchGoals = useCallback(async () => {
-    try {
-      const data = await getAllData<SavingGoals[]>(SAVING_GOAL_API)
-      setGoals(Array.isArray(data) ? data : [])
-    } catch (e: unknown) {
-      const err = e as AxiosError
-      if (err.response?.status !== 401 && err.response?.status !== 404) {
-        console.error(err)
-      }
-    }
-  }, [getAllData])
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return
-    fetchGoals()
-  }, [isAuthReady, accessToken, fetchGoals])
 
   // --- Handlers -----------------------------------------------------
   const handleNewGoal = () => {
@@ -55,30 +39,25 @@ function SavingPage() {
 
   const handleSubmitGoal = async (data: AddSavingsGoal) => {
     try {
-      if (editingGoal) {
-        await putData(SAVING_GOAL_API, data as SavingGoals)
-      } else {
-        await postData(SAVING_GOAL_API, data)
-      }
+      if (editingGoal) await updateGoal.mutateAsync(data)
+      else await createGoal.mutateAsync(data)
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Failed to save goal."))
       throw e // the modal keeps the dialog open so the user can retry
     }
     toast.success(editingGoal ? "Goal updated" : "Goal added")
-    await fetchGoals()
     setFormOpen(false)
     setEditingGoal(null)
   }
 
   const handleDeleteGoal = async (goal: SavingGoals) => {
     try {
-      await deleteData(SAVING_GOAL_API, goal as SavingGoals & { id: string })
+      await deleteGoalMutation.mutateAsync(goal)
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Failed to delete goal."))
       return
     }
     toast.success("Goal deleted")
-    setGoals((prev) => prev.filter((g) => g.id !== goal.id))
   }
 
   const handleAddContribution = async (
@@ -86,13 +65,12 @@ function SavingPage() {
     contribution: SavingContributions
   ) => {
     try {
-      await postData(`api/SavingContribution/${goalId}`, contribution)
+      await addContribution.mutateAsync({ goalId, contribution })
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Failed to add contribution."))
       return
     }
     toast.success("Contribution added")
-    await fetchGoals()
   }
 
   return (
