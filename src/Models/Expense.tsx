@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   textColumn,
+  dateColumn,
   sortableColumn,
   currencyColumn,
   actionsColumn,
@@ -12,7 +13,7 @@ export type Expense = {
   id: string | null;
   title: string;
   amount: number;
-  date: Date;
+  date: string;
   description: string;
   accountId: string;
   categoryId: string;
@@ -38,7 +39,7 @@ export function buildExpenseColumns(handlers?: {
     currencyColumn<Expense>("amount", "Amount", {
       formatter,
     }),
-    textColumn<Expense>("date", "Date"),
+    dateColumn<Expense>("date", "Date"),
     textColumn<Expense>("description", "Description"),
     {
       accessorKey: "accountId",

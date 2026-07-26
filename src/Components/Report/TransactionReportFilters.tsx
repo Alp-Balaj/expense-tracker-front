@@ -17,6 +17,7 @@ import {
   CollapsibleTrigger,
 } from "@/Components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { toISODate } from "@/lib/dates";
 import type { TransactionReportRequest } from "@/Models/Report";
 import type { Category } from "@/Models/Category";
 import type { Account } from "@/Models/Account";
@@ -82,8 +83,10 @@ export function TransactionReportFilters({
     if (!fromDate || !toDate) return;
 
     const filters: TransactionReportRequest = {
-      from: fromDate.toISOString(),
-      to: toDate.toISOString(),
+      // Local calendar day as "yyyy-MM-dd" — toISOString() would shift the
+      // day across the UTC boundary. The backend treats both ends inclusive.
+      from: toISODate(fromDate),
+      to: toISODate(toDate),
       accountIds: selectedAccountIds.length > 0 ? selectedAccountIds : undefined,
       categoryIds: selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       includeExpenses,

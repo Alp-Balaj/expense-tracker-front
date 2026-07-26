@@ -25,6 +25,7 @@ import {
 import type { Income } from "@/Models/Income"
 import type { Category } from "@/Models/Category"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { monthKey, monthKeyFromNow } from "@/lib/dates"
 
 interface IncomeChartsProps {
   incomes: Income[]
@@ -58,16 +59,13 @@ export function IncomeCharts({ incomes, categories }: IncomeChartsProps) {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     monthLabels.push(d.toLocaleDateString("en-US", { month: "short" }))
-    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`)
+    monthKeys.push(monthKeyFromNow(i))
   }
 
   const trendData = monthLabels.map((label, idx) => {
     const key = monthKeys[idx]
     const total = incomes
-      .filter((inc) => {
-        const d = inc.date instanceof Date ? inc.date : new Date(inc.date as string)
-        return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}` === key
-      })
+      .filter((inc) => monthKey(inc.date) === key)
       .reduce((sum, inc) => sum + inc.amount, 0)
 
     return { month: label, income: total }
@@ -81,13 +79,9 @@ export function IncomeCharts({ incomes, categories }: IncomeChartsProps) {
   }
 
   // Build category breakdown for current month
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
-
-  const currentMonthIncomes = incomes.filter((inc) => {
-    const d = inc.date instanceof Date ? inc.date : new Date(inc.date as string)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  })
+  const currentMonthIncomes = incomes.filter(
+    (inc) => monthKey(inc.date) === monthKeyFromNow(0)
+  )
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
 

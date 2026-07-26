@@ -25,6 +25,8 @@ import type { SavingGoals, SavingContributions } from "@/Models/SavingGoals"
 import { SavingsGoalProgressRing } from "./SavingsGoalProgressRing"
 import SavingContributionsModal from "./SavingContributionsModal"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { parseISO } from "date-fns"
+import { toISODate } from "@/lib/dates"
 
 interface SavingsGoalCardProps {
   goal: SavingGoals
@@ -33,8 +35,9 @@ interface SavingsGoalCardProps {
   onAddContribution: (goalId: string, contribution: SavingContributions) => void
 }
 
-function formatDate(d: Date): string {
-  const date = d instanceof Date ? d : new Date(d as unknown as string)
+function formatDate(d: string): string {
+  // parseISO reads "yyyy-MM-dd" as local midnight — no timezone shift.
+  const date = parseISO(toISODate(d))
   return date.toLocaleDateString("de-DE", {
     year: "numeric",
     month: "2-digit",
@@ -58,27 +61,21 @@ export function SavingsGoalCard({
   const isCompleted = goal.savedAmount >= goal.targetAmount
   const remaining = Math.max(0, goal.targetAmount - goal.savedAmount)
 
-  const deadline =
-  goal.deadline instanceof Date
-    ? goal.deadline
-    : new Date(goal.deadline as unknown as string)
+  const deadline = toISODate(goal.deadline)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const target = new Date(deadline)
-  target.setHours(0, 0, 0, 0)
+  const target = parseISO(deadline)
 
   const daysLeft = Math.max(
     0,
     Math.ceil((target.getTime() - today.getTime()) / 86400000)
   )
 
-  const sortedContribs = [...(goal.contributions ?? [])].sort((a, b) => {
-    const da = a.date instanceof Date ? a.date : new Date(a.date as unknown as string)
-    const db = b.date instanceof Date ? b.date : new Date(b.date as unknown as string)
-    return db.getTime() - da.getTime()
-  })
+  const sortedContribs = [...(goal.contributions ?? [])].sort((a, b) =>
+    toISODate(b.date).localeCompare(toISODate(a.date))
+  )
 
   return (
     <>
@@ -209,9 +206,7 @@ export function SavingsGoalCard({
             ) : (
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {sortedContribs.slice(0, 5).map((c) => {
-                  const cd = c.date instanceof Date
-                    ? c.date
-                    : new Date(c.date as unknown as string)
+                  const cd = c.date
                   return (
                     <div
                       key={c.id}

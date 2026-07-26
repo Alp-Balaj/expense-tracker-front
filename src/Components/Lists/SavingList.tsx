@@ -5,6 +5,7 @@ import SavingForm from "../Forms/SavingForm";
 import type { Saving } from "../../Models/Saving";
 import type { AxiosError } from "axios";
 import { Button } from "../ui/button";
+import { formatDate } from "@/lib/dates";
 
 function SavingList() {
     const { accessToken, isAuthReady } = useAuth();
@@ -59,7 +60,7 @@ function SavingList() {
             <ul>
                 {Array.isArray(savings) && savings.map(saving => (
                     <li key={saving.id}>
-                        {saving.amount} - {saving.date.toString()} - {saving.accountId} - {saving.categoryId} - {saving.description}
+                        {saving.amount} - {formatDate(saving.date)} - {saving.accountId} - {saving.categoryId} - {saving.description}
                         <Button onClick={() => editSaving(saving)}>Edit</Button>
                     </li>
                 ))}

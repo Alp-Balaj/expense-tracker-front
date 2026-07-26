@@ -5,6 +5,7 @@ import FutureExpenseForm from "../Forms/FutureExpenseForm";
 import type { FutureExpense } from "../../Models/FutureExpense";
 import type { AxiosError } from "axios";
 import { Button } from "../ui/button";
+import { formatDate } from "@/lib/dates";
 
 function FutureExpenseList() {
   const { accessToken, isAuthReady } = useAuth();
@@ -59,7 +60,7 @@ function FutureExpenseList() {
             <ul>
                 {Array.isArray(futureExpense) && futureExpense.map(futureExpense => (
                     <li key={futureExpense.id}>
-                        {futureExpense.title} - {futureExpense.amount} - {futureExpense.date.toString()} - {futureExpense.categoryId} - {futureExpense.description}
+                        {futureExpense.title} - {futureExpense.amount} - {formatDate(futureExpense.date)} - {futureExpense.categoryId} - {futureExpense.description}
                         <Button onClick={() => editFutureExpense(futureExpense)}>Edit</Button>
                     </li>
                 ))}

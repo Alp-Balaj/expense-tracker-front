@@ -11,6 +11,7 @@ import {
 } from "@/Components/ui/dialog"
 import { DollarSign, Calendar, FileText } from "lucide-react"
 import type { SavingContributions } from "@/Models/SavingGoals"
+import { todayISO } from "@/lib/dates"
 
 interface SavingsContributionModalProps {
   goalId: string
@@ -28,19 +29,12 @@ export default function SavingContributionsModal({
   onSubmit,
 }: SavingsContributionModalProps) {
   const [amount, setAmount] = useState(0)
-  const [date, setDate] = useState(new Date())
+  const [date, setDate] = useState(todayISO())
   const [note, setNote] = useState("")
 
   const toNumber = (v: string) => {
     const n = Number(v)
     return Number.isFinite(n) ? n : 0
-  }
-  const toDate = (v: string) => new Date(`${v}T00:00:00`)
-  const toDateInput = (d: Date) => {
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, "0")
-    const dd = String(d.getDate()).padStart(2, "0")
-    return `${yyyy}-${mm}-${dd}`
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -54,7 +48,7 @@ export default function SavingContributionsModal({
     }
     onSubmit(contribution)
     setAmount(0)
-    setDate(new Date())
+    setDate(todayISO())
     setNote("")
     onOpenChange(false)
   }
@@ -101,8 +95,8 @@ export default function SavingContributionsModal({
               <Input
                 id="contrib-date"
                 type="date"
-                value={toDateInput(date)}
-                onChange={(e) => setDate(toDate(e.target.value))}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
                 className="pl-10 h-11 border-border bg-background"
                 required
               />

@@ -1,7 +1,7 @@
 export type Saving = {
   id: string | null;
   amount: number;
-  date: Date;
+  date: string;
   accountId: string;
   categoryId: string;
   description: string;

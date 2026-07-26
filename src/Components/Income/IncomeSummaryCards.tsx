@@ -2,6 +2,7 @@ import { TrendingUp, Wallet, Calendar, DollarSign } from "lucide-react"
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards"
 import type { Income } from "@/Models/Income"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { monthKey, monthKeyFromNow } from "@/lib/dates"
 
 interface IncomeSummaryCardsProps {
   incomes: Income[]
@@ -9,23 +10,13 @@ interface IncomeSummaryCardsProps {
 
 export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
   const { format, userCurrencyCode } = useCurrency()
-  const now = new Date()
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
+  const currentYear = new Date().getFullYear()
 
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1
-  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear
-
-  const isInMonth = (date: unknown, month: number, year: number) => {
-    const d = date instanceof Date ? date : new Date(date as string)
-    return d.getMonth() === month && d.getFullYear() === year
-  }
-
-  const currentMonthIncomes = incomes.filter((i) =>
-    isInMonth(i.date, currentMonth, currentYear)
+  const currentMonthIncomes = incomes.filter(
+    (i) => monthKey(i.date) === monthKeyFromNow(0)
   )
-  const prevMonthIncomes = incomes.filter((i) =>
-    isInMonth(i.date, prevMonth, prevYear)
+  const prevMonthIncomes = incomes.filter(
+    (i) => monthKey(i.date) === monthKeyFromNow(1)
   )
 
   const currentTotal = currentMonthIncomes.reduce((sum, i) => sum + i.amount, 0)
@@ -48,10 +39,7 @@ export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
 
   // Year-to-date total
   const ytdTotal = incomes
-    .filter((i) => {
-      const d = i.date instanceof Date ? i.date : new Date(i.date as string)
-      return d.getFullYear() === currentYear
-    })
+    .filter((i) => monthKey(i.date).startsWith(String(currentYear)))
     .reduce((sum, i) => sum + i.amount, 0)
 
   const cards = [

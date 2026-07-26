@@ -13,15 +13,17 @@ import type { Income } from "@/Models/Income";
 import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import { useNavigate } from "react-router-dom";
+import { parseISO } from "date-fns";
 import { Button } from "@/Components/ui/button";
 import { useCurrency } from "@/Hooks/useCurrency";
+import { toISODate } from "@/lib/dates";
 
 type UnifiedEntry = {
   id: string;
   type: "expense" | "income" | "saving";
   title: string;
   amount: number;
-  date: Date;
+  date: string;
   accountName: string;
   categoryName: string;
 };
@@ -34,9 +36,8 @@ interface RecentActivityProps {
   isLoading: boolean;
 }
 
-function formatDate(date: Date) {
-  const d = new Date(date);
-  return d.toLocaleDateString("de-DE", {
+function formatDate(date: string) {
+  return parseISO(toISODate(date)).toLocaleDateString("de-DE", {
     day: "2-digit",
     month: "short",
   });
@@ -127,9 +128,8 @@ export function RecentActivity({
       });
     });
 
-    unified.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+    // "yyyy-MM-dd" strings sort chronologically as plain strings.
+    unified.sort((a, b) => b.date.localeCompare(a.date));
 
     return unified.slice(0, 8);
   }, [expenses, incomes, accountMap, categoryMap]);

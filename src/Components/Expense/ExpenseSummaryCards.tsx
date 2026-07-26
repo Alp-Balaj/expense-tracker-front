@@ -2,6 +2,7 @@ import { TrendingDown, Wallet, Calendar, DollarSign } from "lucide-react"
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards"
 import type { Expense } from "@/Models/Expense"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { monthKey, monthKeyFromNow } from "@/lib/dates"
 
 interface ExpenseSummaryCardsProps {
   expenses: Expense[]
@@ -9,23 +10,13 @@ interface ExpenseSummaryCardsProps {
 
 export function ExpenseSummaryCards({ expenses }: ExpenseSummaryCardsProps) {
   const { format, userCurrencyCode } = useCurrency()
-  const now = new Date()
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
+  const currentYear = new Date().getFullYear()
 
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1
-  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear
-
-  const isInMonth = (date: unknown, month: number, year: number) => {
-    const d = date instanceof Date ? date : new Date(date as string)
-    return d.getMonth() === month && d.getFullYear() === year
-  }
-
-  const currentMonthExpenses = expenses.filter((e) =>
-    isInMonth(e.date, currentMonth, currentYear)
+  const currentMonthExpenses = expenses.filter(
+    (e) => monthKey(e.date) === monthKeyFromNow(0)
   )
-  const prevMonthExpenses = expenses.filter((e) =>
-    isInMonth(e.date, prevMonth, prevYear)
+  const prevMonthExpenses = expenses.filter(
+    (e) => monthKey(e.date) === monthKeyFromNow(1)
   )
 
   const currentTotal = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0)
@@ -49,10 +40,7 @@ export function ExpenseSummaryCards({ expenses }: ExpenseSummaryCardsProps) {
   const avgPerEntry = entryCount > 0 ? currentTotal / entryCount : 0
 
   const ytdTotal = expenses
-    .filter((e) => {
-      const d = e.date instanceof Date ? e.date : new Date(e.date as string)
-      return d.getFullYear() === currentYear
-    })
+    .filter((e) => monthKey(e.date).startsWith(String(currentYear)))
     .reduce((sum, e) => sum + e.amount, 0)
 
   const cards = [

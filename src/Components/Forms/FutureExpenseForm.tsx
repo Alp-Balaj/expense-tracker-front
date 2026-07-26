@@ -3,6 +3,7 @@ import type {
   FutureExpense,
   FutureExpenseFormProps,
 } from "../../Models/FutureExpense";
+import { toISODate } from "@/lib/dates";
 import { Button } from "../ui/button";
 
 export default function FutureExpenseForm({
@@ -15,7 +16,7 @@ export default function FutureExpenseForm({
     id: row?.id ?? null,
     title: row?.title ?? "",
     amount: row?.amount ?? 0,
-    date: row?.date ? new Date(row.date) : new Date(),
+    date: toISODate(row?.date),
     categoryId: row?.categoryId ?? "",
     description: row?.description ?? "",
   }));
@@ -27,7 +28,7 @@ export default function FutureExpenseForm({
           id: row?.id ?? null,
           title: row?.title ?? "",
           amount: row?.amount ?? 0,
-          date: row?.date ? new Date(row.date) : new Date(),
+          date: toISODate(row?.date),
           categoryId: row?.categoryId ?? "",
           description: row?.description ?? "",
         });
@@ -39,10 +40,6 @@ export default function FutureExpenseForm({
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;
   };
-
-  const toDate = (value: string) => new Date(`${value}T00:00:00`);
-
-  const toDateInputValue = (d: Date) => d.toISOString().slice(0, 10);
 
   const handleChange = <K extends keyof FutureExpense>(
     key: K,
@@ -73,8 +70,8 @@ export default function FutureExpenseForm({
 
       <input
         type="date"
-        value={toDateInputValue(data.date)}
-        onChange={(e) => handleChange("date", toDate(e.target.value))}
+        value={data.date}
+        onChange={(e) => handleChange("date", e.target.value)}
         placeholder="Date"
       />
 

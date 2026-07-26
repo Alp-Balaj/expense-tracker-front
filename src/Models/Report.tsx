@@ -2,8 +2,8 @@ import type { TransactionKind } from "@/Enums/enums";
 
 // Transaction Report Request - matches backend DTO
 export interface TransactionReportRequest {
-  from: string; // ISO date string
-  to: string; // ISO date string
+  from: string; // "yyyy-MM-dd" (date-only)
+  to: string; // "yyyy-MM-dd" (date-only)
   categoryIds?: string[];
   accountIds?: string[];
   includeExpenses: boolean;

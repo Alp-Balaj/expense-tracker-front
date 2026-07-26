@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { formatDate, toISODate } from "@/lib/dates";
 import {
   Download,
   FileSpreadsheet,
@@ -77,7 +78,7 @@ export function TransactionReportViewer({
         let comparison = 0;
         switch (sortField) {
           case "date":
-            comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+            comparison = a.date.localeCompare(b.date);
             break;
           case "amount":
             comparison =
@@ -117,7 +118,7 @@ export function TransactionReportViewer({
       headers.join(","),
       ...sortedRows.map((row) =>
         [
-          format(new Date(row.date), "yyyy-MM-dd"),
+          toISODate(row.date),
           row.kind === TransactionKind.Expense ? "Expense" : "Income",
           csvCell(row.category),
           csvCell(row.account),
@@ -353,7 +354,7 @@ export function TransactionReportViewer({
             {sortedRows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-medium">
-                  {format(new Date(row.date), "MMM dd, yyyy")}
+                  {formatDate(row.date, "MMM dd, yyyy")}
                 </TableCell>
                 <TableCell>
                   <Badge variant={row.kind === TransactionKind.Expense? "destructive" : "success"}>

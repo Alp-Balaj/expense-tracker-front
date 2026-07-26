@@ -25,6 +25,7 @@ import {
 import type { Expense } from "@/Models/Expense"
 import type { Category } from "@/Models/Category"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { monthKey, monthKeyFromNow } from "@/lib/dates"
 
 interface ExpenseChartsProps {
   expenses: Expense[]
@@ -58,16 +59,13 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     monthLabels.push(d.toLocaleDateString("en-US", { month: "short" }))
-    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`)
+    monthKeys.push(monthKeyFromNow(i))
   }
 
   const trendData = monthLabels.map((label, idx) => {
     const key = monthKeys[idx]
     const total = expenses
-      .filter((exp) => {
-        const d = exp.date instanceof Date ? exp.date : new Date(exp.date as string)
-        return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}` === key
-      })
+      .filter((exp) => monthKey(exp.date) === key)
       .reduce((sum, exp) => sum + exp.amount, 0)
 
     return { month: label, expenses: total }
@@ -81,13 +79,9 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
   }
 
   // Build category breakdown for current month
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
-
-  const currentMonthExpenses = expenses.filter((exp) => {
-    const d = exp.date instanceof Date ? exp.date : new Date(exp.date as string)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  })
+  const currentMonthExpenses = expenses.filter(
+    (exp) => monthKey(exp.date) === monthKeyFromNow(0)
+  )
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
 

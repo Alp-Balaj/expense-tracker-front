@@ -26,8 +26,9 @@ import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { CategoryType } from "@/Enums/enums";
+import { toISODate } from "@/lib/dates";
 
-type FormState = Omit<ModelExpense, "date"> & { date: Date };
+type FormState = ModelExpense;
 
 export interface ExpenseFormModalProps {
   row?: ModelExpense | null;
@@ -97,15 +98,6 @@ export default function ExpenseFormModal({
   }, [getAllData]);
   //#endregion
 
-  const normalizeDate = (value: unknown) => {
-    if (value instanceof Date) return value;
-    if (typeof value === "string" || typeof value === "number") {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? new Date() : d;
-    }
-    return new Date();
-  };
-
   const initial: FormState = useMemo(
     () => ({
       ...(row ?? {
@@ -116,7 +108,8 @@ export default function ExpenseFormModal({
         accountId: "",
         categoryId: "",
       }),
-      date: normalizeDate((row as ModelExpense)?.date ?? new Date()),
+      // Keep the date as a plain "yyyy-MM-dd" string; no Date round-trip.
+      date: toISODate(row?.date),
     }),
     [row]
   );
@@ -137,25 +130,11 @@ export default function ExpenseFormModal({
     return Number.isFinite(n) ? n : 0;
   };
 
-  const toDate = (value: string) => new Date(`${value}T00:00:00`);
-
-  const toDateInputValue = (d: Date) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const payload: ModelExpense = {
-      ...(data as ModelExpense),
-      date: (data.date.toISOString() as unknown) as Date,
-    };
-
     try {
-      await onSubmit(payload);
+      await onSubmit(data);
     } catch {
       return; // error toast shown by the submit handler; keep the dialog open
     }
@@ -225,9 +204,9 @@ export default function ExpenseFormModal({
                 <Input
                   id="date"
                   type="date"
-                  value={toDateInputValue(data.date)}
+                  value={data.date}
                   onChange={(e) =>
-                    setData({ ...data, date: toDate(e.target.value) } as FormState)
+                    setData({ ...data, date: e.target.value } as FormState)
                   }
                   className="pl-10 h-11 border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

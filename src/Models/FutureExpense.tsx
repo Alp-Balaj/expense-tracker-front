@@ -2,7 +2,7 @@ export type FutureExpense = {
   id: string | null;
   title: string;
   amount: number;
-  date: Date;
+  date: string;
   categoryId: string;
   description: string;
 };

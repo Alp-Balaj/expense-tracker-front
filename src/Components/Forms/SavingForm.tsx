@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { Saving, SavingFormProps } from "../../Models/Saving";
+import { toISODate } from "@/lib/dates";
 import { Button } from "../ui/button";
 
 export default function SavingForm({
@@ -11,7 +12,7 @@ export default function SavingForm({
     () => ({
       id: row?.id ?? null,
       amount: row?.amount ?? 0,
-      date: row?.date ? new Date(row.date) : new Date(),
+      date: toISODate(row?.date),
       description: row?.description ?? "",
       accountId: row?.accountId ?? "",
       categoryId: row?.categoryId ?? ""
@@ -35,15 +36,6 @@ export default function SavingForm({
     return Number.isFinite(n) ? n : 0;
   };
   
-  const toDate = (value: string) => new Date(`${value}T00:00:00`);
-
-  const toDateInputValue = (d: Date) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   return (
     <form onSubmit={handleSubmit}>
 
@@ -56,8 +48,8 @@ export default function SavingForm({
 
       <input
         type="date"
-        value={toDateInputValue(data.date)}
-        onChange={(e) => setData({ ...data, date: toDate(e.target.value) })}
+        value={data.date}
+        onChange={(e) => setData({ ...data, date: e.target.value })}
         placeholder="Date"
       />
 

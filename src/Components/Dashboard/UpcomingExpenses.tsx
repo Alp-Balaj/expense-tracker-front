@@ -10,17 +10,19 @@ import { Badge } from "@/Components/ui/badge";
 import { CalendarClock } from "lucide-react";
 import type { FutureExpense } from "@/Models/FutureExpense";
 import { useCurrency } from "@/Hooks/useCurrency";
+import { parseISO } from "date-fns";
+import { toISODate } from "@/lib/dates";
 
 interface UpcomingExpensesProps {
   futureExpenses: FutureExpense[];
   isLoading: boolean;
 }
 
-function daysUntil(date: Date) {
+function daysUntil(date: string) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const target = new Date(date);
-  target.setHours(0, 0, 0, 0);
+  // parseISO reads "yyyy-MM-dd" as local midnight — no timezone shift.
+  const target = parseISO(toISODate(date));
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
@@ -58,7 +60,7 @@ export function UpcomingExpenses({
   const sorted = useMemo(
     () =>
       [...futureExpenses]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5),
     [futureExpenses],
   );
@@ -130,7 +132,7 @@ export function UpcomingExpenses({
           {sorted.map((item) => {
             const days = daysUntil(item.date);
             const badge = urgencyBadge(days);
-            const d = new Date(item.date);
+            const d = parseISO(toISODate(item.date));
             const dateStr = d.toLocaleDateString("de-DE", {
               day: "2-digit",
               month: "short",

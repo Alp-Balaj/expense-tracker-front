@@ -26,9 +26,10 @@ import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { CategoryType } from "@/Enums/enums";
+import { toISODate } from "@/lib/dates";
 import { Spinner } from "../ui/spinner";
 
-type FormState = Omit<ModelIncome, "date"> & { date: Date };
+type FormState = ModelIncome;
 
 export interface IncomeFormModalProps {
   row?: ModelIncome | null;
@@ -37,15 +38,6 @@ export interface IncomeFormModalProps {
   onOpenChange: (open: boolean) => void;
   onCancel?: () => void;
 }
-
-const normalizeDate = (value: unknown) => {
-  if (value instanceof Date) return value;
-  if (typeof value === "string" || typeof value === "number") {
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? new Date() : d;
-  }
-  return new Date();
-};
 
 export default function IncomeFormModal({
   row,
@@ -107,7 +99,8 @@ export default function IncomeFormModal({
         accountId: "",
         categoryId: "",
       }),
-      date: normalizeDate((row as ModelIncome)?.date ?? new Date()),
+      // Keep the date as a plain "yyyy-MM-dd" string; no Date round-trip.
+      date: toISODate(row?.date),
     }),
     [row],
   );
@@ -135,23 +128,10 @@ export default function IncomeFormModal({
     return Number.isFinite(n) ? n : 0;
   };
 
-  const toDate = (value: string) => new Date(`${value}T00:00:00`);
-
-  const toDateInputValue = (d: Date) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const payload: ModelIncome = {
-      ...(data as ModelIncome),
-      date: data.date.toISOString() as unknown as Date,
-    };
     try {
-      await onSubmit(payload);
+      await onSubmit(data);
     } catch {
       return; // error toast shown by the submit handler; keep the dialog open
     }
@@ -234,11 +214,11 @@ export default function IncomeFormModal({
                 <Input
                   id="income-date"
                   type="date"
-                  value={toDateInputValue(data.date)}
+                  value={data.date}
                   onChange={(e) =>
                     setData({
                       ...data,
-                      date: toDate(e.target.value),
+                      date: e.target.value,
                     } as FormState)
                   }
                   className="pl-10 h-11 border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"

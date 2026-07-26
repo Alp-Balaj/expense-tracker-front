@@ -5,6 +5,7 @@ import type { Expense } from "@/Models/Expense";
 import type { Income } from "@/Models/Income";
 import { useMemo } from "react";
 import { useCurrency } from "@/Hooks/useCurrency";
+import { monthKey, monthKeyFromNow } from "@/lib/dates";
 
 interface BalanceOverviewProps {
   accounts: Account[];
@@ -13,14 +14,9 @@ interface BalanceOverviewProps {
   isLoading: boolean;
 }
 
-function getMonthEntries<T extends { date: Date }>(items: T[]) {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  return items.filter((item) => {
-    const d = new Date(item.date);
-    return d.getFullYear() === y && d.getMonth() === m;
-  });
+function getMonthEntries<T extends { date: string }>(items: T[]) {
+  const thisMonth = monthKeyFromNow(0);
+  return items.filter((item) => monthKey(item.date) === thisMonth);
 }
 
 export function BalanceOverview({

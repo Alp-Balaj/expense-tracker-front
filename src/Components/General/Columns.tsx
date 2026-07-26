@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 
+import { formatDate } from "@/lib/dates"
 import { Button } from "@/Components/ui/button"
 import {
   DropdownMenu,
@@ -44,6 +45,32 @@ export function sortableColumn<T>(
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     )
+  }
+}
+
+/* ----------------------------------------
+   Date column ("yyyy-MM-dd" wire value,
+   rendered dd.MM.yyyy; string sort is
+   already chronological)
+----------------------------------------- */
+export function dateColumn<T>(
+  accessorKey: keyof T & string,
+  header: string
+): ColumnDef<T> {
+  return {
+    accessorKey,
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        {header}
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => formatDate(row.getValue(accessorKey)),
   }
 }
 

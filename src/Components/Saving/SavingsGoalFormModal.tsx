@@ -34,6 +34,7 @@ import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
 import type { AxiosError } from "axios";
 import { CategoryType } from "@/Enums/enums";
+import { toISODate } from "@/lib/dates";
 
 export interface SavingsGoalFormModalProps {
   row?: SavingGoals | null;
@@ -48,7 +49,7 @@ type FormState = {
   title: string;
   targetAmount: number;
   savedAmount: number;
-  deadline: Date;
+  deadline: string;
   description: string;
   accountId: string;
   categoryId: string;
@@ -91,27 +92,18 @@ export default function SavingsGoalFormModal({
     }
   }, [getAllData]);
 
-  const normalizeDate = React.useCallback((value: unknown) => {
-    if (value instanceof Date) return value;
-    if (typeof value === "string" || typeof value === "number") {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? new Date() : d;
-    }
-    return new Date();
-  }, []);
-
   const initial: FormState = useMemo(
     () => ({
       id: row?.id ?? null,
       title: row?.title ?? "",
       targetAmount: row?.targetAmount ?? 0,
       savedAmount: row?.savedAmount ?? 0,
-      deadline: normalizeDate(row?.deadline ?? new Date()),
+      deadline: toISODate(row?.deadline),
       description: row?.description ?? "",
       accountId: row?.accountId ?? "",
       categoryId: row?.categoryId ?? "",
     }),
-    [row, normalizeDate],
+    [row],
   );
 
   const [data, setData] = useState<FormState>(initial);
@@ -126,13 +118,6 @@ export default function SavingsGoalFormModal({
   const toNumber = (v: string) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
-  };
-  const toDate = (v: string) => new Date(`${v}T00:00:00`);
-  const toDateInput = (d: Date) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -233,9 +218,9 @@ export default function SavingsGoalFormModal({
                 <Input
                   id="goal-deadline"
                   type="date"
-                  value={toDateInput(data.deadline)}
+                  value={data.deadline}
                   onChange={(e) =>
-                    setData({ ...data, deadline: toDate(e.target.value) })
+                    setData({ ...data, deadline: e.target.value })
                   }
                   className="pl-10 h-11 border-border bg-background"
                   required
