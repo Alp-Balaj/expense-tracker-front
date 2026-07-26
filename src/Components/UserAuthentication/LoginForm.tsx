@@ -59,8 +59,8 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
     try {
       await login(formData)
       navigate("/", { replace: true })
-    } catch {
-      setServerError("Login failed")
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Login failed")
     }
   }
 

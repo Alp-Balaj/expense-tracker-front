@@ -78,8 +78,8 @@ export function SignUpForm({
 
       await signup(payload);
       navigate("/", { replace: true });
-    } catch {
-      setServerError("Registering user failed");
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Registering user failed");
     }
   };
 

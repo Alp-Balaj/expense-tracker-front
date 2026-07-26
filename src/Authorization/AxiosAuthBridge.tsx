@@ -23,12 +23,32 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
+// Auth endpoints answer 401 for bad credentials, not expired sessions —
+// their errors must propagate to the calling form instead of triggering
+// a refresh. Compared against the request's resolved pathname, lowercased.
+const REFRESH_PATH = "/api/user/refresh";
+const AUTH_EXEMPT_PATHS = [
+  "/api/user/login",
+  "/api/user/signup",
+  "/api/user/logout",
+  REFRESH_PATH,
+];
+
+function requestPathname(config: InternalAxiosRequestConfig): string {
+  try {
+    const base = new URL(config.baseURL ?? "", window.location.origin);
+    return new URL(config.url ?? "", base).pathname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 type Handle401Args = {
   err: AxiosError;
   api: AxiosInstance;
   logout: () => void;
-  navigate: ReturnType<typeof useNavigate>;
-  location: Location;
+  navigateRef: React.RefObject<ReturnType<typeof useNavigate>>;
+  locationRef: React.RefObject<Location>;
   setToken: (token: string | null) => void;
 
   tokenRef: React.RefObject<Token>;
@@ -49,6 +69,15 @@ export default function AxiosAuthBridge(): null {
   useEffect(() => {
     tokenRef.current = accessToken;
   }, [accessToken]);
+
+  // navigate and location change identity on every route change; the
+  // interceptors read them through refs so they register only once.
+  const navigateRef = useRef(navigate);
+  const locationRef = useRef(location);
+  useEffect(() => {
+    navigateRef.current = navigate;
+    locationRef.current = location;
+  }, [navigate, location]);
 
   const isRefreshingRef = useRef<boolean>(false);
   const refreshQueueRef = useRef<QueueItem[]>([]);
@@ -94,8 +123,8 @@ export default function AxiosAuthBridge(): null {
           err,
           api,
           logout,
-          navigate,
-          location,
+          navigateRef,
+          locationRef,
           setToken,
           tokenRef,
           isRefreshingRef,
@@ -110,7 +139,7 @@ export default function AxiosAuthBridge(): null {
       api.interceptors.request.eject(reqId);
       api.interceptors.response.eject(resId);
     };
-  }, [logout, navigate, location, setToken]);
+  }, [logout, setToken]);
 
   return null;
 }
@@ -118,7 +147,7 @@ export default function AxiosAuthBridge(): null {
 // Handle 401 responses with token refresh
 async function handle401({
   err, api, logout,
-  navigate, location, setToken,
+  navigateRef, locationRef, setToken,
   tokenRef, isRefreshingRef, refreshQueueRef,
   redirectingRef, processQueueSuccess, processQueueFail,
 }: Handle401Args): Promise<unknown> {
@@ -129,16 +158,17 @@ async function handle401({
     throw err;
   }
 
-  const isRefreshCall =
-    typeof original.url === "string" && original.url.includes("/api/User/refresh");
+  const pathname = requestPathname(original);
+  const isRefreshCall = pathname === REFRESH_PATH;
 
   if (isRefreshCall || original._retry) {
     if (!redirectingRef.current) {
       redirectingRef.current = true;
       logout();
 
+      const location = locationRef.current;
       if (location.pathname !== "/login") {
-        navigate("/login", {
+        navigateRef.current("/login", {
           replace: true,
           state: { from: location.pathname },
         });
@@ -147,6 +177,14 @@ async function handle401({
       setTimeout(() => (redirectingRef.current = false), 0);
     }
 
+    throw err;
+  }
+
+  // A 401 from an auth endpoint (wrong password, expired signup token, …)
+  // or from a request that never carried a bearer token is not an expired
+  // session — skip the refresh flow and let the caller handle the error.
+  const hadAuthHeader = Boolean(original.headers?.Authorization);
+  if (AUTH_EXEMPT_PATHS.includes(pathname) || !hadAuthHeader) {
     throw err;
   }
 
@@ -183,8 +221,9 @@ async function handle401({
       redirectingRef.current = true;
       logout();
 
+      const location = locationRef.current;
       if (location.pathname !== "/login") {
-        navigate("/login", {
+        navigateRef.current("/login", {
           replace: true,
           state: { from: location.pathname },
         });
@@ -194,7 +233,7 @@ async function handle401({
     }
 
     throw refreshErr;
-  } 
+  }
   finally {
     isRefreshingRef.current = false;
   }

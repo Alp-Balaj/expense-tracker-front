@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useAuth } from "../Authorization/AuthContext";
 import {
   loginApi,
@@ -7,6 +8,21 @@ import {
   logOutApi
 } from "../Services/loginServices";
 import type { LoginRequest, SignUpRequest, AuthResponse } from "../Models/UserAuth";
+
+// The backend answers failed auth with a plain-string body ("Invalid
+// credentials") or an object carrying a message; axios's own err.message
+// ("Request failed with status code 401") is useless to the user.
+function serverErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const data: unknown = err.response?.data;
+    if (typeof data === "string" && data) return data;
+    if (data && typeof data === "object") {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === "string" && message) return message;
+    }
+  }
+  return fallback;
+}
 
 export function useAuthenticationApi() {
   const { accessToken, setToken } = useAuth();
@@ -20,8 +36,7 @@ export function useAuthenticationApi() {
 
       return response;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
-      throw new Error(message);
+      throw new Error(serverErrorMessage(err, "Invalid email or password"));
     }
   };
 
@@ -34,8 +49,7 @@ export function useAuthenticationApi() {
 
       return response;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Registering user failed";
-      throw new Error(message);
+      throw new Error(serverErrorMessage(err, "Registering user failed"));
     }
   };
 
