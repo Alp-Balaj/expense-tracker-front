@@ -86,7 +86,7 @@ export function currencyColumn<T>(
     formatter?: (value: number) => string
   }
 ): ColumnDef<T> {
-  const { locale = "en-US", currency = "EUR", formatter } = options
+  const { locale, currency = "EUR", formatter } = options
 
   return {
     accessorKey,

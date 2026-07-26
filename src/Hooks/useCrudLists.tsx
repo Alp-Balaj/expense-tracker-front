@@ -7,14 +7,13 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 
 type CrudMode = "create" | "update";
 
-type UseCrudListOptions<T> = {
+type UseCrudListOptions = {
   endpoint: string;
-  getId?: (row: T) => string;
 };
 
 type EntityWithId = { id: string | null };
 
-export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOptions<T>) {
+export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOptions) {
   const { accessToken, isAuthReady } = useAuth();
   const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
 
@@ -37,22 +36,8 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
   useEffect(() => {
     if (!isAuthReady || !accessToken) return;
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const data = await getAllData<T[]>(endpoint);
-        if (!cancelled) setItems(data);
-      } catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) console.error(err);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthReady, accessToken, getAllData, endpoint]);
+    fetchAll();
+  }, [isAuthReady, accessToken, fetchAll]);
 
   const startCreate = () => {
     setEditing(null);

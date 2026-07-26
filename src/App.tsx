@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
 import AccountPage from "./Pages/AccountPage";
+import NotFoundPage from "./Pages/NotFoundPage";
 
 import { AuthorizationProvider } from "./Authorization/AuthContext";
 import RequireAuth from "./Authorization/RequireAuthentication";
@@ -46,7 +47,7 @@ function App() {
                 </Route>
 
                 {/* Fallback */}
-                <Route path="*" element={<Navigate to="/notFound" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </SidebarProvider>
           </UserPreferencesProvider>

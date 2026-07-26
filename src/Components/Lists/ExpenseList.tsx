@@ -102,7 +102,7 @@ export default function ExpenseList() {
         close={closeModal}
         onOpenChange={setDialogOpen}
         onConfirm={confirmDelete}
-        title="Delete income?"
+        title="Delete expense?"
         description={`Delete "${deleting?.title}"? This action cannot be undone.`}
       />
     </div>

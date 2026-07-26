@@ -3,8 +3,6 @@ import { useAuth } from "../Authorization/AuthContext";
 import {
   loginApi,
   signupApi,
-  checkLoginApi,
-  refreshTokenApi,
   logOutApi
 } from "../Services/loginServices";
 import type { LoginRequest, SignUpRequest, AuthResponse } from "../Models/UserAuth";
@@ -25,7 +23,7 @@ function serverErrorMessage(err: unknown, fallback: string): string {
 }
 
 export function useAuthenticationApi() {
-  const { accessToken, setToken } = useAuth();
+  const { setToken } = useAuth();
 
   const login = async (data: LoginRequest): Promise<AuthResponse> => {
     try {
@@ -53,16 +51,6 @@ export function useAuthenticationApi() {
     }
   };
 
-  const checkLogin = async (): Promise<boolean> => {
-    if (await checkLoginApi(accessToken)) return true;
-
-    const newToken = await refreshTokenApi();
-    if (!newToken) return false;
-
-    setToken(newToken);
-    return true;
-  };
-
   const logout = async (): Promise<void> => {
     try {
       // Best-effort server-side revocation; the local session is cleared
@@ -75,5 +63,5 @@ export function useAuthenticationApi() {
     }
   };
 
-  return { login, signup, checkLogin, logout };
+  return { login, signup, logout };
 }

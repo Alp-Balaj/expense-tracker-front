@@ -38,7 +38,7 @@ interface SavingsGoalCardProps {
 function formatDate(d: string): string {
   // parseISO reads "yyyy-MM-dd" as local midnight — no timezone shift.
   const date = parseISO(toISODate(d))
-  return date.toLocaleDateString("de-DE", {
+  return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

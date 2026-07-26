@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useEffect, useState } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
-import { Navigate, useNavigate } from "react-router-dom"
+import { Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { Button } from "../ui/button"
@@ -34,6 +34,7 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
   const { login } = useAuthenticationApi()
   const { accessToken } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [serverError, setServerError] = useState("")
 
@@ -58,7 +59,8 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
     setServerError("")
     try {
       await login(formData)
-      navigate("/", { replace: true })
+      const from = (location.state as { from?: string } | null)?.from ?? "/"
+      navigate(from, { replace: true })
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Login failed")
     }

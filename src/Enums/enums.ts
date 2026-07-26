@@ -20,6 +20,6 @@ export type CategoryType = typeof CategoryType[keyof typeof CategoryType];
 export const TransactionKind = {
   Expense: 0,
   Income: 1
-}
+} as const;
 
 export type TransactionKind = typeof TransactionKind[keyof typeof TransactionKind]

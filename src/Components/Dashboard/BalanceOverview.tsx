@@ -89,7 +89,7 @@ export function BalanceOverview({
           : "text-red-600 dark:text-red-400",
     },
   ];
-  const skeletonItems = ["a", "b", "c"];
+  const skeletonItems = ["a", "b", "c", "d"];
 
   if (isLoading) {
     return (

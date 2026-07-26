@@ -72,7 +72,8 @@ export function QuickActions({
                 <Button
                   variant="outline"
                   onClick={handlers[action.key]}
-                  className={`flex flex-col h-full w-full items-center justify-center gap-1.5 border-border ${action.hoverColor} transition-colors cursor-pointer py-3`}
+                  disabled={action.key === "future"}
+                  className={`flex flex-col h-full w-full items-center justify-center gap-1.5 border-border ${action.hoverColor} transition-colors cursor-pointer py-3 disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   <div
                     className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl ${action.color}`}

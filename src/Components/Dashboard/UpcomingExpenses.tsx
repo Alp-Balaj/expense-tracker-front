@@ -133,7 +133,7 @@ export function UpcomingExpenses({
             const days = daysUntil(item.date);
             const badge = urgencyBadge(days);
             const d = parseISO(toISODate(item.date));
-            const dateStr = d.toLocaleDateString("de-DE", {
+            const dateStr = d.toLocaleDateString(undefined, {
               day: "2-digit",
               month: "short",
               year: "numeric",

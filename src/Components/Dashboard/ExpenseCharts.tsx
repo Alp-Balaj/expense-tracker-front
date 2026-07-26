@@ -58,7 +58,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
 
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    monthLabels.push(d.toLocaleDateString("en-US", { month: "short" }))
+    monthLabels.push(d.toLocaleDateString(undefined, { month: "short" }))
     monthKeys.push(monthKeyFromNow(i))
   }
 

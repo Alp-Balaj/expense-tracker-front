@@ -72,6 +72,11 @@ export function AccountForm({
   const [name, setName] = useState("");
   const [amountType, setAmountType] = useState<AmountType>(defaultType);
   const [balance, setBalance] = useState(0);
+
+  const toNumber = (value: string) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
   const [currencyId, setCurrencyId] = useState("");
   const [description, setDescription] = useState<string>("");
 
@@ -161,7 +166,7 @@ export function AccountForm({
                 step="0.01"
                 placeholder="0.00"
                 value={balance}
-                onChange={(e) => setBalance(parseFloat(e.target.value))}
+                onChange={(e) => setBalance(toNumber(e.target.value))}
               />
             </div>
 

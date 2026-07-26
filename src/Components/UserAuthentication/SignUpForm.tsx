@@ -151,7 +151,10 @@ export function SignUpForm({
                   <Input
                     id="password"
                     type="password"
-                    {...register("password", { required: "Password is required" })}
+                    {...register("password", {
+                      required: "Password is required",
+                      minLength: { value: 8, message: "Password must be at least 8 characters" },
+                    })}
                   />
                   {errors.password && (
                     <FieldDescription>{String(errors.password.message)}</FieldDescription>
@@ -189,7 +192,7 @@ export function SignUpForm({
                   {isSubmitting ? (
                     <>
                       <Spinner />
-                      <span className="ml-2">"Registering user..."</span>
+                      <span className="ml-2">Registering user...</span>
                     </>
                   ) : (
                     "Create Account"

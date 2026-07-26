@@ -66,7 +66,7 @@ export default function ExpenseFormModal({
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setAccountLoadError("Failed to load accounts.");
-        console.error(accountLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingAccounts(false);
@@ -90,7 +90,7 @@ export default function ExpenseFormModal({
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setCategoryLoadError("Failed to load categories.");
-        console.error(categoryLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingCategories(false);
@@ -251,6 +251,9 @@ export default function ExpenseFormModal({
                   </SelectContent>
                 </Select>
               </div>
+              {accountLoadError && (
+                <p className="text-sm text-destructive">{accountLoadError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -288,6 +291,9 @@ export default function ExpenseFormModal({
                   </SelectContent>
                 </Select>
               </div>
+              {categoryLoadError && (
+                <p className="text-sm text-destructive">{categoryLoadError}</p>
+              )}
             </div>
           </div>
 

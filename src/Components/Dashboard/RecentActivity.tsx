@@ -37,7 +37,7 @@ interface RecentActivityProps {
 }
 
 function formatDate(date: string) {
-  return parseISO(toISODate(date)).toLocaleDateString("de-DE", {
+  return parseISO(toISODate(date)).toLocaleDateString(undefined, {
     day: "2-digit",
     month: "short",
   });

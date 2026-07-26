@@ -47,7 +47,7 @@ const { accessToken, isAuthReady } = useAuth();
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setAccountLoadError("Failed to load accounts.");
-        console.error(accountLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingAccounts(false);
@@ -70,7 +70,7 @@ const { accessToken, isAuthReady } = useAuth();
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setCategoryLoadError("Failed to load categories.");
-        console.error(categoryLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingCategories(false);
@@ -153,6 +153,11 @@ const { accessToken, isAuthReady } = useAuth();
 
           {/* Transaction Report Tab */}
           <TabsContent value="transactions" className="space-y-6">
+            {(accountLoadError || categoryLoadError) && (
+              <div role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {accountLoadError ?? categoryLoadError}
+              </div>
+            )}
             <div className="grid gap-6 lg:grid-cols-[350px_1fr]">
               {/* Filters Panel */}
               <div className="lg:sticky lg:top-8 lg:self-start">
