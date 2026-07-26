@@ -1,36 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
-import type { AxiosError } from "axios";
+import { useMemo } from "react";
 import { usePreferences } from "@/Authorization/UserPreferencesContext";
-import { useAuth } from "@/Authorization/AuthContext";
-import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
+import { useCurrenciesQuery } from "@/Hooks/queries/useCurrencies";
 import type { Currency } from "@/Models/Currency";
 
+// Every one of this hook's consumers shares the same ["currencies"] query
+// cache entry, so mounting it in 13 places (or once per rendered row, as
+// ConvertedAmount does) still fires a single network request.
 export function useCurrency() {
   const { preferences } = usePreferences();
-  const { accessToken, isAuthReady } = useAuth();
-  const { getAllData } = useAuthorizationApi();
-
-  const [currenciesFromDb, setCurrenciesFromDb] = useState<Currency[]>([]);
-
-  useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const data = await getAllData<Currency[]>("api/Currency");
-        if (!cancelled && data) setCurrenciesFromDb(data);
-      } catch (e: unknown) {
-        const err = e as AxiosError;
-        if (err.response?.status !== 401) console.error(err);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthReady, accessToken, getAllData]);
+  const { data: currenciesFromDb = [] } = useCurrenciesQuery();
 
   const currenciesMap = useMemo(() => {
     const map: Record<string, Currency> = {};
