@@ -39,7 +39,7 @@ export interface SavingsGoalFormModalProps {
   row?: SavingGoals | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: AddSavingsGoal) => void;
+  onSubmit: (data: AddSavingsGoal) => void | Promise<void>;
   onCancel?: () => void;
 }
 
@@ -135,7 +135,7 @@ export default function SavingsGoalFormModal({
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const payload: AddSavingsGoal = {
       id: data.id,
@@ -147,7 +147,11 @@ export default function SavingsGoalFormModal({
       accountId: data.accountId,
       categoryId: data.categoryId,
     };
-    onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch {
+      return; // error toast shown by the submit handler; keep the dialog open
+    }
     onOpenChange(false);
   };
 

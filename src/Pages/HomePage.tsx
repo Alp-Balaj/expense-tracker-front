@@ -19,6 +19,8 @@ import type { Category } from "@/Models/Category";
 import type { AddSavingsGoal } from "@/Models/SavingGoals";
 import { SAVING_GOAL_API } from "@/Services/api";
 import type { AxiosError } from "axios";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/errors";
 
 export default function HomePage() {
   const { accessToken, isAuthReady } = useAuth();
@@ -77,31 +79,37 @@ export default function HomePage() {
   const handleExpenseSubmit = async (data: Expense) => {
     try {
       await postData("api/Expense", data);
-      setExpenseOpen(false);
-      await fetchAll();
     } catch (e) {
-      console.error(e);
+      toast.error(getApiErrorMessage(e, "Failed to add expense."));
+      throw e; // the modal keeps itself open
     }
+    toast.success("Expense added");
+    setExpenseOpen(false);
+    await fetchAll();
   };
 
   const handleIncomeSubmit = async (data: Income) => {
     try {
       await postData("api/Income", data);
-      setIncomeOpen(false);
-      await fetchAll();
     } catch (e) {
-      console.error(e);
+      toast.error(getApiErrorMessage(e, "Failed to add income."));
+      throw e; // the modal keeps itself open
     }
+    toast.success("Income added");
+    setIncomeOpen(false);
+    await fetchAll();
   };
 
   const handleSavingsSubmit = async (data: AddSavingsGoal) => {
     try {
       await postData(SAVING_GOAL_API, data);
-      setSavingsOpen(false);
-      await fetchAll();
     } catch (e) {
-      console.error(e);
+      toast.error(getApiErrorMessage(e, "Failed to add savings goal."));
+      throw e; // the modal keeps itself open
     }
+    toast.success("Savings goal added");
+    setSavingsOpen(false);
+    await fetchAll();
   };
 
   // #endregion

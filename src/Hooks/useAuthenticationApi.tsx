@@ -50,8 +50,15 @@ export function useAuthenticationApi() {
   };
 
   const logout = async (): Promise<void> => {
-    await logOutApi();
-    setToken(null);
+    try {
+      // Best-effort server-side revocation; the local session is cleared
+      // regardless so an unreachable backend can't strand the user.
+      await logOutApi();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setToken(null);
+    }
   };
 
   return { login, signup, checkLogin, logout };

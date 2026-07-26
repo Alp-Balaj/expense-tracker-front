@@ -14,6 +14,8 @@ import type {
 import { useAuth } from "@/Authorization/AuthContext"
 import { SAVING_GOAL_API } from "@/Services/api"
 import type { AxiosError } from "axios"
+import { toast } from "sonner"
+import { getApiErrorMessage } from "@/lib/errors"
 
 function SavingPage() {
   const { accessToken, isAuthReady } = useAuth()
@@ -58,22 +60,25 @@ function SavingPage() {
       } else {
         await postData(SAVING_GOAL_API, data)
       }
-      await fetchGoals()
-      setFormOpen(false)
-      setEditingGoal(null)
     } catch (e) {
-      // Keep the dialog open so the user can retry
-      console.error(e)
+      toast.error(getApiErrorMessage(e, "Failed to save goal."))
+      throw e // the modal keeps the dialog open so the user can retry
     }
+    toast.success(editingGoal ? "Goal updated" : "Goal added")
+    await fetchGoals()
+    setFormOpen(false)
+    setEditingGoal(null)
   }
 
   const handleDeleteGoal = async (goal: SavingGoals) => {
     try {
       await deleteData(SAVING_GOAL_API, goal as SavingGoals & { id: string })
-      setGoals((prev) => prev.filter((g) => g.id !== goal.id))
     } catch (e) {
-      console.error(e)
+      toast.error(getApiErrorMessage(e, "Failed to delete goal."))
+      return
     }
+    toast.success("Goal deleted")
+    setGoals((prev) => prev.filter((g) => g.id !== goal.id))
   }
 
   const handleAddContribution = async (
@@ -82,10 +87,12 @@ function SavingPage() {
   ) => {
     try {
       await postData(`api/SavingContribution/${goalId}`, contribution)
-      await fetchGoals()
     } catch (e) {
-      console.error(e)
+      toast.error(getApiErrorMessage(e, "Failed to add contribution."))
+      return
     }
+    toast.success("Contribution added")
+    await fetchGoals()
   }
 
   return (

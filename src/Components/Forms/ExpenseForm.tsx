@@ -31,7 +31,7 @@ type FormState = Omit<ModelExpense, "date"> & { date: Date };
 
 export interface ExpenseFormModalProps {
   row?: ModelExpense | null;
-  onSubmit: (data: ModelExpense) => void;
+  onSubmit: (data: ModelExpense) => void | Promise<void>;
 
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -146,7 +146,7 @@ export default function ExpenseFormModal({
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const payload: ModelExpense = {
@@ -154,7 +154,11 @@ export default function ExpenseFormModal({
       date: (data.date.toISOString() as unknown) as Date,
     };
 
-    onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch {
+      return; // error toast shown by the submit handler; keep the dialog open
+    }
     onOpenChange(false);
   };
 

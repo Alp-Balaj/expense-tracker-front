@@ -22,6 +22,8 @@ import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import { PageHeader } from "@/Components/General/PageHeader";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/errors";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportType>("transactions");
@@ -87,12 +89,14 @@ const { accessToken, isAuthReady } = useAuth();
 
   const handleGenerateReport = async (filters: TransactionReportRequest) => {
     setIsLoading(true);
-
-    const response = await postData<TransactionReportResult>('/api/Reports/transactions/preview', filters);
-    const data = await response;
-
-    setReport(data);
-    setIsLoading(false);
+    try {
+      const data = await postData<TransactionReportResult>('/api/Reports/transactions/preview', filters);
+      setReport(data);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Failed to generate report."));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const reportTabs = [

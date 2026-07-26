@@ -19,6 +19,8 @@ import { AmountType } from "@/Enums/enums";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/errors";
 import { PageHeader } from "@/Components/General/PageHeader";
 
 export default function AccountPage() {
@@ -51,10 +53,12 @@ export default function AccountPage() {
       if (account.id === null) {
         try {
           await postData<AddAccount>("api/Account", account);
+          toast.success("Account added");
         } catch (e: unknown) {
           const err = e as AxiosError;
           if (err.response?.status !== 401) {
             console.error(err);
+            toast.error(getApiErrorMessage(e, "Failed to add account."));
           }
         } finally {
           setIsLoadingAccounts(false);
@@ -63,10 +67,12 @@ export default function AccountPage() {
       } else {
         try {
           await putData<AddAccount>("api/Account", account as AddAccount);
+          toast.success("Account updated");
         } catch (e: unknown) {
           const err = e as AxiosError;
           if (err.response?.status !== 401) {
             console.error(err);
+            toast.error(getApiErrorMessage(e, "Failed to update account."));
           }
         } finally {
           setIsLoadingAccounts(false);
@@ -102,10 +108,12 @@ export default function AccountPage() {
     try {
       await deleteData("api/Account", deletingAccount);
       setAccounts((prev) => prev.filter((acc) => acc.id !== deletingAccount.id));
+      toast.success("Account deleted");
     } catch (e: unknown) {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         console.error(err);
+        toast.error(getApiErrorMessage(e, "Failed to delete account."));
       }
     } finally {
       setDeletingAccount(null);

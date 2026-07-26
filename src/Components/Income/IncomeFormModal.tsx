@@ -32,7 +32,7 @@ type FormState = Omit<ModelIncome, "date"> & { date: Date };
 
 export interface IncomeFormModalProps {
   row?: ModelIncome | null;
-  onSubmit: (data: ModelIncome) => void;
+  onSubmit: (data: ModelIncome) => void | Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCancel?: () => void;
@@ -144,13 +144,17 @@ export default function IncomeFormModal({
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const payload: ModelIncome = {
       ...(data as ModelIncome),
       date: data.date.toISOString() as unknown as Date,
     };
-    onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch {
+      return; // error toast shown by the submit handler; keep the dialog open
+    }
     onOpenChange(false);
   };
 

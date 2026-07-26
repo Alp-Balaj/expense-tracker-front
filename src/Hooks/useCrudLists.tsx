@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AxiosError } from "axios";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 
@@ -80,9 +82,15 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
   const submit = async (data: T) => {
     const mode: CrudMode = editing ? "update" : "create";
 
-    if (mode === "update") await putData(endpoint, data);
-    else await postData(endpoint, data);
+    try {
+      if (mode === "update") await putData(endpoint, data);
+      else await postData(endpoint, data);
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, "Saving failed."));
+      throw e; // callers keep their form open
+    }
 
+    toast.success(mode === "update" ? "Changes saved" : "Added");
     closeForm();
     await fetchAll();
   };
@@ -90,7 +98,14 @@ export function useCrudList<T extends EntityWithId>({ endpoint }: UseCrudListOpt
   const confirmDelete = async () => {
     if (!deleting) return;
 
-    await deleteData(endpoint, deleting);
+    try {
+      await deleteData(endpoint, deleting);
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, "Delete failed."));
+      return; // keep the confirm dialog open for retry/cancel
+    }
+
+    toast.success("Deleted");
     setDialogOpen(false);
     setDeleting(null);
     await fetchAll();

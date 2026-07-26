@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
 
 import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
@@ -26,6 +27,7 @@ function App() {
           <ThemeProvider defaultTheme="light">
             <SidebarProvider>
               <AxiosAuthBridge />
+              <Toaster richColors position="top-right" />
               <Routes>
                 {/* Public */}
                 <Route path="/login" element={<LoginPage />} />
