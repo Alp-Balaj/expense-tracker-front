@@ -1,4 +1,5 @@
 import { Moon, Sun } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/Components/ui/button"
 import {
@@ -7,10 +8,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu"
-import { useTheme } from "@/Components/Layout/ThemeProvider"
+import { usePreferences } from "@/Authorization/UserPreferencesContext"
 
 export function ModeToggle() {
-  const { setTheme } = useTheme()
+  const { updatePreferences } = usePreferences()
+
+  const chooseTheme = (theme: "light" | "dark" | "system") => {
+    // updatePreferences applies the theme instantly, then persists it server-side.
+    updatePreferences({ theme }).catch(() =>
+      toast.error("Failed to save theme preference"),
+    )
+  }
 
   return (
     <DropdownMenu>
@@ -22,13 +30,13 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuItem onClick={() => chooseTheme("light")}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem onClick={() => chooseTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+        <DropdownMenuItem onClick={() => chooseTheme("system")}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

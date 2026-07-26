@@ -1,21 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/Components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/Components/ui/tabs";
 import { Button } from "@/Components/ui/button";
 import { Settings } from "lucide-react";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import { usePreferences } from "@/Authorization/UserPreferencesContext";
+import { usePreferences, type UserPreferences } from "@/Authorization/UserPreferencesContext";
 import { AccountSettings } from "./AccountSettings";
 import { PasswordChange } from "./PasswordChange";
 import { Preferences } from "./Preferences";
-import type { UserSettings, UserPreferences } from "@/Models/UserSettings";
+import type { UserSettings } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
 export function UserSettingsModal() {
   const { accessToken, isAuthReady, email: authEmail, username: authUsername } = useAuth();
-  const { getAllData, putDataNoId } = useAuthorizationApi();
-  const { setPreferences } = usePreferences();
+  const { getAllData } = useAuthorizationApi();
+  const { preferences, updatePreferences } = usePreferences();
 
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("settings");
@@ -29,31 +29,18 @@ export function UserSettingsModal() {
   useEffect(() => { if (isAuthReady && accessToken) fetchCurrencies(); }, [fetchCurrencies, isAuthReady, accessToken]);
 
   const [userSettings, setUserSettings] = useState<UserSettings>({ email: authEmail, username: authUsername });
-  const [userPreferences, setUserPreferences] = useState<UserPreferences>({ theme: "light", baseCurrency: "USD", preferredCurrency: "EUR" });
 
   useEffect(() => {
-    if (!isAuthReady || !accessToken) return;
-    const fetchUserData = async () => {
-      setUserSettings({ email: authEmail, username: authUsername });
-      const apiPrefs = await getAllData<{ theme?: "light" | "dark" | "system"; baseCurrency?: string; userPreferredCurrencyCode?: string }>("/api/UserPreferences");
-      setUserPreferences({
-        theme: apiPrefs?.theme ?? "light",
-        baseCurrency: apiPrefs?.baseCurrency ?? "USD",
-        preferredCurrency: apiPrefs?.userPreferredCurrencyCode ?? "EUR",
-      });
-    };
-    fetchUserData();
-  }, [isAuthReady, accessToken, authEmail, authUsername, getAllData]);
+    setUserSettings({ email: authEmail, username: authUsername });
+  }, [authEmail, authUsername]);
+
+  const initialPreferences = useMemo<UserPreferences>(
+    () => preferences ?? { theme: "system", baseCurrency: "EUR" },
+    [preferences],
+  );
 
   const handlePreferencesSave = async (prefs: UserPreferences) => {
-    const apiPayload = {
-      theme: prefs.theme,
-      baseCurrency: prefs.baseCurrency,
-      userPreferredCurrencyCode: prefs.preferredCurrency,
-    };
-    await putDataNoId("/api/UserPreferences", apiPayload);
-    setPreferences(apiPayload);
-    setUserPreferences(prefs);
+    await updatePreferences(prefs);
   };
 
   return (
@@ -79,7 +66,7 @@ export function UserSettingsModal() {
           </TabsContent>
 
           <TabsContent value="preferences" className="p-6">
-            <Preferences initialPreferences={userPreferences} currencies={currencies} onSave={handlePreferencesSave} />
+            <Preferences initialPreferences={initialPreferences} currencies={currencies} onSave={handlePreferencesSave} />
           </TabsContent>
         </Tabs>
       </DialogContent>

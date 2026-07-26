@@ -23,8 +23,8 @@ function App() {
   return (
     <BrowserRouter>
       <AuthorizationProvider>
-        <UserPreferencesProvider>
-          <ThemeProvider defaultTheme="light">
+        <ThemeProvider defaultTheme="light">
+          <UserPreferencesProvider>
             <SidebarProvider>
               <AxiosAuthBridge />
               <Toaster richColors position="top-right" />
@@ -49,8 +49,8 @@ function App() {
                 <Route path="*" element={<Navigate to="/notFound" replace />} />
               </Routes>
             </SidebarProvider>
-          </ThemeProvider>
-        </UserPreferencesProvider>
+          </UserPreferencesProvider>
+        </ThemeProvider>
       </AuthorizationProvider>
     </BrowserRouter>
   );

@@ -38,7 +38,7 @@ export function useCurrency() {
     return map;
   }, [currenciesFromDb]);
 
-  const userCurrencyCode = preferences?.userPreferredCurrencyCode ?? "EUR";
+  const userCurrencyCode = preferences?.baseCurrency ?? "EUR";
 
   const convert = (amount: number, fromCode: string) => {
     const from = currenciesMap[fromCode];

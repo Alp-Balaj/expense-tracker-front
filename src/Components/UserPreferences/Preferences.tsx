@@ -1,33 +1,39 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/Components/ui/button";
 import { Label } from "@/Components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Check } from "lucide-react";
-import type { UserPreferences } from "@/Models/UserSettings";
+import type { UserPreferences } from "@/Authorization/UserPreferencesContext";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
 interface PreferencesProps {
   initialPreferences: UserPreferences;
   currencies: CurrencyDropdown[];
-  onSave?: (preferences: UserPreferences) => void;
+  onSave?: (preferences: UserPreferences) => void | Promise<void>;
 }
 
+const THEMES = ["light", "dark", "system"] as const;
+
 export function Preferences({ initialPreferences, currencies, onSave }: PreferencesProps) {
-  const [theme, setTheme] = useState(initialPreferences.theme);
-  const [baseCurrency, setBaseCurrency] = useState(initialPreferences.baseCurrency);
-  const [preferredCurrency, setPreferredCurrency] = useState(initialPreferences.preferredCurrency);
+  const [theme, setTheme] = useState(initialPreferences.theme ?? "system");
+  const [baseCurrency, setBaseCurrency] = useState(initialPreferences.baseCurrency ?? "EUR");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setTheme(initialPreferences.theme);
-    setBaseCurrency(initialPreferences.baseCurrency);
-    setPreferredCurrency(initialPreferences.preferredCurrency);
+    setTheme(initialPreferences.theme ?? "system");
+    setBaseCurrency(initialPreferences.baseCurrency ?? "EUR");
   }, [initialPreferences]);
 
-  const handleSave = () => {
-    onSave?.({ theme, baseCurrency, preferredCurrency });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      await onSave?.({ theme, baseCurrency });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to save preferences");
+    }
   };
 
   return (
@@ -35,8 +41,8 @@ export function Preferences({ initialPreferences, currencies, onSave }: Preferen
       <div className="space-y-3">
         <Label>Theme</Label>
         <div className="grid grid-cols-3 gap-2">
-          {["light", "dark", "system"].map((t) => (
-            <Button key={t} onClick={() => setTheme(t as any)} className={theme === t ? "bg-primary text-primary-foreground" : "outline"}>
+          {THEMES.map((t) => (
+            <Button key={t} onClick={() => setTheme(t)} className={theme === t ? "bg-primary text-primary-foreground" : "outline"}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </Button>
           ))}
@@ -45,21 +51,8 @@ export function Preferences({ initialPreferences, currencies, onSave }: Preferen
 
       <div className="space-y-2 pt-4 border-t border-border">
         <Label>Base Currency</Label>
-        <p className="text-xs text-muted-foreground">The currency exchange rates are calculated against.</p>
-        <Select value={baseCurrency} onValueChange={setBaseCurrency}>
-          <SelectTrigger className="w-full"><SelectValue placeholder="Select a currency"/></SelectTrigger>
-          <SelectContent>
-            {currencies.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2 pt-4 border-t border-border">
-        <Label>Preferred Display Currency</Label>
         <p className="text-xs text-muted-foreground">All amounts across the app will be converted and shown in this currency.</p>
-        <Select value={preferredCurrency} onValueChange={setPreferredCurrency}>
+        <Select value={baseCurrency} onValueChange={setBaseCurrency}>
           <SelectTrigger className="w-full"><SelectValue placeholder="Select a currency"/></SelectTrigger>
           <SelectContent>
             {currencies.map((c) => (

@@ -154,7 +154,7 @@ export function UserSettingsModal({
       theme,
       baseCurrency,
     });
-    setPreferences({ theme, userBaseCurrencyCode: baseCurrency });
+    setPreferences({ theme, baseCurrency });
     onPreferencesSave?.({ theme, baseCurrency });
     setPreferencesSaved(true);
     setTimeout(() => setPreferencesSaved(false), 2000);
