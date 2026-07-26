@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Non-blocking: the repo currently has ~18 pre-existing eslint errors unrelated to
+      # this suggestion (shadcn boilerplate + a couple of set-state-in-effect warnings).
+      # Reporting them here without failing the build avoids turning CI red on day one;
+      # flip this to blocking once that backlog is cleared.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test
+
+      # Runs tsc -b (type-check, every tsconfig here already sets noEmit) then vite build.
+      - name: Build
+        run: npm run build
