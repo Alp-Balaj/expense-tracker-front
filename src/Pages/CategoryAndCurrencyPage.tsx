@@ -28,6 +28,7 @@ import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
 import type { AxiosError } from "axios";
 import { useAuth } from "@/Authorization/AuthContext";
 import { PageHeader } from "@/Components/General/PageHeader";
+import ConfirmDelete from "@/Components/General/ConfirmDelete";
 
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
@@ -38,7 +39,7 @@ const tabConfig = [
 
 export default function CategoryAndCurrencyPage() {
   const { accessToken, isAuthReady } = useAuth();
-  const { getAllData, postData, putData } = useAuthorizationApi();
+  const { getAllData, postData, putData, deleteData } = useAuthorizationApi();
 
   //#region Category
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,7 +56,7 @@ export default function CategoryAndCurrencyPage() {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setCategoryLoadError("Failed to load categories.");
-        console.error(categoryLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingCategories(false);
@@ -71,9 +72,32 @@ export default function CategoryAndCurrencyPage() {
     setCategoryDialogOpen(true);
   };
 
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+
   const handleDeleteCategory = (category: Category) => {
-    setCategories((prev) => prev.filter((c) => c.id !== category.id));
+    setDeletingCategory(category);
   };
+
+  const confirmDeleteCategory = useCallback(async () => {
+    if (!deletingCategory) return;
+    setCategoryLoadError(null);
+    try {
+      await deleteData("api/Category", deletingCategory);
+      setCategories((prev) => prev.filter((c) => c.id !== deletingCategory.id));
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCategoryLoadError(
+          err.response && [400, 409, 500].includes(err.response.status)
+            ? "This category is used by existing transactions and can't be deleted."
+            : "Failed to delete category."
+        );
+      }
+    } finally {
+      setDeletingCategory(null);
+    }
+  }, [deleteData, deletingCategory]);
 
   const handleSaveCategory = useCallback(async (category: AddCategory) => {
     setIsLoadingCategories(true);
@@ -121,8 +145,8 @@ export default function CategoryAndCurrencyPage() {
 
 
   const fetchCurrencies = useCallback(async () => {
-    setIsLoadingCategories(true);
-    setCategoryLoadError(null);
+    setIsLoadingCurrencies(true);
+    setCurrencyLoadError(null);
 
     try {
       const data = await getAllData<Currency[]>("api/Currency");
@@ -131,7 +155,7 @@ export default function CategoryAndCurrencyPage() {
       const err = e as AxiosError;
       if (err.response?.status !== 401) {
         setCurrencyLoadError("Failed to load currencies.");
-        console.error(currencyLoadError);
+        console.error(err);
       }
     } finally {
       setIsLoadingCurrencies(false);
@@ -150,10 +174,10 @@ export default function CategoryAndCurrencyPage() {
         const err = e as AxiosError;
         if (err.response?.status !== 401) {
           console.error(err);
-          setCategoryLoadError("Failed to add currency.");
+          setCurrencyLoadError("Failed to add currency.");
         }
       } finally {
-        setIsLoadingCategories(false);
+        setIsLoadingCurrencies(false);
       }
       fetchCurrencies();
     } else {
@@ -163,24 +187,47 @@ export default function CategoryAndCurrencyPage() {
         const err = e as AxiosError;
         if (err.response?.status !== 401) {
           console.error(err);
-          setCategoryLoadError("Failed to edit currency.");
+          setCurrencyLoadError("Failed to edit currency.");
         }
       } finally {
-        setIsLoadingCategories(false);
+        setIsLoadingCurrencies(false);
       }
       fetchCurrencies();
     }
     setEditingCurrency(null);
-  },[postData, putData]);
+  },[postData, putData, fetchCurrencies]);
   
   const handleEditCurrency = (currency: Currency) => {
     setEditingCurrency(currency);
     setCurrencyDialogOpen(true);
   };
 
+  const [deletingCurrency, setDeletingCurrency] = useState<Currency | null>(null);
+
   const handleDeleteCurrency = (currency: Currency) => {
-    setCurrencies((prev) => prev.filter((c) => c.id !== currency.id));
+    setDeletingCurrency(currency);
   };
+
+  const confirmDeleteCurrency = useCallback(async () => {
+    if (!deletingCurrency) return;
+    setCurrencyLoadError(null);
+    try {
+      await deleteData("api/Currency", deletingCurrency);
+      setCurrencies((prev) => prev.filter((c) => c.id !== deletingCurrency.id));
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCurrencyLoadError(
+          err.response && [400, 409, 500].includes(err.response.status)
+            ? "This currency is used by existing transactions and can't be deleted."
+            : "Failed to delete currency."
+        );
+      }
+    } finally {
+      setDeletingCurrency(null);
+    }
+  }, [deleteData, deletingCurrency]);
 
   const handleAddCurrency = () => {
     setEditingCurrency(null);
@@ -227,6 +274,11 @@ export default function CategoryAndCurrencyPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {categoryLoadError && (
+                  <div role="alert" className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {categoryLoadError}
+                  </div>
+                )}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-4">
                     {tabConfig.map((tab) => (
@@ -300,6 +352,11 @@ export default function CategoryAndCurrencyPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
+                {currencyLoadError && (
+                  <div role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {currencyLoadError}
+                  </div>
+                )}
                 {currencies.map((currency) => (
                   <CurrencyCard
                     key={currency.id}
@@ -331,6 +388,28 @@ export default function CategoryAndCurrencyPage() {
         onOpenChange={setCurrencyDialogOpen}
         currency={editingCurrency}
         onSave={handleSaveCurrency}
+      />
+
+      <ConfirmDelete
+        open={deletingCategory !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setDeletingCategory(null);
+        }}
+        close={() => setDeletingCategory(null)}
+        onConfirm={confirmDeleteCategory}
+        title="Delete category?"
+        description={`Delete "${deletingCategory?.name}"? This action cannot be undone.`}
+      />
+
+      <ConfirmDelete
+        open={deletingCurrency !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setDeletingCurrency(null);
+        }}
+        close={() => setDeletingCurrency(null)}
+        onConfirm={confirmDeleteCurrency}
+        title="Delete currency?"
+        description={`Delete "${deletingCurrency?.name}"? This action cannot be undone.`}
       />
     </div>
   );
