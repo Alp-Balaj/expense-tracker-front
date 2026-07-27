@@ -11,6 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { TransactionReportFilters } from "@/Components/Report/TransactionReportFilters";
 import { TransactionReportViewer } from "@/Components/Report/TransactionReportViewer";
+import { BudgetReport } from "@/Components/Report/BudgetReport";
 import type {
   TransactionReportRequest,
   TransactionReportResult,
@@ -142,17 +143,7 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="budget">
-            <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-border bg-card/50">
-              <div className="text-center">
-                <Construction className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                <p className="mt-4 text-lg font-medium text-foreground">
-                  Budget Report
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Coming soon - Budget vs actual spending analysis
-                </p>
-              </div>
-            </div>
+            <BudgetReport />
           </TabsContent>
 
           <TabsContent value="trends">

@@ -5,6 +5,7 @@ import { BalanceOverview } from "@/Components/Dashboard/BalanceOverview";
 import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { AccountBalances } from "@/Components/Dashboard/AccountBalances";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
+import { BudgetOverview } from "@/Components/Dashboard/BudgetOverview";
 import ExpenseFormModal from "@/Components/Forms/ExpenseForm";
 import IncomeFormModal from "@/Components/Income/IncomeFormModal";
 import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal";
@@ -116,6 +117,7 @@ export default function HomePage() {
           {/* Right sidebar - takes 2 columns */}
           <div className="lg:col-span-2 space-y-6">
             <AccountBalances accounts={accounts} isLoading={isLoading} />
+            <BudgetOverview />
             <UpcomingExpenses
               futureExpenses={futureExpenses}
               isLoading={isLoading}
