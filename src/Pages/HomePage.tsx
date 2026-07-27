@@ -15,7 +15,6 @@ import { SpendCalendar } from "@/Components/Dashboard/SpendCalendar";
 import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
-import { BudgetOverview } from "@/Components/Dashboard/BudgetOverview";
 import { useQuickLog } from "@/Components/Layout/useQuickLog";
 
 import { useAuth } from "@/Authorization/AuthContext";
@@ -180,7 +179,7 @@ export default function HomePage() {
             <SpendCalendar expenses={expenses} month={month} isLoading={isLoading} />
           </div>
 
-          <div className="order-3 lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-2 lg:self-start">
+          <div className="order-3 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-2 lg:self-start">
             <RecentActivity
               expenses={expenses}
               incomes={incomes}
@@ -196,10 +195,6 @@ export default function HomePage() {
 
           <div className="order-5 lg:col-span-5 lg:col-start-8 lg:row-start-3">
             <RecurringSpend expenses={expenses} isLoading={isLoading} />
-          </div>
-
-          <div className="order-6 lg:col-span-5 lg:col-start-8 lg:row-start-4">
-            <BudgetOverview statuses={budgetStatuses} isLoading={isLoadingBudgets} />
           </div>
         </div>
       </main>

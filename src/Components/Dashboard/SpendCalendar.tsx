@@ -43,7 +43,7 @@ export function SpendCalendar({ expenses, month, isLoading }: SpendCalendarProps
 
   if (isLoading) {
     return (
-      <Panel className="flex animate-pulse flex-col p-5">
+      <Panel className="flex animate-pulse flex-col p-5 lg:h-full">
         <div className="h-4 w-32 rounded bg-muted" />
         <div className="mt-4 grid grid-cols-7 gap-1.5">
           {Array.from({ length: 35 }, (_, i) => (
@@ -55,7 +55,7 @@ export function SpendCalendar({ expenses, month, isLoading }: SpendCalendarProps
   }
 
   return (
-    <Panel className="flex flex-col p-5">
+    <Panel className="flex flex-col p-5 lg:h-full">
       <PanelHeader
         title="Spend calendar"
         meta={

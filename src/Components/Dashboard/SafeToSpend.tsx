@@ -40,8 +40,10 @@ export function SafeToSpend({
   const { format, userCurrencyCode } = useCurrency();
   const money = (amount: number) => format(amount, userCurrencyCode);
 
+  // lg:h-full lets the card fill its grid row, so it ends level with the
+  // calendar beside it; the footer strip's lg:mt-auto takes up the slack.
   const shell =
-    "flex flex-col lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-7";
+    "flex flex-col lg:h-full lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:p-7";
 
   if (isLoading) {
     return (
