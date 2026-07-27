@@ -44,7 +44,7 @@ vi.mock("@/Authorization/AuthContext", () => ({ useAuth: () => ({ username: "alp
 
 // The log-something forms live in the shell now; the page only asks for them.
 vi.mock("@/Components/Layout/useQuickLog", () => ({
-  useQuickLog: () => ({ logExpense: vi.fn(), logIncome: vi.fn(), logSaving: vi.fn() }),
+  useQuickLog: () => ({ logExpense: vi.fn(), logIncome: vi.fn(), logSaving: vi.fn(), logTransfer: vi.fn() }),
 }));
 
 const TODAY = new Date(2026, 6, 27, 9, 0, 0); // Monday 27 July 2026, 09:00 local

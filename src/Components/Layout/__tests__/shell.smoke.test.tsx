@@ -9,6 +9,7 @@ import * as incomeHooks from "@/Hooks/queries/useIncomes";
 import * as futureExpenseHooks from "@/Hooks/queries/useFutureExpenses";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
 import * as savingGoalHooks from "@/Hooks/queries/useSavingGoals";
+import * as transferHooks from "@/Hooks/queries/useTransfers";
 import type { BudgetStatus } from "@/Models/Budget";
 
 vi.mock("@/Hooks/queries/useExpenses");
@@ -16,6 +17,7 @@ vi.mock("@/Hooks/queries/useIncomes");
 vi.mock("@/Hooks/queries/useFutureExpenses");
 vi.mock("@/Hooks/queries/useBudgets");
 vi.mock("@/Hooks/queries/useSavingGoals");
+vi.mock("@/Hooks/queries/useTransfers");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -37,6 +39,7 @@ vi.mock("@/Components/General/ModeToggle", () => ({ ModeToggle: () => null }));
 vi.mock("@/Components/Forms/ExpenseForm", () => ({ default: () => null }));
 vi.mock("@/Components/Income/IncomeFormModal", () => ({ default: () => null }));
 vi.mock("@/Components/Saving/SavingsGoalFormModal", () => ({ default: () => null }));
+vi.mock("@/Components/Transfer/TransferFormModal", () => ({ default: () => null }));
 
 const overall: BudgetStatus = {
   id: "b-overall",
@@ -74,6 +77,7 @@ function renderShell() {
   vi.mocked(savingGoalHooks).useCreateSavingGoal.mockReturnValue({
     mutateAsync: vi.fn(),
   } as never);
+  vi.mocked(transferHooks).useCreateTransfer.mockReturnValue({ mutateAsync: vi.fn() } as never);
 
   return render(
     <MemoryRouter initialEntries={["/budgets"]}>
