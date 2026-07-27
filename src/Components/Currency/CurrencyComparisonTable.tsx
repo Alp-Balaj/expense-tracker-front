@@ -8,17 +8,22 @@ import {
 } from "@/Components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
 import type { Currency } from "@/Models/Currency";
+import { normalizeCode } from "@/lib/exchangeRates";
 import { ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 
 interface CurrencyComparisonTableProps {
   currencies: Currency[];
+  /** The user's base currency from preferences — this table used to assume EUR. */
+  baseCode: string;
   baseAmount?: number;
 }
 
 export function CurrencyComparisonTable({
   currencies,
+  baseCode,
   baseAmount = 100,
 }: CurrencyComparisonTableProps) {
+  const base = normalizeCode(baseCode);
 
   return (
     <Card className="border-border">
@@ -26,11 +31,11 @@ export function CurrencyComparisonTable({
         <CardTitle className="flex items-center gap-2">
           Currency Comparison
           <span className="text-sm font-normal text-muted-foreground">
-            (Base: EUR)
+            (Base: {base})
           </span>
         </CardTitle>
         <CardDescription>
-          How {baseAmount} EUR compares to other currencies
+          How {baseAmount} {base} compares to other currencies
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -40,16 +45,21 @@ export function CurrencyComparisonTable({
               <TableHead>Currency</TableHead>
               <TableHead className="text-center">Rate</TableHead>
               <TableHead className="text-right">
-                {baseAmount} EUR =
+                {baseAmount} {base} =
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currencies
-              .filter((c) => c.code !== "EUR")
+              .filter((c) => normalizeCode(c.code) !== base)
+              .filter((c) => Number.isFinite(c.exchangeRateToBase) && c.exchangeRateToBase > 0)
               .map((currency) => {
-                const convertedAmount = baseAmount * currency.exchangeRateToBase;
-                const isStronger = currency.exchangeRateToBase < 1;
+                // exchangeRateToBase converts INTO the base, so going the other way
+                // — "what does 100 of my base buy?" — divides. The old code
+                // multiplied, which was right only under the inverted convention
+                // this suggestion removes.
+                const convertedAmount = baseAmount / currency.exchangeRateToBase;
+                const isStronger = currency.exchangeRateToBase > 1;
 
                 return (
                   <TableRow key={currency.id}>

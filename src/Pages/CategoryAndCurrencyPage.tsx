@@ -11,6 +11,8 @@ import type { AddCategory, Category } from "@/Models/Category";
 import { CurrencyForm } from "@/Components/Currency/CurrencyForm";
 import { CurrencyCard } from "@/Components/Currency/CurrencyCard";
 import { CurrencyComparisonTable } from "@/Components/Currency/CurrencyComparisonTable";
+import { RateFreshnessNote } from "@/Components/Currency/RateFreshnessNote";
+import { useCurrency } from "@/Hooks/useCurrency";
 import type { Currency } from "@/Models/Currency";
 
 import { CategoryType } from "@/Enums/enums";
@@ -21,6 +23,7 @@ import {
   PiggyBank,
   Calendar,
   Coins,
+  RefreshCw,
 } from "lucide-react";
 
 import type { AxiosError } from "axios";
@@ -36,6 +39,7 @@ import {
   useCreateCurrency,
   useUpdateCurrency,
   useDeleteCurrency,
+  useRefreshRates,
 } from "@/Hooks/queries/useCurrencies";
 
 const tabConfig = [
@@ -173,6 +177,41 @@ export default function CategoryAndCurrencyPage() {
     setCurrencyDialogOpen(true);
   };
 
+  const { userCurrencyCode, rateFreshness } = useCurrency();
+  const refreshRates = useRefreshRates();
+  const [rateRefreshNote, setRateRefreshNote] = useState<string | null>(null);
+
+  // Rates also refresh themselves daily on the server; this is the "don't wait
+  // until tomorrow" button.
+  const handleRefreshRates = async () => {
+    setCurrencyLoadError(null);
+    setRateRefreshNote(null);
+    try {
+      const result = await refreshRates.mutateAsync();
+      if (result.providerUnavailable) {
+        // Not an error state: the previous rates are still there and still shown.
+        setRateRefreshNote(
+          `Couldn't reach the rate service — your existing rates are unchanged.`,
+        );
+      } else if (result.unsupportedCodes.length > 0) {
+        setRateRefreshNote(
+          `Updated to ECB rates for ${result.ratesAsOf}. ${result.unsupportedCodes.join(", ")} ` +
+            `${result.unsupportedCodes.length === 1 ? "isn't" : "aren't"} published — keep ${
+              result.unsupportedCodes.length === 1 ? "its" : "their"
+            } rate up to date by hand.`,
+        );
+      } else {
+        setRateRefreshNote(`Updated to ECB rates for ${result.ratesAsOf}.`);
+      }
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      if (err.response?.status !== 401) {
+        console.error(err);
+        setCurrencyLoadError("Failed to refresh exchange rates.");
+      }
+    }
+  };
+
   //#endregion
 
   const [activeTab, setActiveTab] = useState("expenses");
@@ -270,13 +309,28 @@ export default function CategoryAndCurrencyPage() {
                       Currencies
                     </CardTitle>
                     <CardDescription>
-                      Manage currencies and exchange rates
+                      Rates update daily against {userCurrencyCode}
                     </CardDescription>
                   </div>
-                  <Button size="sm" onClick={handleAddCurrency}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRefreshRates}
+                      disabled={refreshRates.isPending}
+                      title="Refresh exchange rates now"
+                      aria-label="Refresh exchange rates now"
+                    >
+                      <RefreshCw
+                        className={`h-4 w-4 ${refreshRates.isPending ? "animate-spin" : ""}`}
+                      />
+                    </Button>
+                    <Button size="sm" onClick={handleAddCurrency}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+                <RateFreshnessNote freshness={rateFreshness} className="mt-2" />
               </CardHeader>
               <CardContent className="space-y-3">
                 {currencyLoadError && (
@@ -284,10 +338,16 @@ export default function CategoryAndCurrencyPage() {
                     {currencyLoadError}
                   </div>
                 )}
+                {rateRefreshNote && (
+                  <div role="status" className="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                    {rateRefreshNote}
+                  </div>
+                )}
                 {currencies.map((currency) => (
                   <CurrencyCard
                     key={currency.id}
                     currency={currency}
+                    baseCode={userCurrencyCode}
                     onEdit={handleEditCurrency}
                     onDelete={handleDeleteCurrency}
                   />
@@ -296,7 +356,11 @@ export default function CategoryAndCurrencyPage() {
             </Card>
 
             {/* Currency Comparison Table */}
-            <CurrencyComparisonTable currencies={currencies} baseAmount={100} />
+            <CurrencyComparisonTable
+              currencies={currencies}
+              baseCode={userCurrencyCode}
+              baseAmount={100}
+            />
           </div>
         </div>
       </main>
@@ -314,6 +378,7 @@ export default function CategoryAndCurrencyPage() {
         open={currencyDialogOpen}
         onOpenChange={setCurrencyDialogOpen}
         currency={editingCurrency}
+        baseCode={userCurrencyCode}
         onSave={handleSaveCurrency}
       />
 
