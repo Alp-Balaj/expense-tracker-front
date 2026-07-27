@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -13,6 +16,9 @@ import {
   AmountTypeIcon,
 } from "@/Components/Accounts/AccountCard";
 import { ConvertedAmount } from "@/Components/General/ConvertedAmount";
+import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
+import { useTransfersQuery } from "@/Hooks/queries/useTransfers";
+import { formatDate } from "@/lib/dates";
 
 interface AccountDetailsDialogProps {
   open: boolean;
@@ -25,9 +31,22 @@ export function AccountDetailsDialog({
   onOpenChange,
   account,
 }: AccountDetailsDialogProps) {
+  // Hooks stay above the `!account` bail-out — the dialog renders with a null
+  // account between closing and the parent clearing its selection.
+  const { data: allTransfers = [] } = useTransfersQuery();
+  const { data: accounts = [] } = useAccountsQuery();
+
+  const transfers = useMemo(() => {
+    if (!account) return [];
+    return allTransfers
+      .filter((t) => t.fromAccountId === account.id || t.toAccountId === account.id)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [allTransfers, account]);
+
   if (!account) return null;
 
   const colorStyle = amountTypeColors[account.amountType];
+  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? "another account";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,6 +100,56 @@ export function AccountDetailsDialog({
                 <div>
                   <p className="text-muted-foreground mb-1">Description</p>
                   <p className="text-foreground">{account.description}</p>
+                </div>
+              </>
+            )}
+
+            {transfers.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-muted-foreground mb-2">Transfers</p>
+                  <ul className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {transfers.map((transfer) => {
+                      const isOutgoing = transfer.fromAccountId === account.id;
+                      const counterparty = isOutgoing
+                        ? transfer.toAccountId
+                        : transfer.fromAccountId;
+
+                      return (
+                        <li key={transfer.id} className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2 min-w-0">
+                            {isOutgoing ? (
+                              <ArrowUpRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                            ) : (
+                              <ArrowDownLeft className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="truncate text-foreground">
+                                {isOutgoing ? "To" : "From"} {accountName(counterparty)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(transfer.date)}
+                                {transfer.note ? ` · ${transfer.note}` : ""}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`shrink-0 text-right font-medium tabular-nums ${
+                              isOutgoing ? "text-muted-foreground" : "text-foreground"
+                            }`}
+                          >
+                            {isOutgoing ? "−" : "+"}
+                            <ConvertedAmount
+                              amount={transfer.amount}
+                              fromCode={account.currencyCode}
+                            />
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               </>
             )}

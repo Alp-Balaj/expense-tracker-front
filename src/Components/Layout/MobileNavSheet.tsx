@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { PiggyBank, Plus, TrendingUp, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, PiggyBank, Plus, TrendingUp, type LucideIcon } from "lucide-react";
 
 import {
   Sheet,
@@ -26,7 +26,7 @@ interface MobileNavSheetProps {
  */
 export function MobileNavSheet({ open, onOpenChange, indicators }: MobileNavSheetProps) {
   const { pathname } = useLocation();
-  const { logExpense, logIncome, logSaving } = useQuickLog();
+  const { logExpense, logIncome, logSaving, logTransfer } = useQuickLog();
 
   const close = () => onOpenChange(false);
   const logThen = (open: () => void) => () => {
@@ -69,6 +69,11 @@ export function MobileNavSheet({ open, onOpenChange, indicators }: MobileNavShee
               icon={PiggyBank}
               label="Saving"
               onClick={logThen(logSaving)}
+            />
+            <QuickLogButton
+              icon={ArrowLeftRight}
+              label="Transfer"
+              onClick={logThen(logTransfer)}
             />
           </div>
         </div>

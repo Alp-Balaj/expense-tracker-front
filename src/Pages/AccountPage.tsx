@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, Plus, Search, Filter } from "lucide-react";
+import { Wallet, Plus, Search, Filter, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import {
@@ -14,6 +14,7 @@ import { AccountSummary } from "@/Components/Accounts/AccountSummary";
 import { AccountForm } from "@/Components/Accounts/AccountForm";
 import { DeleteAccountDialog } from "@/Components/Accounts/DeleteAccountDialog";
 import { AccountDetailsDialog } from "@/Components/Accounts/AccountDetailsDialog";
+import TransferList from "@/Components/Transfer/TransferList";
 import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { toast } from "sonner";
@@ -189,6 +190,17 @@ export default function AccountPage() {
               )}
             </div>
           )}
+        </section>
+
+        {/* Transfers — money moved between the accounts above, kept out of
+            the income/expense totals by living in its own table. */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Transfers</h2>
+          </div>
+
+          <TransferList />
         </section>
       </main>
 

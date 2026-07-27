@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Ellipsis, PiggyBank, Plus, TrendingUp } from "lucide-react";
+import { ArrowLeftRight, Ellipsis, PiggyBank, Plus, TrendingUp } from "lucide-react";
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -39,7 +39,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { username } = useAuth();
   const { convert } = useCurrency();
-  const { logExpense, logIncome, logSaving } = useQuickLog();
+  const { logExpense, logIncome, logSaving, logTransfer } = useQuickLog();
 
   const month = currentMonth();
 
@@ -142,6 +142,10 @@ export default function HomePage() {
                 <DropdownMenuItem onClick={logSaving}>
                   <PiggyBank className="h-4 w-4" />
                   New savings goal
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={logTransfer}>
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Transfer between accounts
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
