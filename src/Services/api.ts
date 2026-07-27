@@ -7,3 +7,6 @@ export const api = axios.create({
 
 // Backend controller is SavingGoalController -> route "api/SavingGoal" (no "s")
 export const SAVING_GOAL_API = "api/SavingGoal";
+
+// Likewise BudgetController -> "api/Budget"
+export const BUDGET_API = "api/Budget";

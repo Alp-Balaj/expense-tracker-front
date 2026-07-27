@@ -20,32 +20,56 @@ export function useResourceQuery<T>(queryKey: QueryKey, endpoint: string, staleT
   });
 }
 
-export function useCreateResource<T extends EntityWithId>(queryKey: QueryKey, endpoint: string) {
-  const { postData } = useAuthorizationApi();
+// Some resources are inputs to a derived query owned by another key — writing
+// an expense, for instance, changes every budget's status. `alsoInvalidate`
+// lists those dependants so a mutation refreshes them along with its own key.
+function useInvalidator(queryKey: QueryKey, alsoInvalidate: QueryKey[] = []) {
   const client = useQueryClient();
+
+  return () => {
+    client.invalidateQueries({ queryKey });
+    alsoInvalidate.forEach((key) => client.invalidateQueries({ queryKey: key }));
+  };
+}
+
+export function useCreateResource<T extends EntityWithId>(
+  queryKey: QueryKey,
+  endpoint: string,
+  alsoInvalidate?: QueryKey[]
+) {
+  const { postData } = useAuthorizationApi();
+  const invalidate = useInvalidator(queryKey, alsoInvalidate);
 
   return useMutation({
     mutationFn: (data: T) => postData<T, T>(endpoint, data),
-    onSuccess: () => client.invalidateQueries({ queryKey }),
+    onSuccess: invalidate,
   });
 }
 
-export function useUpdateResource<T extends EntityWithId>(queryKey: QueryKey, endpoint: string) {
+export function useUpdateResource<T extends EntityWithId>(
+  queryKey: QueryKey,
+  endpoint: string,
+  alsoInvalidate?: QueryKey[]
+) {
   const { putData } = useAuthorizationApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidator(queryKey, alsoInvalidate);
 
   return useMutation({
     mutationFn: (data: T) => putData<T, T>(endpoint, data),
-    onSuccess: () => client.invalidateQueries({ queryKey }),
+    onSuccess: invalidate,
   });
 }
 
-export function useDeleteResource<T extends EntityWithId>(queryKey: QueryKey, endpoint: string) {
+export function useDeleteResource<T extends EntityWithId>(
+  queryKey: QueryKey,
+  endpoint: string,
+  alsoInvalidate?: QueryKey[]
+) {
   const { deleteData } = useAuthorizationApi();
-  const client = useQueryClient();
+  const invalidate = useInvalidator(queryKey, alsoInvalidate);
 
   return useMutation({
     mutationFn: (data: T) => deleteData<void>(endpoint, data),
-    onSuccess: () => client.invalidateQueries({ queryKey }),
+    onSuccess: invalidate,
   });
 }
