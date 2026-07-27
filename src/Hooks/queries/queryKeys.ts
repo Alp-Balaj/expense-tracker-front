@@ -11,4 +11,5 @@ export const queryKeys = {
   incomes: ["incomes"] as const,
   futureExpenses: ["futureExpenses"] as const,
   savingGoals: ["savingGoals"] as const,
+  transfers: ["transfers"] as const,
 };
