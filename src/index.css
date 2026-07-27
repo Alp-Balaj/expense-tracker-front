@@ -91,12 +91,18 @@
   --border: oklch(0.9276 0.0058 264.5313);
   --input: oklch(0.9276 0.0058 264.5313);
   --ring: oklch(0.6716 0.1368 48.5130);
+  /* The warm paper the app chrome sits on — cards and the nav stay --card white. */
+  --canvas: oklch(0.9850 0.0040 75);
+  /* Two extra steps of the accent ramp: a tint to fill active nav rows and the
+     safe-to-spend block, and a darker step for label text on top of that tint. */
+  --primary-soft: oklch(0.9620 0.0240 60);
+  --primary-strong: oklch(0.5300 0.1300 48);
   --chart-1: oklch(0.5940 0.0443 196.0233);
   --chart-2: oklch(0.7214 0.1337 49.9802);
   --chart-3: oklch(0.8721 0.0864 68.5474);
   --chart-4: oklch(0.6268 0 0);
   --chart-5: oklch(0.6830 0 0);
-  --sidebar: oklch(0.9670 0.0029 264.5419);
+  --sidebar: oklch(1.0000 0 0);
   --sidebar-foreground: oklch(0.2101 0.0318 264.6645);
   --sidebar-primary: oklch(0.6716 0.1368 48.5130);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
@@ -146,6 +152,10 @@
   --border: oklch(39.514% 0.00133 15.353);
   --input: oklch(0.2520 0 0);
   --ring: oklch(0.7214 0.1337 49.9802);
+  /* Dark theme has no warm paper to sit on — the canvas is the background. */
+  --canvas: oklch(0.1797 0.0043 308.1928);
+  --primary-soft: oklch(0.2820 0.0380 50);
+  --primary-strong: oklch(0.8100 0.1000 55);
   --chart-1: oklch(0.5940 0.0443 196.0233);
   --chart-2: oklch(0.7214 0.1337 49.9802);
   --chart-3: oklch(0.8721 0.0864 68.5474);
@@ -188,6 +198,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-strong: var(--primary-strong);
+  --color-canvas: var(--canvas);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

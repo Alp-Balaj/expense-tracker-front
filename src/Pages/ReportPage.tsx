@@ -5,7 +5,6 @@ import {
   PieChart,
   TrendingUp,
   Construction,
-  Paperclip,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
@@ -18,7 +17,6 @@ import type {
   ReportType,
 } from "@/Models/Report";
 import { useAuthorizationApi } from "@/Hooks/useAuthorizationApi";
-import { PageHeader } from "@/Components/General/PageHeader";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/errors";
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
@@ -75,10 +73,7 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader title="Reports" icon={<Paperclip className="h-5 w-5 text-primary" />} />
-      
-      <main className="p-3 sm:p-6 space-y-4 sm:space-y-8">
+    <main className="p-3 sm:p-6 space-y-4 sm:space-y-8">
         {/* Report Type Tabs */}
         <Tabs
           value={activeTab}
@@ -160,7 +155,6 @@ export default function ReportsPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+    </main>
   );
 }

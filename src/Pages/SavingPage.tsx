@@ -1,6 +1,4 @@
 import { useState } from "react"
-import { PiggyBank } from "lucide-react"
-import { PageHeader } from "@/Components/General/PageHeader"
 import { SavingsHeroCard } from "@/Components/Saving/SavingsHeroCard"
 import { SavingsAchievementCard } from "@/Components/Saving/SavingsAchievementCard"
 import { SavingsGoalGrid } from "@/Components/Saving/SavingsGoalGrid"
@@ -74,12 +72,7 @@ function SavingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title="Savings"
-        icon={<PiggyBank className="h-5 w-5 text-green-600 dark:text-green-400" />}
-      />
-
+    <>
       <main className="p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Hero + Achievement row */}
         <div className="grid gap-5 lg:grid-cols-3">
@@ -116,7 +109,7 @@ function SavingPage() {
           setEditingGoal(null)
         }}
       />
-    </div>
+    </>
   )
 }
 

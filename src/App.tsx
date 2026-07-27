@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -27,7 +28,8 @@ function App() {
       <AuthorizationProvider>
         <ThemeProvider defaultTheme="light">
           <UserPreferencesProvider>
-            <SidebarProvider>
+            {/* 252px is the rail width the nav design is drawn at. */}
+            <SidebarProvider style={{ "--sidebar-width": "252px" } as CSSProperties}>
               <AxiosAuthBridge />
               <Toaster richColors position="top-right" />
               <Routes>

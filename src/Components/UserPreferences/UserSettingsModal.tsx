@@ -13,7 +13,7 @@ import { Preferences } from "./Preferences";
 import type { UserSettings } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
-export function UserSettingsModal() {
+export function UserSettingsModal({ triggerClassName }: { triggerClassName?: string } = {}) {
   const { accessToken, setToken, isAuthReady, email: authEmail, username: authUsername } = useAuth();
   const { getAllData } = useAuthorizationApi();
   const { preferences, updatePreferences } = usePreferences();
@@ -58,7 +58,7 @@ export function UserSettingsModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon"><Settings className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" className={triggerClassName} aria-label="Settings"><Settings className="h-4 w-4" /></Button>
       </DialogTrigger>
       <DialogContent className="max-h-160 min-h-160 p-0 gap-0 overflow-auto">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">

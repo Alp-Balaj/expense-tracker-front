@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Ellipsis, PiggyBank, Plus, TrendingUp } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -10,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import { DashboardTopBar } from "@/Components/Dashboard/DashboardTopBar";
 import { Eyebrow } from "@/Components/Dashboard/Panel";
 import { SafeToSpend } from "@/Components/Dashboard/SafeToSpend";
 import { SpendCalendar } from "@/Components/Dashboard/SpendCalendar";
@@ -18,23 +16,16 @@ import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
 import { BudgetOverview } from "@/Components/Dashboard/BudgetOverview";
-import ExpenseFormModal from "@/Components/Forms/ExpenseForm";
-import IncomeFormModal from "@/Components/Income/IncomeFormModal";
-import SavingsGoalFormModal from "@/Components/Saving/SavingsGoalFormModal";
+import { useQuickLog } from "@/Components/Layout/useQuickLog";
 
-import type { Expense } from "@/Models/Expense";
-import type { Income } from "@/Models/Income";
-import type { AddSavingsGoal } from "@/Models/SavingGoals";
-import { getApiErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/Authorization/AuthContext";
 import { useCurrency } from "@/Hooks/useCurrency";
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
-import { useExpensesQuery, useCreateExpense } from "@/Hooks/queries/useExpenses";
-import { useIncomesQuery, useCreateIncome } from "@/Hooks/queries/useIncomes";
+import { useExpensesQuery } from "@/Hooks/queries/useExpenses";
+import { useIncomesQuery } from "@/Hooks/queries/useIncomes";
 import { useFutureExpensesQuery } from "@/Hooks/queries/useFutureExpenses";
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
-import { useCreateSavingGoal } from "@/Hooks/queries/useSavingGoals";
 import { currentMonth, formatMonth, overallBudgetStatus } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
 import {
@@ -48,7 +39,8 @@ import {
 export default function HomePage() {
   const navigate = useNavigate();
   const { username } = useAuth();
-  const { format, convert, userCurrencyCode } = useCurrency();
+  const { convert } = useCurrency();
+  const { logExpense, logIncome, logSaving } = useQuickLog();
 
   const month = currentMonth();
 
@@ -68,26 +60,17 @@ export default function HomePage() {
     isLoadingFutureExpenses ||
     isLoadingCategories;
 
-  const createExpense = useCreateExpense();
-  const createIncome = useCreateIncome();
-  const createSavingGoal = useCreateSavingGoal();
-
-  // ── Modal state ─────────────────────────────────────────────
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [incomeOpen, setIncomeOpen] = useState(false);
-  const [savingsOpen, setSavingsOpen] = useState(false);
-
   // ⌘E / Ctrl+E logs an expense from anywhere on the page.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "e") {
         event.preventDefault();
-        setExpenseOpen(true);
+        logExpense();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [logExpense]);
 
   // #region ── Derived figures ─────────────────────────────────────────
   const cursor = useMemo(() => monthCursor(month), [month]);
@@ -131,53 +114,10 @@ export default function HomePage() {
     year: "numeric",
   });
 
-  const readout = overall
-    ? {
-        amount: format(overall.remaining, userCurrencyCode),
-        caption: `left · ${cursor.daysLeft}d`,
-      }
-    : { amount: format(spentThisMonth, userCurrencyCode), caption: `spent · ${monthLabel}` };
-  // #endregion
-
-  // #region ── Submit handlers ─────────────────────────────────────────
-  const handleExpenseSubmit = async (data: Expense) => {
-    try {
-      await createExpense.mutateAsync(data);
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Failed to add expense."));
-      throw e; // the modal keeps itself open
-    }
-    toast.success("Expense added");
-    setExpenseOpen(false);
-  };
-
-  const handleIncomeSubmit = async (data: Income) => {
-    try {
-      await createIncome.mutateAsync(data);
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Failed to add income."));
-      throw e; // the modal keeps itself open
-    }
-    toast.success("Income added");
-    setIncomeOpen(false);
-  };
-
-  const handleSavingsSubmit = async (data: AddSavingsGoal) => {
-    try {
-      await createSavingGoal.mutateAsync(data);
-    } catch (e) {
-      toast.error(getApiErrorMessage(e, "Failed to add savings goal."));
-      throw e; // the modal keeps itself open
-    }
-    toast.success("Savings goal added");
-    setSavingsOpen(false);
-  };
   // #endregion
 
   return (
-    <div className="min-h-screen bg-[oklch(0.985_0.004_75)] dark:bg-background">
-      <DashboardTopBar readout={readout} />
-
+    <>
       <main className="px-4 pt-5 pb-24 sm:px-6 lg:px-10 lg:pt-8 lg:pb-28">
         <div className="flex items-end justify-between gap-4">
           <div className="min-w-0">
@@ -196,18 +136,18 @@ export default function HomePage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIncomeOpen(true)}>
+                <DropdownMenuItem onClick={logIncome}>
                   <TrendingUp className="h-4 w-4" />
                   Add income
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSavingsOpen(true)}>
+                <DropdownMenuItem onClick={logSaving}>
                   <PiggyBank className="h-4 w-4" />
                   New savings goal
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button className="hidden sm:inline-flex" onClick={() => setExpenseOpen(true)}>
+            <Button className="hidden sm:inline-flex" onClick={logExpense}>
               <Plus className="h-4 w-4" />
               Log expense
               <kbd className="ml-0.5 font-mono text-[10px] opacity-65">⌘E</kbd>
@@ -264,36 +204,17 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* The one action the dashboard exists to make easy. */}
+      {/*
+        The one action the dashboard exists to make easy. Phones get the tab
+        bar's centre button instead, so this only shows from md up.
+      */}
       <Button
-        onClick={() => setExpenseOpen(true)}
+        onClick={logExpense}
         aria-label="Log expense"
-        className="fixed right-5 bottom-5 z-30 size-14 rounded-2xl shadow-lg lg:right-8 lg:bottom-8"
+        className="fixed right-5 bottom-5 z-30 hidden size-14 rounded-2xl shadow-lg md:inline-flex lg:right-8 lg:bottom-8"
       >
         <Plus className="size-6" />
       </Button>
-
-      {/* Form Modals */}
-      <ExpenseFormModal
-        open={expenseOpen}
-        onOpenChange={setExpenseOpen}
-        onSubmit={handleExpenseSubmit}
-        onCancel={() => setExpenseOpen(false)}
-      />
-
-      <IncomeFormModal
-        open={incomeOpen}
-        onOpenChange={setIncomeOpen}
-        onSubmit={handleIncomeSubmit}
-        onCancel={() => setIncomeOpen(false)}
-      />
-
-      <SavingsGoalFormModal
-        open={savingsOpen}
-        onOpenChange={setSavingsOpen}
-        onSubmit={handleSavingsSubmit}
-        onCancel={() => setSavingsOpen(false)}
-      />
-    </div>
+    </>
   );
 }

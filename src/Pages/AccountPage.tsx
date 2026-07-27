@@ -18,7 +18,6 @@ import type { Account, AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/errors";
-import { PageHeader } from "@/Components/General/PageHeader";
 import {
   useAccountsQuery,
   useCreateAccount,
@@ -97,13 +96,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <PageHeader
-        title="Accounts"
-        icon={<Wallet className="h-5 w-5 text-primary" />}
-      />
-
+    <>
       <main className="p-3 sm:p-6 space-y-6 sm:space-y-8">
         {/* Summary Cards */}
         <AccountSummary accounts={accounts} />
@@ -222,6 +215,6 @@ export default function AccountPage() {
         onOpenChange={(open) => !open && setViewingAccount(null)}
         account={viewingAccount}
       />
-    </div>
+    </>
   );
 }

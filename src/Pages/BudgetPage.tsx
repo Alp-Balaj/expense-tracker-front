@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { PieChart, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/Components/General/PageHeader";
 import { Button } from "@/Components/ui/button";
 import ConfirmDelete from "@/Components/General/ConfirmDelete";
 import { Spinner } from "@/Components/ui/spinner";
@@ -88,12 +87,7 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title="Budgets"
-        icon={<PieChart className="h-5 w-5 text-primary" />}
-      />
-
+    <>
       <main className="space-y-4 p-3 sm:space-y-6 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <MonthSelector month={month} onChange={setMonth} />
@@ -173,6 +167,6 @@ export default function BudgetPage() {
             : "This action cannot be undone."
         }
       />
-    </div>
+    </>
   );
 }

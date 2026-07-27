@@ -13,7 +13,6 @@ import type { SavingContributions } from "@/Models/SavingGoals"
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock("@/Hooks/queries/useSavingGoals")
 
-vi.mock("@/Components/General/PageHeader", () => ({ PageHeader: () => null }))
 vi.mock("@/Components/Saving/SavingsHeroCard", () => ({ SavingsHeroCard: () => null }))
 vi.mock("@/Components/Saving/SavingsAchievementCard", () => ({ SavingsAchievementCard: () => null }))
 vi.mock("@/Components/Saving/SavingsGoalFormModal", () => ({ default: () => null }))

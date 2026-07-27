@@ -9,7 +9,6 @@ import * as incomeHooks from "@/Hooks/queries/useIncomes";
 import * as futureExpenseHooks from "@/Hooks/queries/useFutureExpenses";
 import * as categoryHooks from "@/Hooks/queries/useCategories";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
-import * as savingGoalHooks from "@/Hooks/queries/useSavingGoals";
 import { AmountType, CategoryType } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { BudgetStatus } from "@/Models/Budget";
@@ -29,7 +28,6 @@ vi.mock("@/Hooks/queries/useIncomes");
 vi.mock("@/Hooks/queries/useFutureExpenses");
 vi.mock("@/Hooks/queries/useCategories");
 vi.mock("@/Hooks/queries/useBudgets");
-vi.mock("@/Hooks/queries/useSavingGoals");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -44,16 +42,10 @@ vi.mock("@/Hooks/useCurrency", () => ({
 
 vi.mock("@/Authorization/AuthContext", () => ({ useAuth: () => ({ username: "alp" }) }));
 
-// The condensed header readout only appears on scroll; probe the data instead.
-vi.mock("@/Components/Dashboard/DashboardTopBar", () => ({
-  DashboardTopBar: ({ readout }: { readout?: { amount: string; caption: string } | null }) => (
-    <div data-testid="readout">{readout ? `${readout.amount} ${readout.caption}` : ""}</div>
-  ),
+// The log-something forms live in the shell now; the page only asks for them.
+vi.mock("@/Components/Layout/useQuickLog", () => ({
+  useQuickLog: () => ({ logExpense: vi.fn(), logIncome: vi.fn(), logSaving: vi.fn() }),
 }));
-
-vi.mock("@/Components/Forms/ExpenseForm", () => ({ default: () => null }));
-vi.mock("@/Components/Income/IncomeFormModal", () => ({ default: () => null }));
-vi.mock("@/Components/Saving/SavingsGoalFormModal", () => ({ default: () => null }));
 
 const TODAY = new Date(2026, 6, 27, 9, 0, 0); // Monday 27 July 2026, 09:00 local
 
@@ -201,12 +193,6 @@ function mockQueries(statuses: BudgetStatus[]) {
     data: statuses,
     isLoading: false,
   } as never);
-
-  vi.mocked(expenseHooks).useCreateExpense.mockReturnValue({ mutateAsync: vi.fn() } as never);
-  vi.mocked(incomeHooks).useCreateIncome.mockReturnValue({ mutateAsync: vi.fn() } as never);
-  vi.mocked(savingGoalHooks).useCreateSavingGoal.mockReturnValue({
-    mutateAsync: vi.fn(),
-  } as never);
 }
 
 function renderDashboard() {
@@ -260,11 +246,6 @@ describe("HomePage dashboard", () => {
     // €1254.59 over the 85 days since the oldest expense is €14.76/day,
     // which stretches €2937 of liquid balance to 198 days.
     expect(screen.getByText("198 days")).toBeInTheDocument();
-  });
-
-  it("feeds the collapsed header the same hero figure", () => {
-    renderDashboard();
-    expect(screen.getByTestId("readout")).toHaveTextContent("€352.68 left · 5d");
   });
 
   it("pulls the nearest planned expense out of the queue", () => {
