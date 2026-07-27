@@ -7,6 +7,7 @@ import {
   TrendingDown,
   Tags,
   PiggyBank,
+  PieChart,
   Paperclip,
 } from "lucide-react";
 
@@ -50,6 +51,12 @@ export default function AppLayout() {
       label: "Savings",
       isActive: location.pathname.startsWith("/savings"),
       onClick: () => navigate("/savings"),
+    },
+    {
+      icon: PieChart,
+      label: "Budgets",
+      isActive: location.pathname.startsWith("/budgets"),
+      onClick: () => navigate("/budgets"),
     },
     {
       icon: Paperclip,

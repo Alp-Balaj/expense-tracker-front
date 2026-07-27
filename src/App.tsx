@@ -19,6 +19,7 @@ import { ThemeProvider } from "./Components/Layout/ThemeProvider";
 import IncomePage from "./Pages/IncomePage";
 import ExpensePage from "./Pages/ExpensePage";
 import SavingPage from "./Pages/SavingPage";
+import BudgetPage from "./Pages/BudgetPage";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
                     <Route path="/income" element={<IncomePage />} />
                     <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
                     <Route path="/savings" element={<SavingPage />} />
+                    <Route path="/budgets" element={<BudgetPage />} />
                     <Route path="/reports" element={<ReportsPage />} />
                   </Route>
                 </Route>
