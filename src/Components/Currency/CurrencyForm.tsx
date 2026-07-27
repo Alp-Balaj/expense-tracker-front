@@ -16,6 +16,8 @@ interface CurrencyEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currency?: Currency | null;
+  /** The user's base currency from preferences — the labels used to hardcode EUR. */
+  baseCode: string;
   onSave: (currency: Currency) => void;
 }
 
@@ -23,6 +25,7 @@ export function CurrencyForm({
   open,
   onOpenChange,
   currency,
+  baseCode,
   onSave,
 }: CurrencyEditDialogProps) {
   const [code, setCode] = useState("");
@@ -107,7 +110,7 @@ export function CurrencyForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="rate">Exchange Rate to EUR</Label>
+            <Label htmlFor="rate">Exchange Rate to {baseCode}</Label>
             <div className="relative">
               <Input
                 id="rate"
@@ -120,11 +123,16 @@ export function CurrencyForm({
                 className="pr-16"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                per EUR
+                {baseCode} per {code || "unit"}
               </span>
             </div>
+            {/* This label used to say the exact opposite ("How many X equal 1 EUR"),
+                which is the inverse of what the backend stores and what the rate
+                fetcher writes. */}
             <p className="text-xs text-muted-foreground">
-              How many {code || "units"} equal 1 EUR
+              How many {baseCode} one {code || "unit"} is worth. Rates for major
+              currencies refresh automatically — enter one by hand only for
+              currencies the daily update doesn't cover.
             </p>
           </div>
         </div>

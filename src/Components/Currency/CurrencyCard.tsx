@@ -3,18 +3,28 @@
 import { Card, CardContent } from "@/Components/ui/card";
 import { Button } from "@/Components/ui/button";
 import type { Currency } from "@/Models/Currency";
+import { normalizeCode } from "@/lib/exchangeRates";
 import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 
 interface CurrencyCardProps {
   currency: Currency;
+  /** The user's base currency from preferences — this card used to assume EUR. */
+  baseCode: string;
   onEdit?: (currency: Currency) => void;
   onDelete?: (currency: Currency) => void;
 }
 
-export function CurrencyCard({ currency, onEdit, onDelete }: CurrencyCardProps) {
-  const isBaseCurrency = currency.code === "EUR";
-  const rateDisplay = isBaseCurrency ? "Base" : currency.exchangeRateToBase.toFixed(4);
-  const isStronger = currency.exchangeRateToBase < 1;
+export function CurrencyCard({ currency, baseCode, onEdit, onDelete }: CurrencyCardProps) {
+  const base = normalizeCode(baseCode);
+  const isBaseCurrency = normalizeCode(currency.code) === base;
+  const rate = currency.exchangeRateToBase;
+  const hasUsableRate = Number.isFinite(rate) && rate > 0;
+
+  const rateDisplay = isBaseCurrency ? "Base" : hasUsableRate ? rate.toFixed(4) : "—";
+  // rate > 1 means one unit of this currency buys more than one unit of the base,
+  // so it is the stronger of the two. This read `< 1` back when the card assumed
+  // the inverse rate direction.
+  const isStronger = hasUsableRate && rate > 1;
 
   return (
     <Card className="border-border bg-card hover:bg-accent/50 transition-colors">
@@ -40,7 +50,7 @@ export function CurrencyCard({ currency, onEdit, onDelete }: CurrencyCardProps) 
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="flex items-center gap-1 justify-end">
-                {!isBaseCurrency && (
+                {!isBaseCurrency && hasUsableRate && (
                   isStronger ? (
                     <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
                   ) : (
@@ -51,9 +61,9 @@ export function CurrencyCard({ currency, onEdit, onDelete }: CurrencyCardProps) 
                   {rateDisplay}
                 </span>
               </div>
-              {!isBaseCurrency && (
+              {!isBaseCurrency && hasUsableRate && (
                 <p className="text-xs text-muted-foreground">
-                  1 {currency.code} = {(1 / currency.exchangeRateToBase).toFixed(4)} EUR
+                  1 {currency.code} = {rate.toFixed(4)} {base}
                 </p>
               )}
             </div>
