@@ -4,6 +4,7 @@ import {
   budgetTone,
   budgetsNeedingAttention,
   formatMonth,
+  overallBudgetStatus,
   overspend,
   shiftMonth,
 } from "@/lib/budget";
@@ -124,6 +125,22 @@ describe("shiftMonth", () => {
 
   it("keeps the yyyy-MM zero padding the API requires", () => {
     expect(shiftMonth("2026-10", -1)).toBe("2026-09");
+  });
+});
+
+describe("overallBudgetStatus", () => {
+  it("picks the budget that spans every category", () => {
+    const overall = status({ id: "all", categoryId: null, categoryName: "All categories" });
+    const found = overallBudgetStatus([status({ id: "1" }), overall, status({ id: "2" })]);
+    expect(found?.id).toBe("all");
+  });
+
+  it("is null when only category budgets exist", () => {
+    expect(overallBudgetStatus([status({ id: "1" }), status({ id: "2" })])).toBeNull();
+  });
+
+  it("is null when nothing is budgeted", () => {
+    expect(overallBudgetStatus([])).toBeNull();
   });
 });
 

@@ -1,169 +1,123 @@
 import { useMemo } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/Components/ui/card";
-import { Badge } from "@/Components/ui/badge";
-import { CalendarClock } from "lucide-react";
+import { parseISO } from "date-fns";
+import { Panel, PanelHeader } from "@/Components/Dashboard/Panel";
 import type { FutureExpense } from "@/Models/FutureExpense";
 import { useCurrency } from "@/Hooks/useCurrency";
-import { parseISO } from "date-fns";
 import { toISODate } from "@/lib/dates";
+import { billsDueWithin, upcomingBills, type UpcomingBill } from "@/lib/dashboard";
 
 interface UpcomingExpensesProps {
   futureExpenses: FutureExpense[];
   isLoading: boolean;
 }
 
-function daysUntil(date: string) {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  // parseISO reads "yyyy-MM-dd" as local midnight — no timezone shift.
-  const target = parseISO(toISODate(date));
-  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+/** How far ahead the summary line looks. */
+const HORIZON_DAYS = 14;
+const MAX_ROWS = 4;
+
+function countdown(days: number) {
+  if (days < 0) return `${Math.abs(days)}d ago`;
+  if (days === 0) return "today";
+  return `${days}d`;
 }
 
-function urgencyBadge(days: number) {
-  if (days < 0)
-    return {
-      label: "Overdue",
-      className:
-        "bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800",
-    };
-  if (days <= 7)
-    return {
-      label: `${days}d left`,
-      className:
-        "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-    };
-  if (days <= 30)
-    return {
-      label: `${days}d left`,
-      className:
-        "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-    };
-  return {
-    label: `${days}d left`,
-    className: "bg-muted text-muted-foreground border-border",
-  };
+function longDate(bill: UpcomingBill) {
+  return parseISO(toISODate(bill.date)).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
 }
 
-export function UpcomingExpenses({
-  futureExpenses,
-  isLoading,
-}: UpcomingExpensesProps) {
+/**
+ * What is about to leave the account. The nearest bill is pulled out and
+ * given weight — it is the one that can catch you out.
+ */
+export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpensesProps) {
   const { format, userCurrencyCode } = useCurrency();
 
-  const sorted = useMemo(
-    () =>
-      [...futureExpenses]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 5),
-    [futureExpenses],
-  );
+  const bills = useMemo(() => upcomingBills(futureExpenses), [futureExpenses]);
+  const shown = bills.slice(0, MAX_ROWS);
+  const dueSoon = billsDueWithin(bills, HORIZON_DAYS);
 
-  const totalUpcoming = useMemo(
-    () => futureExpenses.reduce((s, e) => s + e.amount, 0),
-    [futureExpenses],
-  );
   const skeletonItems = ["a", "b", "c"];
 
   if (isLoading) {
     return (
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Upcoming Expenses</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <Panel className="animate-pulse p-5">
+        <div className="h-4 w-24 rounded bg-muted" />
+        <div className="mt-4 h-16 rounded-xl bg-muted" />
+        <div className="mt-3 space-y-3">
           {skeletonItems.map((id) => (
-            <div key={id} className="flex items-center gap-3 animate-pulse">
-              <div className="h-9 w-9 rounded-lg bg-muted" />
-              <div className="flex-1 space-y-1">
-                <div className="h-4 w-28 rounded bg-muted" />
-                <div className="h-3 w-16 rounded bg-muted" />
-              </div>
-              <div className="h-4 w-16 rounded bg-muted" />
-            </div>
+            <div key={id} className="h-3 w-full rounded bg-muted" />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
     );
   }
 
-  if (sorted.length === 0) {
+  if (shown.length === 0) {
     return (
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Upcoming Expenses</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Planned future expenses
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground py-6 text-center">
-            No planned expenses yet.
-          </p>
-        </CardContent>
-      </Card>
+      <Panel className="p-5">
+        <PanelHeader title="Coming up" description="Expenses you have planned ahead" />
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          Nothing planned. Future expenses you add will queue up here.
+        </p>
+      </Panel>
     );
   }
+
+  const [next, ...rest] = shown;
+  const overdue = next.daysUntil < 0;
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-foreground">Upcoming Expenses</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              {futureExpenses.length} planned &middot;{" "}
-              {format(totalUpcoming, userCurrencyCode)} total
-            </CardDescription>
-          </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-            <CalendarClock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {sorted.map((item) => {
-            const days = daysUntil(item.date);
-            const badge = urgencyBadge(days);
-            const d = parseISO(toISODate(item.date));
-            const dateStr = d.toLocaleDateString(undefined, {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            });
+    <Panel className="p-5">
+      <PanelHeader
+        title="Coming up"
+        description={`${bills.length} planned`}
+        meta={dueSoon > 0 ? `${format(dueSoon, userCurrencyCode)} in ${HORIZON_DAYS}d` : undefined}
+      />
 
-            return (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{dateStr}</p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] font-normal ${badge.className}`}
-                >
-                  {badge.label}
-                </Badge>
-                <span className="text-sm font-semibold tabular-nums text-foreground">
-                  {format(item.amount, userCurrencyCode)}
-                </span>
-              </div>
-            );
-          })}
+      {/* The nearest bill, given its own block. */}
+      <div
+        className={`mt-3.5 flex items-center gap-3 rounded-xl p-3 ${
+          overdue ? "bg-destructive/10" : "bg-primary/10"
+        }`}
+      >
+        <span
+          className={`shrink-0 rounded-lg bg-card px-2.5 py-1.5 font-mono text-[11px] font-bold ${
+            overdue ? "text-destructive" : "text-primary"
+          }`}
+        >
+          {countdown(next.daysUntil)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-semibold text-foreground">{next.title}</div>
+          <div className="text-xs text-muted-foreground">{longDate(next)}</div>
         </div>
-      </CardContent>
-    </Card>
+        <span className="shrink-0 text-[17px] font-bold tabular-nums text-foreground">
+          {format(next.amount, userCurrencyCode)}
+        </span>
+      </div>
+
+      {rest.length > 0 && (
+        <ul className="mt-1">
+          {rest.map((bill) => (
+            <li
+              key={bill.id}
+              className="flex items-center gap-3 border-t border-border px-1 py-2.5"
+            >
+              <span className="w-9 shrink-0 font-mono text-[11px] text-muted-foreground">
+                {countdown(bill.daysUntil)}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">{bill.title}</span>
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                {format(bill.amount, userCurrencyCode)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }

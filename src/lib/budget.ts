@@ -69,6 +69,15 @@ export function budgetsNeedingAttention(
     .slice(0, limit);
 }
 
+/**
+ * The single budget that covers every expense category, which the dashboard
+ * hero measures "safe to spend" against. Null when the user only set
+ * per-category budgets, or none at all.
+ */
+export function overallBudgetStatus(statuses: BudgetStatus[]): BudgetStatus | null {
+  return statuses.find((s) => s.categoryId === null) ?? null;
+}
+
 /** The current local month as "yyyy-MM". */
 export function currentMonth(): string {
   const now = new Date();
