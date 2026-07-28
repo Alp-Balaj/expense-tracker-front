@@ -147,7 +147,9 @@ export function DataTable<TData, TValue>({
                 </Button>
               )}
 
-              {/* TODO: column filters (category/account selects, date ranges) — see Suggestion-5 */}
+              {/* Category/account/amount filters live on the page (Suggestion-5),
+                  so they can drive the summary cards and charts too — the page
+                  passes the already-filtered rows in as `data`. */}
               {toolbar.rightSlot}
             </div>
           )}
