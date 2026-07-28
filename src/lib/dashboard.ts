@@ -1,7 +1,8 @@
 import { AmountType } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
-import type { FutureExpense } from "@/Models/FutureExpense";
+import { PlannedKind } from "@/Enums/enums";
+import type { PlannedOccurrence, PlannedTransaction } from "@/Models/PlannedTransaction";
 import { monthKey, toISODate, todayISO } from "@/lib/dates";
 
 /**
@@ -252,22 +253,80 @@ export function cashRunwayDays(liquid: number, burn: number): number | null {
 
 // #region ── Upcoming bills ───────────────────────────────────────────
 
-export type UpcomingBill = FutureExpense & { daysUntil: number };
+export type UpcomingBill = {
+  key: string;
+  title: string;
+  amount: number;
+  date: string;
+  /** Negative once overdue. */
+  daysUntil: number;
+  kind: PlannedKind;
+  /**
+   * The occurrence waiting to be confirmed, when there is one. Null for a
+   * look-ahead entry, which cannot be acted on because it has not fallen due.
+   */
+  occurrence: PlannedOccurrence | null;
+};
 
-/** Planned expenses, soonest first, with overdue ones leading. */
+/**
+ * What is about to leave the account, soonest first with overdue leading.
+ *
+ * Two sources, because they answer two different questions. Pending occurrences
+ * are money genuinely owed *now* and can be confirmed on the spot. Templates
+ * contribute their computed next due date, which is what makes the widget a
+ * look-ahead rather than a backlog — nothing is materialised before it falls
+ * due, so without this half the dashboard could only ever show what is late.
+ *
+ * A template whose next date already has an occurrence is not added twice: the
+ * real one wins, since it is the one you can act on.
+ */
 export function upcomingBills(
-  futureExpenses: FutureExpense[],
+  occurrences: PlannedOccurrence[],
+  templates: PlannedTransaction[] = [],
   today: string = todayISO(),
 ): UpcomingBill[] {
-  return futureExpenses
-    .map((bill) => ({ ...bill, daysUntil: daysBetween(today, toISODate(bill.date)) }))
-    .sort((a, b) => a.daysUntil - b.daysUntil);
+  const bills: UpcomingBill[] = occurrences.map((occurrence) => ({
+    key: occurrence.id,
+    title: occurrence.title,
+    amount: occurrence.amount,
+    date: toISODate(occurrence.dueDate),
+    daysUntil: daysBetween(today, toISODate(occurrence.dueDate)),
+    kind: occurrence.kind,
+    occurrence,
+  }));
+
+  const spokenFor = new Set(
+    occurrences.map((o) => `${o.plannedTransactionId}:${toISODate(o.dueDate)}`),
+  );
+
+  for (const template of templates) {
+    if (!template.isActive || !template.nextDueDate) continue;
+
+    const date = toISODate(template.nextDueDate);
+    if (spokenFor.has(`${template.id}:${date}`)) continue;
+
+    bills.push({
+      key: `next:${template.id}`,
+      title: template.title,
+      amount: template.amount,
+      date,
+      daysUntil: daysBetween(today, date),
+      kind: template.kind,
+      occurrence: null,
+    });
+  }
+
+  return bills.sort((a, b) => a.daysUntil - b.daysUntil || a.key.localeCompare(b.key));
 }
 
-/** What the bills due within `days` add up to — the "€1,591 by 10 Aug" line. */
+/**
+ * What the bills due within `days` add up to — the "€1,591 in 14d" line.
+ * Money coming *in* is excluded: this line answers "what do I need to cover?",
+ * and netting a salary against it would flatter the figure into uselessness.
+ */
 export function billsDueWithin(bills: UpcomingBill[], days: number): number {
   return bills
-    .filter((bill) => bill.daysUntil <= days)
+    .filter((bill) => bill.daysUntil <= days && bill.kind !== PlannedKind.Income)
     .reduce((sum, bill) => sum + bill.amount, 0);
 }
 

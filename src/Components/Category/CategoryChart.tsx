@@ -14,14 +14,12 @@ const typeLabels: Record<CategoryType, string> = {
   [CategoryType.Expense]: "Expenses",
   [CategoryType.Income]: "Income",
   [CategoryType.Savings]: "Savings",
-  [CategoryType.FutureExpense]: "Future Expenses",
 };
 
 const typeDescriptions: Record<CategoryType, string> = {
   [CategoryType.Expense]: "Breakdown of your expense categories",
   [CategoryType.Income]: "Breakdown of your income sources",
   [CategoryType.Savings]: "Breakdown of your savings categories",
-  [CategoryType.FutureExpense]: "Breakdown of your planned future expenses",
 };
 
 export function CategoryChart({ categories, type, chartType = "bar" }: CategoryChartProps) {

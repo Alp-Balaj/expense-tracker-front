@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ArrowLeftRight,
   ChevronLeft,
@@ -23,7 +24,11 @@ import { SpendCalendar } from "@/Components/Dashboard/SpendCalendar";
 import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
+import CommitOccurrenceDialog from "@/Components/Planned/CommitOccurrenceDialog";
 import { useQuickLog } from "@/Components/Layout/useQuickLog";
+
+import type { CommitOccurrence, PlannedOccurrence } from "@/Models/PlannedTransaction";
+import { getApiErrorMessage } from "@/lib/errors";
 
 import { useAuth } from "@/Authorization/AuthContext";
 import { useCurrency } from "@/Hooks/useCurrency";
@@ -31,7 +36,11 @@ import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
 import { useExpensesQuery } from "@/Hooks/queries/useExpenses";
 import { useIncomesQuery } from "@/Hooks/queries/useIncomes";
-import { useFutureExpensesQuery } from "@/Hooks/queries/useFutureExpenses";
+import {
+  useCommitOccurrence,
+  usePlannedOccurrencesQuery,
+  usePlannedTransactionsQuery,
+} from "@/Hooks/queries/usePlannedTransactions";
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
 import { currentMonth, formatMonth, overallBudgetStatus, shiftMonth } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
@@ -55,11 +64,26 @@ export default function HomePage() {
   const [month, setMonth] = useState(currentMonth());
   const isCurrentMonth = month === currentMonth();
 
+  const [confirming, setConfirming] = useState<PlannedOccurrence | null>(null);
+  const commitOccurrence = useCommitOccurrence();
+
+  const handleConfirm = async (id: string, commit: CommitOccurrence) => {
+    try {
+      await commitOccurrence.mutateAsync({ id, commit });
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Failed to confirm."));
+      throw e; // keeps the dialog open so the user can correct it
+    }
+    toast.success("Recorded");
+    setConfirming(null);
+  };
+
   const { data: accounts = [], isLoading: isLoadingAccounts } = useAccountsQuery();
   const { data: expenses = [], isLoading: isLoadingExpenses } = useExpensesQuery();
   const { data: incomes = [], isLoading: isLoadingIncomes } = useIncomesQuery();
-  const { data: futureExpenses = [], isLoading: isLoadingFutureExpenses } =
-    useFutureExpensesQuery();
+  const { data: occurrences = [], isLoading: isLoadingOccurrences } =
+    usePlannedOccurrencesQuery();
+  const { data: plans = [] } = usePlannedTransactionsQuery();
   const { data: categories = [], isLoading: isLoadingCategories } = useCategoriesQuery();
   const { data: budgetStatuses = [], isLoading: isLoadingBudgets } =
     useBudgetStatusQuery(month);
@@ -68,7 +92,7 @@ export default function HomePage() {
     isLoadingAccounts ||
     isLoadingExpenses ||
     isLoadingIncomes ||
-    isLoadingFutureExpenses ||
+    isLoadingOccurrences ||
     isLoadingCategories;
 
   // ⌘E / Ctrl+E logs an expense from anywhere on the page.
@@ -231,7 +255,12 @@ export default function HomePage() {
           </div>
 
           <div className="order-2 lg:col-span-5 lg:col-start-8 lg:row-start-2">
-            <UpcomingExpenses futureExpenses={futureExpenses} isLoading={isLoading} />
+            <UpcomingExpenses
+              occurrences={occurrences}
+              plans={plans}
+              isLoading={isLoading}
+              onConfirm={setConfirming}
+            />
           </div>
 
           <div className="order-5 lg:col-span-5 lg:col-start-8 lg:row-start-3">
@@ -251,6 +280,18 @@ export default function HomePage() {
       >
         <Plus className="size-6" />
       </Button>
+
+      {/*
+        Confirming a due bill without leaving the dashboard — the one-click post
+        the "Coming up" widget offers. Same dialog the Planned page uses, so the
+        rules about amount, account and date are stated in exactly one place.
+      */}
+      <CommitOccurrenceDialog
+        occurrence={confirming}
+        open={confirming !== null}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        onSubmit={handleConfirm}
+      />
     </>
   );
 }

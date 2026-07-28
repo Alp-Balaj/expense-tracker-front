@@ -9,7 +9,9 @@ export const queryKeys = {
   currencies: ["currencies"] as const,
   expenses: ["expenses"] as const,
   incomes: ["incomes"] as const,
-  futureExpenses: ["futureExpenses"] as const,
+  plannedTransactions: ["plannedTransactions"] as const,
+  /** The due queue. Separate from the templates: confirming one changes only this. */
+  plannedOccurrences: ["plannedOccurrences"] as const,
   savingGoals: ["savingGoals"] as const,
   transfers: ["transfers"] as const,
 };

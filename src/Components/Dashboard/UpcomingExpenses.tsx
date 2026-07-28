@@ -1,14 +1,20 @@
 import { useMemo } from "react";
 import { parseISO } from "date-fns";
+import { Check } from "lucide-react";
+
 import { Panel, PanelHeader } from "@/Components/Dashboard/Panel";
-import type { FutureExpense } from "@/Models/FutureExpense";
+import { Button } from "@/Components/ui/button";
+import type { PlannedOccurrence, PlannedTransaction } from "@/Models/PlannedTransaction";
 import { useCurrency } from "@/Hooks/useCurrency";
 import { toISODate } from "@/lib/dates";
 import { billsDueWithin, upcomingBills, type UpcomingBill } from "@/lib/dashboard";
 
 interface UpcomingExpensesProps {
-  futureExpenses: FutureExpense[];
+  occurrences: PlannedOccurrence[];
+  plans: PlannedTransaction[];
   isLoading: boolean;
+  /** Opens the confirm dialog for an occurrence that has actually fallen due. */
+  onConfirm?: (occurrence: PlannedOccurrence) => void;
 }
 
 /** How far ahead the summary line looks. */
@@ -30,13 +36,22 @@ function longDate(bill: UpcomingBill) {
 }
 
 /**
- * What is about to leave the account. The nearest bill is pulled out and
- * given weight — it is the one that can catch you out.
+ * What is about to leave the account.
+ *
+ * Mixes two things on purpose: entries that have fallen due and are waiting for
+ * you (confirmable right here — the note's one-click post) and the computed next
+ * date of everything else, which is what makes this a look-ahead rather than a
+ * list of things you are already late on.
  */
-export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpensesProps) {
+export function UpcomingExpenses({
+  occurrences,
+  plans,
+  isLoading,
+  onConfirm,
+}: UpcomingExpensesProps) {
   const { format, userCurrencyCode } = useCurrency();
 
-  const bills = useMemo(() => upcomingBills(futureExpenses), [futureExpenses]);
+  const bills = useMemo(() => upcomingBills(occurrences, plans), [occurrences, plans]);
   const shown = bills.slice(0, MAX_ROWS);
   const dueSoon = billsDueWithin(bills, HORIZON_DAYS);
 
@@ -59,9 +74,10 @@ export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpenses
   if (shown.length === 0) {
     return (
       <Panel className="p-5">
-        <PanelHeader title="Coming up" description="Expenses you have planned ahead" />
+        <PanelHeader title="Coming up" description="What you have planned ahead" />
         <p className="py-8 text-center text-sm text-muted-foreground">
-          Nothing planned. Future expenses you add will queue up here.
+          Nothing planned. Rent, subscriptions and one-off payments you add will
+          queue up here.
         </p>
       </Panel>
     );
@@ -69,12 +85,13 @@ export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpenses
 
   const [next, ...rest] = shown;
   const overdue = next.daysUntil < 0;
+  const waiting = bills.filter((bill) => bill.occurrence !== null).length;
 
   return (
     <Panel className="p-5">
       <PanelHeader
         title="Coming up"
-        description={`${bills.length} planned`}
+        description={waiting > 0 ? `${waiting} waiting for you` : `${bills.length} planned`}
         meta={dueSoon > 0 ? `${format(dueSoon, userCurrencyCode)} in ${HORIZON_DAYS}d` : undefined}
       />
 
@@ -98,13 +115,25 @@ export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpenses
         <span className="shrink-0 text-[17px] font-bold tabular-nums text-foreground">
           {format(next.amount, userCurrencyCode)}
         </span>
+        {/* Only what has genuinely fallen due can be confirmed — a look-ahead
+            entry has no occurrence behind it yet. */}
+        {next.occurrence && onConfirm && (
+          <Button
+            size="sm"
+            onClick={() => onConfirm(next.occurrence as PlannedOccurrence)}
+            className="h-8 shrink-0 gap-1.5"
+          >
+            <Check className="h-3.5 w-3.5" />
+            Confirm
+          </Button>
+        )}
       </div>
 
       {rest.length > 0 && (
         <ul className="mt-1">
           {rest.map((bill) => (
             <li
-              key={bill.id}
+              key={bill.key}
               className="flex items-center gap-3 border-t border-border px-1 py-2.5"
             >
               <span className="w-9 shrink-0 font-mono text-[11px] text-muted-foreground">
@@ -114,6 +143,17 @@ export function UpcomingExpenses({ futureExpenses, isLoading }: UpcomingExpenses
               <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
                 {format(bill.amount, userCurrencyCode)}
               </span>
+              {bill.occurrence && onConfirm && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onConfirm(bill.occurrence as PlannedOccurrence)}
+                  className="h-7 shrink-0 px-2"
+                  aria-label={`Confirm ${bill.title}`}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </li>
           ))}
         </ul>

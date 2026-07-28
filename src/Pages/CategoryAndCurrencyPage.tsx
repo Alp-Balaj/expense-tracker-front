@@ -21,7 +21,6 @@ import {
   Wallet,
   TrendingUp,
   PiggyBank,
-  Calendar,
   Coins,
   RefreshCw,
 } from "lucide-react";
@@ -45,8 +44,9 @@ import {
 const tabConfig = [
   { value: "expenses", label: "Expenses", icon: Wallet, categoryType: CategoryType.Expense },
   { value: "income", label: "Income", icon: TrendingUp, categoryType: CategoryType.Income },
+  // No "Planned" tab: a planned expense uses these same Expense categories, so
+  // confirming one lands in the budget and the report you already have.
   { value: "savings", label: "Savings", icon: PiggyBank, categoryType: CategoryType.Savings },
-  { value: "future", label: "Future Expenses", icon: Calendar, categoryType: CategoryType.FutureExpense },
 ];
 
 // 400/409/500 on delete generally means the row is still referenced by

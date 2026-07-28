@@ -21,6 +21,7 @@ import IncomePage from "./Pages/IncomePage";
 import ExpensePage from "./Pages/ExpensePage";
 import SavingPage from "./Pages/SavingPage";
 import BudgetPage from "./Pages/BudgetPage";
+import PlannedPage from "./Pages/PlannedPage";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
                     <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
                     <Route path="/savings" element={<SavingPage />} />
                     <Route path="/budgets" element={<BudgetPage />} />
+                    <Route path="/planned" element={<PlannedPage />} />
                     <Route path="/reports" element={<ReportsPage />} />
                   </Route>
                 </Route>

@@ -44,7 +44,14 @@ export function NavRow({ item, pathname, size, indicators, onNavigate }: NavRowP
   const isActive = isNavItemActive(item, pathname);
   const Icon = item.icon;
 
-  const count = item.badge === "expenseCount" ? indicators.expenseCount : null;
+  // "Planned" counts what is waiting to be confirmed — the only nav count that
+  // means "you have something to do here" rather than "this is how much there is".
+  const count =
+    item.badge === "expenseCount"
+      ? indicators.expenseCount
+      : item.badge === "plannedDue"
+        ? indicators.plannedDue
+        : null;
   const showDot = item.badge === "budgetAttention" && indicators.budgetAttention;
 
   return (

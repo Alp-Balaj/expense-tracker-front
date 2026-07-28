@@ -129,9 +129,6 @@ export function CategoryForm({
                 <SelectItem value={String(CategoryType.Expense)}>Expense</SelectItem>
                 <SelectItem value={String(CategoryType.Income)}>Income</SelectItem>
                 <SelectItem value={String(CategoryType.Savings)}>Savings</SelectItem>
-                <SelectItem value={String(CategoryType.FutureExpense)}>
-                  Future Expense
-                </SelectItem>
               </SelectContent>
             </Select>
           </div>

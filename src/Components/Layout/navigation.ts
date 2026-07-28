@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   FileText,
   Home,
   PieChart,
@@ -23,7 +24,7 @@ export type NavItem = {
   to: string;
   icon: LucideIcon;
   /** Which indicator, if any, this row carries. See useNavIndicators. */
-  badge?: "expenseCount" | "budgetAttention";
+  badge?: "expenseCount" | "budgetAttention" | "plannedDue";
 };
 
 export type NavGroup = {
@@ -43,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Plan",
     items: [
+      { label: "Planned", to: "/planned", icon: CalendarClock, badge: "plannedDue" },
       { label: "Budgets", to: "/budgets", icon: PieChart, badge: "budgetAttention" },
       { label: "Savings", to: "/savings", icon: PiggyBank },
     ],

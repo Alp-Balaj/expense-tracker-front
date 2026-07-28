@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 
 import { useExpensesQuery } from "@/Hooks/queries/useExpenses";
-import { useFutureExpensesQuery } from "@/Hooks/queries/useFutureExpenses";
+import {
+  usePlannedOccurrencesQuery,
+  usePlannedTransactionsQuery,
+} from "@/Hooks/queries/usePlannedTransactions";
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
 import type { BudgetStatus } from "@/Models/Budget";
 import {
@@ -29,6 +32,8 @@ export type NavIndicators = {
   expenseCount: number;
   /** Whether "Budgets" shows its attention dot. */
   budgetAttention: boolean;
+  /** What the "Planned" nav item counts: occurrences waiting to be confirmed. */
+  plannedDue: number;
   /** The overall budget, for the sidebar's safe-to-spend block. Null when unset. */
   overallBudget: BudgetStatus | null;
   cursor: MonthCursor;
@@ -53,7 +58,8 @@ export function useNavIndicators(): NavIndicators {
   const month = currentMonth();
 
   const { data: expenses = [], isLoading: isLoadingExpenses } = useExpensesQuery();
-  const { data: futureExpenses = [] } = useFutureExpensesQuery();
+  const { data: occurrences = [] } = usePlannedOccurrencesQuery();
+  const { data: plans = [] } = usePlannedTransactionsQuery();
   const { data: budgetStatuses = [], isLoading: isLoadingBudgets } =
     useBudgetStatusQuery(month);
 
@@ -68,10 +74,10 @@ export function useNavIndicators(): NavIndicators {
   );
 
   const alerts = useMemo<NavAlert[]>(() => {
-    const bills: NavAlert[] = upcomingBills(futureExpenses)
+    const bills: NavAlert[] = upcomingBills(occurrences, plans)
       .filter((bill) => bill.daysUntil <= BILL_HORIZON_DAYS)
       .map((bill) => ({
-        id: `bill-${bill.id ?? bill.title}-${bill.date}`,
+        id: `bill-${bill.key}`,
         kind: "bill",
         title: bill.title,
         detail:
@@ -82,7 +88,8 @@ export function useNavIndicators(): NavIndicators {
               : `Due in ${bill.daysUntil}d`,
         amount: bill.amount,
         urgent: bill.daysUntil <= 0,
-        to: "/expenses",
+        // The bell now leads somewhere you can actually act on it.
+        to: "/planned",
       }));
 
     const budgets: NavAlert[] = budgetStatuses
@@ -105,13 +112,14 @@ export function useNavIndicators(): NavIndicators {
     return [...bills, ...budgets].sort(
       (a, b) => Number(b.urgent) - Number(a.urgent),
     );
-  }, [futureExpenses, budgetStatuses]);
+  }, [occurrences, plans, budgetStatuses]);
 
   const cursor = useMemo(() => monthCursor(month), [month]);
 
   return {
     expenseCount: expenses.length,
     budgetAttention,
+    plannedDue: occurrences.length,
     overallBudget,
     cursor,
     monthLabel: formatMonth(month).split(" ")[0],
