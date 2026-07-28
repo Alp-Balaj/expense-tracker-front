@@ -131,13 +131,14 @@ function plannedPlan(
   title: string,
   amount: number,
   nextDueDate: string,
+  kind: PlannedKind = PlannedKind.Expense,
 ): PlannedTransaction {
   return {
     id,
     title,
     amount,
     description: null,
-    kind: PlannedKind.Expense,
+    kind,
     categoryId: "cat-general",
     fromAccountId: "acc-checking",
     toAccountId: null,
@@ -291,8 +292,24 @@ describe("HomePage dashboard", () => {
 
     expect(screen.getByText("Car insurance")).toBeInTheDocument();
     expect(screen.getByText("2d")).toBeInTheDocument();
-    expect(screen.getByText("€412.00")).toBeInTheDocument();
+    expect(screen.getByText("−€412.00")).toBeInTheDocument();
     // All three land inside the fortnight: 412 + 1150 + 29.
+    expect(screen.getByText(/€1591\.00 in 14d/)).toBeInTheDocument();
+  });
+
+  it("marks a planned income as money coming in", () => {
+    // Lands before the car insurance, so it takes the widget's lead block.
+    vi.mocked(plannedHooks).usePlannedTransactionsQuery.mockReturnValue({
+      data: [...plans, plannedPlan("f4", "Salary", 3200, "2026-07-28", PlannedKind.Income)],
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    // The sign carries the direction without relying on colour, and the kind is
+    // spoken for anyone who cannot see either.
+    expect(screen.getByText("+€3200.00")).toBeInTheDocument();
+    expect(screen.getByText("Income:")).toBeInTheDocument();
+    // Money in is never netted against the fortnight's bills.
     expect(screen.getByText(/€1591\.00 in 14d/)).toBeInTheDocument();
   });
 

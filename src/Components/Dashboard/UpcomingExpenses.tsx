@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { parseISO } from "date-fns";
-import { Check } from "lucide-react";
+import { ArrowRightLeft, Check, TrendingDown, TrendingUp } from "lucide-react";
 
 import { Panel, PanelHeader } from "@/Components/Dashboard/Panel";
 import { Button } from "@/Components/ui/button";
+import { PlannedKind } from "@/Enums/enums";
 import type { PlannedOccurrence, PlannedTransaction } from "@/Models/PlannedTransaction";
 import { useCurrency } from "@/Hooks/useCurrency";
 import { toISODate } from "@/lib/dates";
@@ -21,6 +22,43 @@ interface UpcomingExpensesProps {
 const HORIZON_DAYS = 14;
 const MAX_ROWS = 4;
 
+/**
+ * How each kind reads on the dashboard.
+ *
+ * Two conventions meet here and both are kept. The arrow and its colour are the
+ * Planned feature's own language, so a row means the same thing here as it does
+ * on the Planned page. The signed, tinted amount is the dashboard's — the same
+ * treatment the ledger card next to this one gives money in versus money out.
+ *
+ * Expense is the quiet default: its arrow stays muted so income is the thing
+ * that catches the eye, which is the only case where "coming up" is good news.
+ * The sign carries the meaning on its own, so nothing here depends on colour.
+ */
+const KIND_META = {
+  [PlannedKind.Expense]: {
+    icon: TrendingDown,
+    label: "Expense",
+    iconTone: "text-muted-foreground",
+    amountTone: "text-foreground",
+    sign: "−",
+  },
+  [PlannedKind.Income]: {
+    icon: TrendingUp,
+    label: "Income",
+    iconTone: "text-secondary",
+    amountTone: "text-secondary",
+    sign: "+",
+  },
+  [PlannedKind.Transfer]: {
+    icon: ArrowRightLeft,
+    label: "Transfer",
+    iconTone: "text-blue-600 dark:text-blue-400",
+    amountTone: "text-foreground",
+    // Neither in nor out — a sign would claim something untrue.
+    sign: "",
+  },
+};
+
 function countdown(days: number) {
   if (days < 0) return `${Math.abs(days)}d ago`;
   if (days === 0) return "today";
@@ -36,7 +74,7 @@ function longDate(bill: UpcomingBill) {
 }
 
 /**
- * What is about to leave the account.
+ * What is about to move through the account, in either direction.
  *
  * Mixes two things on purpose: entries that have fallen due and are waiting for
  * you (confirmable right here — the note's one-click post) and the computed next
@@ -84,8 +122,15 @@ export function UpcomingExpenses({
   }
 
   const [next, ...rest] = shown;
-  const overdue = next.daysUntil < 0;
+  const nextMeta = KIND_META[next.kind];
+  const NextIcon = nextMeta.icon;
+  // Late money coming *in* is not a debt, so it never gets the alarm treatment.
+  const overdue = next.daysUntil < 0 && next.kind !== PlannedKind.Income;
+  const incoming = next.kind === PlannedKind.Income;
   const waiting = bills.filter((bill) => bill.occurrence !== null).length;
+
+  const blockTint = incoming ? "bg-secondary/10" : overdue ? "bg-destructive/10" : "bg-primary/10";
+  const chipTone = incoming ? "text-secondary" : overdue ? "text-destructive" : "text-primary";
 
   return (
     <Panel className="p-5">
@@ -96,23 +141,24 @@ export function UpcomingExpenses({
       />
 
       {/* The nearest bill, given its own block. */}
-      <div
-        className={`mt-3.5 flex items-center gap-3 rounded-xl p-3 ${
-          overdue ? "bg-destructive/10" : "bg-primary/10"
-        }`}
-      >
+      <div className={`mt-3.5 flex items-center gap-3 rounded-xl p-3 ${blockTint}`}>
         <span
-          className={`shrink-0 rounded-lg bg-card px-2.5 py-1.5 font-mono text-[11px] font-bold ${
-            overdue ? "text-destructive" : "text-primary"
-          }`}
+          className={`shrink-0 rounded-lg bg-card px-2.5 py-1.5 font-mono text-[11px] font-bold ${chipTone}`}
         >
           {countdown(next.daysUntil)}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold text-foreground">{next.title}</div>
+          <div className="flex items-center gap-1.5">
+            <NextIcon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 ${nextMeta.iconTone}`} />
+            <span className="min-w-0 truncate text-[15px] font-semibold text-foreground">
+              <span className="sr-only">{nextMeta.label}: </span>
+              {next.title}
+            </span>
+          </div>
           <div className="text-xs text-muted-foreground">{longDate(next)}</div>
         </div>
-        <span className="shrink-0 text-[17px] font-bold tabular-nums text-foreground">
+        <span className={`shrink-0 text-[17px] font-bold tabular-nums ${nextMeta.amountTone}`}>
+          {nextMeta.sign}
           {format(next.amount, userCurrencyCode)}
         </span>
         {/* Only what has genuinely fallen due can be confirmed — a look-ahead
@@ -131,31 +177,45 @@ export function UpcomingExpenses({
 
       {rest.length > 0 && (
         <ul className="mt-1">
-          {rest.map((bill) => (
-            <li
-              key={bill.key}
-              className="flex items-center gap-3 border-t border-border px-1 py-2.5"
-            >
-              <span className="w-9 shrink-0 font-mono text-[11px] text-muted-foreground">
-                {countdown(bill.daysUntil)}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-sm text-foreground">{bill.title}</span>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                {format(bill.amount, userCurrencyCode)}
-              </span>
-              {bill.occurrence && onConfirm && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onConfirm(bill.occurrence as PlannedOccurrence)}
-                  className="h-7 shrink-0 px-2"
-                  aria-label={`Confirm ${bill.title}`}
+          {rest.map((bill) => {
+            const meta = KIND_META[bill.kind];
+            const Icon = meta.icon;
+
+            return (
+              <li
+                key={bill.key}
+                className="flex items-center gap-3 border-t border-border px-1 py-2.5"
+              >
+                <span className="w-9 shrink-0 font-mono text-[11px] text-muted-foreground">
+                  {countdown(bill.daysUntil)}
+                </span>
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <Icon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 ${meta.iconTone}`} />
+                  <span className="min-w-0 truncate text-sm text-foreground">
+                    <span className="sr-only">{meta.label}: </span>
+                    {bill.title}
+                  </span>
+                </span>
+                <span
+                  className={`shrink-0 text-sm font-semibold tabular-nums ${meta.amountTone}`}
                 >
-                  <Check className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </li>
-          ))}
+                  {meta.sign}
+                  {format(bill.amount, userCurrencyCode)}
+                </span>
+                {bill.occurrence && onConfirm && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onConfirm(bill.occurrence as PlannedOccurrence)}
+                    className="h-7 shrink-0 px-2"
+                    aria-label={`Confirm ${bill.title}`}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </Panel>
