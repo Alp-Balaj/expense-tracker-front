@@ -15,10 +15,10 @@ import {
   splitAmountParts,
   upcomingBills,
 } from "@/lib/dashboard";
-import { AmountType } from "@/Enums/enums";
+import { AmountType, PlannedKind, PlannedOccurrenceState, Recurrence } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
-import type { FutureExpense } from "@/Models/FutureExpense";
+import type { PlannedOccurrence, PlannedTransaction } from "@/Models/PlannedTransaction";
 
 const TODAY = "2026-07-27";
 
@@ -47,8 +47,59 @@ function account(overrides: Partial<Account> = {}): Account {
   };
 }
 
-function futureExpense(date: string, amount: number, title = "Bill"): FutureExpense {
-  return { id: `${title}-${date}`, title, amount, date, categoryId: "c1", description: "" };
+/** An occurrence waiting to be confirmed — something genuinely owed now. */
+function occurrence(
+  dueDate: string,
+  amount: number,
+  title = "Bill",
+  kind: PlannedKind = PlannedKind.Expense,
+): PlannedOccurrence {
+  return {
+    id: `${title}-${dueDate}`,
+    plannedTransactionId: `t-${title}`,
+    periodKey: dueDate.slice(0, 7),
+    dueDate,
+    state: PlannedOccurrenceState.Pending,
+    committedAt: null,
+    expenseId: null,
+    incomeId: null,
+    transferId: null,
+    title,
+    description: null,
+    kind,
+    amount,
+    categoryId: "c1",
+    fromAccountId: "a1",
+    toAccountId: null,
+    savingGoalId: null,
+  };
+}
+
+/** A schedule contributing its computed next date — a look-ahead, not yet owed. */
+function plan(
+  nextDueDate: string | null,
+  amount: number,
+  title = "Plan",
+  overrides: Partial<PlannedTransaction> = {},
+): PlannedTransaction {
+  return {
+    id: `t-${title}`,
+    title,
+    amount,
+    description: null,
+    kind: PlannedKind.Expense,
+    categoryId: "c1",
+    fromAccountId: "a1",
+    toAccountId: null,
+    savingGoalId: null,
+    recurrence: Recurrence.Monthly,
+    startDate: "2026-01-01",
+    endDate: null,
+    isActive: true,
+    nextDueDate,
+    pendingCount: 0,
+    ...overrides,
+  };
 }
 
 describe("date helpers", () => {
@@ -245,25 +296,68 @@ describe("cashRunwayDays", () => {
 });
 
 describe("upcomingBills", () => {
-  const bills = [
-    futureExpense("2026-08-10", 29, "Gym"),
-    futureExpense("2026-07-29", 412, "Car insurance"),
-    futureExpense("2026-07-20", 15, "Overdue thing"),
-    futureExpense("2026-08-01", 1150, "Rent"),
+  // Only the overdue one has actually fallen due, so only it exists as an
+  // occurrence; the rest are look-ahead dates computed from their schedules.
+  const queue = [occurrence("2026-07-20", 15, "Overdue thing")];
+  const plans = [
+    plan("2026-08-10", 29, "Gym"),
+    plan("2026-07-29", 412, "Car insurance"),
+    plan("2026-08-01", 1150, "Rent"),
   ];
 
   it("sorts soonest first, overdue leading", () => {
-    const sorted = upcomingBills(bills, TODAY);
+    const sorted = upcomingBills(queue, plans, TODAY);
     expect(sorted.map((b) => b.title)).toEqual(["Overdue thing", "Car insurance", "Rent", "Gym"]);
     expect(sorted[0].daysUntil).toBe(-7);
     expect(sorted[1].daysUntil).toBe(2);
   });
 
+  it("marks only what has fallen due as confirmable", () => {
+    const sorted = upcomingBills(queue, plans, TODAY);
+    // The widget's confirm button hangs off this: a date that has not arrived
+    // has no occurrence behind it and nothing to post.
+    expect(sorted[0].occurrence).not.toBeNull();
+    expect(sorted.slice(1).every((b) => b.occurrence === null)).toBe(true);
+  });
+
+  it("does not list a schedule twice when its next date is already queued", () => {
+    const alsoQueued = occurrence("2026-07-29", 412, "Car insurance");
+    alsoQueued.plannedTransactionId = "t-Car insurance";
+
+    const sorted = upcomingBills([...queue, alsoQueued], plans, TODAY);
+
+    expect(sorted.filter((b) => b.title === "Car insurance")).toHaveLength(1);
+    // The real one wins, because it is the one you can act on.
+    expect(sorted.find((b) => b.title === "Car insurance")?.occurrence).not.toBeNull();
+  });
+
+  it("ignores paused schedules and ones with nothing further scheduled", () => {
+    const sorted = upcomingBills(
+      [],
+      [plan("2026-08-01", 100, "Paused", { isActive: false }), plan(null, 100, "Finished")],
+      TODAY,
+    );
+
+    expect(sorted).toEqual([]);
+  });
+
   it("sums what falls inside the horizon", () => {
-    const sorted = upcomingBills(bills, TODAY);
+    const sorted = upcomingBills(queue, plans, TODAY);
     // Overdue (15) + car insurance (412) + rent (1150) within 5 days; gym is 14 out.
     expect(billsDueWithin(sorted, 5)).toBe(1577);
     expect(billsDueWithin(sorted, 14)).toBe(1606);
+  });
+
+  it("leaves money coming in out of the total", () => {
+    // "What do I need to cover?" — netting a salary against it would flatter the
+    // figure into uselessness.
+    const withSalary = upcomingBills(
+      [occurrence("2026-07-28", 2500, "Salary", PlannedKind.Income), ...queue],
+      [],
+      TODAY,
+    );
+
+    expect(billsDueWithin(withSalary, 5)).toBe(15);
   });
 });
 

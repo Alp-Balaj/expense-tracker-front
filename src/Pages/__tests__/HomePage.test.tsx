@@ -6,7 +6,7 @@ import HomePage from "@/Pages/HomePage";
 import * as accountHooks from "@/Hooks/queries/useAccounts";
 import * as expenseHooks from "@/Hooks/queries/useExpenses";
 import * as incomeHooks from "@/Hooks/queries/useIncomes";
-import * as futureExpenseHooks from "@/Hooks/queries/useFutureExpenses";
+import * as plannedHooks from "@/Hooks/queries/usePlannedTransactions";
 import * as categoryHooks from "@/Hooks/queries/useCategories";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
 import { AmountType, CategoryType } from "@/Enums/enums";
@@ -14,8 +14,9 @@ import type { Account } from "@/Models/Account";
 import type { BudgetStatus } from "@/Models/Budget";
 import type { Category } from "@/Models/Category";
 import type { Expense } from "@/Models/Expense";
-import type { FutureExpense } from "@/Models/FutureExpense";
+import type { PlannedTransaction } from "@/Models/PlannedTransaction";
 import type { Income } from "@/Models/Income";
+import { PlannedKind, Recurrence } from "@/Enums/enums";
 
 // The dashboard is almost entirely derived data. This renders the real page
 // against fixed fixtures on a fixed date, so the figures it puts on screen —
@@ -25,7 +26,7 @@ import type { Income } from "@/Models/Income";
 vi.mock("@/Hooks/queries/useAccounts");
 vi.mock("@/Hooks/queries/useExpenses");
 vi.mock("@/Hooks/queries/useIncomes");
-vi.mock("@/Hooks/queries/useFutureExpenses");
+vi.mock("@/Hooks/queries/usePlannedTransactions");
 vi.mock("@/Hooks/queries/useCategories");
 vi.mock("@/Hooks/queries/useBudgets");
 
@@ -120,10 +121,40 @@ const incomes: Income[] = [
   },
 ];
 
-const futureExpenses: FutureExpense[] = [
-  { id: "f1", title: "Gym membership", amount: 29, date: "2026-08-10", categoryId: "c", description: "" },
-  { id: "f2", title: "Car insurance", amount: 412, date: "2026-07-29", categoryId: "c", description: "" },
-  { id: "f3", title: "Rent — August", amount: 1150, date: "2026-08-01", categoryId: "c", description: "" },
+/**
+ * Schedules whose next date is still ahead, so the widget shows them as a
+ * look-ahead. Nothing has fallen due on the pinned date, which is why the queue
+ * below is empty — the server only materialises an occurrence on the day.
+ */
+function plannedPlan(
+  id: string,
+  title: string,
+  amount: number,
+  nextDueDate: string,
+): PlannedTransaction {
+  return {
+    id,
+    title,
+    amount,
+    description: null,
+    kind: PlannedKind.Expense,
+    categoryId: "cat-general",
+    fromAccountId: "acc-checking",
+    toAccountId: null,
+    savingGoalId: null,
+    recurrence: Recurrence.Monthly,
+    startDate: "2026-01-01",
+    endDate: null,
+    isActive: true,
+    nextDueDate,
+    pendingCount: 0,
+  };
+}
+
+const plans: PlannedTransaction[] = [
+  plannedPlan("f1", "Gym membership", 29, "2026-08-10"),
+  plannedPlan("f2", "Car insurance", 412, "2026-07-29"),
+  plannedPlan("f3", "Rent — August", 1150, "2026-08-01"),
 ];
 
 const categories: Category[] = [
@@ -181,9 +212,16 @@ function mockQueries(statuses: BudgetStatus[]) {
     data: incomes,
     isLoading: false,
   } as never);
-  vi.mocked(futureExpenseHooks).useFutureExpensesQuery.mockReturnValue({
-    data: futureExpenses,
+  vi.mocked(plannedHooks).usePlannedTransactionsQuery.mockReturnValue({
+    data: plans,
     isLoading: false,
+  } as never);
+  vi.mocked(plannedHooks).usePlannedOccurrencesQuery.mockReturnValue({
+    data: [],
+    isLoading: false,
+  } as never);
+  vi.mocked(plannedHooks).useCommitOccurrence.mockReturnValue({
+    mutateAsync: vi.fn(),
   } as never);
   vi.mocked(categoryHooks).useCategoriesQuery.mockReturnValue({
     data: categories,

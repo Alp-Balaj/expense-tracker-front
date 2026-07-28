@@ -6,7 +6,7 @@ import AppLayout from "@/Components/Layout/AppLayout";
 import { SidebarProvider } from "@/Components/ui/sidebar";
 import * as expenseHooks from "@/Hooks/queries/useExpenses";
 import * as incomeHooks from "@/Hooks/queries/useIncomes";
-import * as futureExpenseHooks from "@/Hooks/queries/useFutureExpenses";
+import * as plannedHooks from "@/Hooks/queries/usePlannedTransactions";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
 import * as savingGoalHooks from "@/Hooks/queries/useSavingGoals";
 import * as transferHooks from "@/Hooks/queries/useTransfers";
@@ -14,7 +14,7 @@ import type { BudgetStatus } from "@/Models/Budget";
 
 vi.mock("@/Hooks/queries/useExpenses");
 vi.mock("@/Hooks/queries/useIncomes");
-vi.mock("@/Hooks/queries/useFutureExpenses");
+vi.mock("@/Hooks/queries/usePlannedTransactions");
 vi.mock("@/Hooks/queries/useBudgets");
 vi.mock("@/Hooks/queries/useSavingGoals");
 vi.mock("@/Hooks/queries/useTransfers");
@@ -64,7 +64,11 @@ function renderShell() {
     isLoading: false,
   } as never);
   vi.mocked(incomeHooks).useIncomesQuery.mockReturnValue({ data: [], isLoading: false } as never);
-  vi.mocked(futureExpenseHooks).useFutureExpensesQuery.mockReturnValue({
+  vi.mocked(plannedHooks).usePlannedOccurrencesQuery.mockReturnValue({
+    data: [],
+    isLoading: false,
+  } as never);
+  vi.mocked(plannedHooks).usePlannedTransactionsQuery.mockReturnValue({
     data: [],
     isLoading: false,
   } as never);
