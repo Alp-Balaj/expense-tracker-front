@@ -11,7 +11,13 @@ import { useExpensesQuery, useCreateExpense, useUpdateExpense, useDeleteExpense 
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts"
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
-export default function ExpenseList() {
+type ExpenseListProps = {
+  /** The rows to show — the page's period- and filter-scoped slice.
+   *  Defaults to the full history. */
+  data?: Expense[]
+}
+
+export default function ExpenseList({ data }: ExpenseListProps = {}) {
   const {
     open,
     setOpen,
@@ -26,10 +32,12 @@ export default function ExpenseList() {
     closeModal,
   } = useCrudDialogs<Expense>()
 
-  const { data: expenses = [] } = useExpensesQuery()
+  const { data: allExpenses = [] } = useExpensesQuery()
   const { data: accounts = [] } = useAccountsQuery()
   const { data: categories = [] } = useCategoriesQuery()
   const { format, userCurrencyCode } = useCurrency()
+
+  const expenses = data ?? allExpenses
 
   const createExpense = useCreateExpense()
   const updateExpense = useUpdateExpense()

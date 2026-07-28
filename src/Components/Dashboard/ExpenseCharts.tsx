@@ -25,11 +25,20 @@ import {
 import type { Expense } from "@/Models/Expense"
 import type { Category } from "@/Models/Category"
 import { useCurrency } from "@/Hooks/useCurrency"
-import { monthKey, monthKeyFromNow } from "@/lib/dates"
+import { monthKey } from "@/lib/dates"
+import {
+  filterByPeriod,
+  periodLabel,
+  resolvePeriod,
+  trendMonths,
+  type Period,
+} from "@/lib/period"
 
 interface ExpenseChartsProps {
+  /** Full history — the trend needs months either side of the selection. */
   expenses: Expense[]
   categories: Category[]
+  period?: Period
 }
 
 const FALLBACK_COLORS = [
@@ -49,21 +58,22 @@ function compactNumber(value: number): string {
   return String(Math.round(value))
 }
 
-export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
+export function ExpenseCharts({
+  expenses,
+  categories,
+  period = resolvePeriod("thisMonth"),
+}: ExpenseChartsProps) {
   const { format, userCurrencyCode } = useCurrency()
-  // Build monthly trend data for the last 6 months
-  const now = new Date()
-  const monthLabels: string[] = []
-  const monthKeys: string[] = []
 
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    monthLabels.push(d.toLocaleDateString(undefined, { month: "short" }))
-    monthKeys.push(monthKeyFromNow(i))
-  }
+  // The trend window follows the selected period rather than always ending at
+  // the current month, so "Last month" slides it back a month.
+  const chartMonths = trendMonths(period)
 
-  const trendData = monthLabels.map((label, idx) => {
-    const key = monthKeys[idx]
+  const trendData = chartMonths.map((key) => {
+    const [year, month] = key.split("-").map(Number)
+    const label = new Date(year, month - 1, 1).toLocaleDateString(undefined, {
+      month: "short",
+    })
     const total = expenses
       .filter((exp) => monthKey(exp.date) === key)
       .reduce((sum, exp) => sum + exp.amount, 0)
@@ -78,16 +88,14 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
     },
   }
 
-  // Build category breakdown for current month
-  const currentMonthExpenses = expenses.filter(
-    (exp) => monthKey(exp.date) === monthKeyFromNow(0)
-  )
+  // Build category breakdown for the selected period
+  const periodExpenses = filterByPeriod(expenses, period)
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
 
   const categoryTotals: Record<string, { name: string; value: number; fill: string }> = {}
   let colorIdx = 0
-  for (const exp of currentMonthExpenses) {
+  for (const exp of periodExpenses) {
     const cat = categoryMap.get(exp.categoryId)
     const catName = cat?.name ?? "Uncategorized"
     const catColor = cat?.color || FALLBACK_COLORS[colorIdx % FALLBACK_COLORS.length]
@@ -118,7 +126,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
         <CardHeader>
           <CardTitle className="text-foreground">Expense Trends</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Monthly expenses over the past 6 months
+            Monthly expenses over the past {chartMonths.length} months
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -172,7 +180,7 @@ export function ExpenseCharts({ expenses, categories }: ExpenseChartsProps) {
         <CardHeader>
           <CardTitle className="text-foreground">Expenses by Category</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Breakdown of your spending this month
+            Breakdown of your spending — {periodLabel(period).toLowerCase()}
           </CardDescription>
         </CardHeader>
         <CardContent>

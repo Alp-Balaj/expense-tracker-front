@@ -11,7 +11,13 @@ import { useIncomesQuery, useCreateIncome, useUpdateIncome, useDeleteIncome } fr
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts"
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
-export default function IncomeList() {
+type IncomeListProps = {
+  /** The rows to show — the page's period- and filter-scoped slice.
+   *  Defaults to the full history. */
+  data?: Income[]
+}
+
+export default function IncomeList({ data }: IncomeListProps = {}) {
   const {
     open,
     setOpen,
@@ -26,10 +32,12 @@ export default function IncomeList() {
     closeModal,
   } = useCrudDialogs<Income>()
 
-  const { data: incomes = [] } = useIncomesQuery()
+  const { data: allIncomes = [] } = useIncomesQuery()
   const { data: accounts = [] } = useAccountsQuery()
   const { data: categories = [] } = useCategoriesQuery()
   const { format, userCurrencyCode } = useCurrency()
+
+  const incomes = data ?? allIncomes
 
   const createIncome = useCreateIncome()
   const updateIncome = useUpdateIncome()

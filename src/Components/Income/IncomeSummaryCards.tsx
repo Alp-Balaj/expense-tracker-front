@@ -2,25 +2,35 @@ import { TrendingUp, Wallet, Calendar, DollarSign } from "lucide-react"
 import { SummaryCards } from "@/Components/Dashboard/SummaryCards"
 import type { Income } from "@/Models/Income"
 import { useCurrency } from "@/Hooks/useCurrency"
-import { monthKey, monthKeyFromNow } from "@/lib/dates"
+import { monthKey } from "@/lib/dates"
+import {
+  filterByPeriod,
+  periodLabel,
+  precedingPeriod,
+  resolvePeriod,
+  type Period,
+} from "@/lib/period"
 
 interface IncomeSummaryCardsProps {
+  /** Full history — the cards filter it themselves, because the comparison
+   *  card needs the window *before* the selected period too. */
   incomes: Income[]
+  period?: Period
 }
 
-export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
+export function IncomeSummaryCards({
+  incomes,
+  period = resolvePeriod("thisMonth"),
+}: IncomeSummaryCardsProps) {
   const { format, userCurrencyCode } = useCurrency()
   const currentYear = new Date().getFullYear()
 
-  const currentMonthIncomes = incomes.filter(
-    (i) => monthKey(i.date) === monthKeyFromNow(0)
-  )
-  const prevMonthIncomes = incomes.filter(
-    (i) => monthKey(i.date) === monthKeyFromNow(1)
-  )
+  const inPeriod = filterByPeriod(incomes, period)
+  const previous = precedingPeriod(period)
+  const inPrevious = previous ? filterByPeriod(incomes, previous) : []
 
-  const currentTotal = currentMonthIncomes.reduce((sum, i) => sum + i.amount, 0)
-  const prevTotal = prevMonthIncomes.reduce((sum, i) => sum + i.amount, 0)
+  const currentTotal = inPeriod.reduce((sum, i) => sum + i.amount, 0)
+  const prevTotal = inPrevious.reduce((sum, i) => sum + i.amount, 0)
 
   const percentChange =
     prevTotal > 0
@@ -31,10 +41,8 @@ export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
 
   const changePrefix = Number(percentChange) >= 0 ? "+" : ""
 
-  // Count of income entries this month
-  const entryCount = currentMonthIncomes.length
+  const entryCount = inPeriod.length
 
-  // Average income per entry this month
   const avgPerEntry = entryCount > 0 ? currentTotal / entryCount : 0
 
   // Year-to-date total
@@ -42,18 +50,25 @@ export function IncomeSummaryCards({ incomes }: IncomeSummaryCardsProps) {
     .filter((i) => monthKey(i.date).startsWith(String(currentYear)))
     .reduce((sum, i) => sum + i.amount, 0)
 
+  const label = periodLabel(period)
+
   const cards = [
     {
-      title: "Monthly Income",
+      title: "Income",
       value: format(currentTotal, userCurrencyCode),
-      change: `${changePrefix}${percentChange}%`,
-      changeType: Number(percentChange) >= 0 ? ("positive" as const) : ("negative" as const),
+      // "All time" has no window before it to compare against.
+      change: previous ? `${changePrefix}${percentChange}% vs previous` : label,
+      changeType: !previous
+        ? ("neutral" as const)
+        : Number(percentChange) >= 0
+          ? ("positive" as const)
+          : ("negative" as const),
       icon: TrendingUp,
     },
     {
-      title: "Entries This Month",
+      title: "Entries",
       value: String(entryCount),
-      change: `${currentMonthIncomes.length} transactions`,
+      change: label,
       changeType: "neutral" as const,
       icon: Calendar,
     },
