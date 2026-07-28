@@ -18,10 +18,28 @@ import {
 } from "@/Components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { toISODate } from "@/lib/dates";
+import { resolvePeriod, type PeriodPreset } from "@/lib/period";
 import type { TransactionReportRequest } from "@/Models/Report";
 import type { Category } from "@/Models/Category";
 import type { Account } from "@/Models/Account";
 import { CategoryType } from "@/Enums/enums";
+
+/**
+ * The presets the list pages offer, minus the open-ended ones: a report needs
+ * a concrete range, and "All time" would ask the backend for everything.
+ */
+const QUICK_PERIODS: { value: PeriodPreset; label: string }[] = [
+  { value: "thisMonth", label: "This month" },
+  { value: "lastMonth", label: "Last month" },
+  { value: "last3Months", label: "Last 3 months" },
+  { value: "thisYear", label: "This year" },
+];
+
+/** "yyyy-MM-dd" to the local Date the calendar holds, with no UTC hop. */
+function toLocalDate(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
 
 interface TransactionReportFiltersProps {
   accounts: Account[];
@@ -113,6 +131,37 @@ export function TransactionReportFilters({
       <div className="flex items-center gap-2">
         <Filter className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Report Filters</h3>
+      </div>
+
+      {/* Period presets — the same vocabulary the expense and income pages use */}
+      <div className="space-y-2">
+        <Label>Period</Label>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_PERIODS.map((preset) => {
+            const period = resolvePeriod(preset.value);
+            const isActive =
+              !!fromDate &&
+              !!toDate &&
+              toISODate(fromDate) === period.from &&
+              toISODate(toDate) === period.to;
+
+            return (
+              <Button
+                key={preset.value}
+                type="button"
+                size="sm"
+                variant={isActive ? "default" : "outline"}
+                className={cn(!isActive && "bg-transparent")}
+                onClick={() => {
+                  setFromDate(toLocalDate(period.from));
+                  setToDate(toLocalDate(period.to));
+                }}
+              >
+                {preset.label}
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Date Range */}

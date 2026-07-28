@@ -1,6 +1,14 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight, Ellipsis, PiggyBank, Plus, TrendingUp } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronLeft,
+  ChevronRight,
+  Ellipsis,
+  PiggyBank,
+  Plus,
+  TrendingUp,
+} from "lucide-react";
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -25,7 +33,7 @@ import { useExpensesQuery } from "@/Hooks/queries/useExpenses";
 import { useIncomesQuery } from "@/Hooks/queries/useIncomes";
 import { useFutureExpensesQuery } from "@/Hooks/queries/useFutureExpenses";
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
-import { currentMonth, formatMonth, overallBudgetStatus } from "@/lib/budget";
+import { currentMonth, formatMonth, overallBudgetStatus, shiftMonth } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
 import {
   cashRunwayDays,
@@ -41,7 +49,11 @@ export default function HomePage() {
   const { convert } = useCurrency();
   const { logExpense, logIncome, logSaving, logTransfer } = useQuickLog();
 
-  const month = currentMonth();
+  // The dashboard's widgets are month-shaped by design — the budget status is
+  // fetched per month, the calendar is a month grid — so this steps by whole
+  // months rather than taking the free-form period the list pages use.
+  const [month, setMonth] = useState(currentMonth());
+  const isCurrentMonth = month === currentMonth();
 
   const { data: accounts = [], isLoading: isLoadingAccounts } = useAccountsQuery();
   const { data: expenses = [], isLoading: isLoadingExpenses } = useExpensesQuery();
@@ -128,6 +140,31 @@ export default function HomePage() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center rounded-md border border-border">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Previous month"
+                onClick={() => setMonth(shiftMonth(month, -1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[6.5rem] text-center text-sm font-medium text-foreground">
+                {formatMonth(month)}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Next month"
+                // Nothing is logged in the future; stepping past today would
+                // only ever show an empty dashboard.
+                disabled={isCurrentMonth}
+                onClick={() => setMonth(shiftMonth(month, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" aria-label="More ways to log">
