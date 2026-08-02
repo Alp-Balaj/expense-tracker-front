@@ -35,6 +35,16 @@ export default defineConfig(({ command }) => {
             { src: "/pwa-maskable-192x192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
             { src: "/pwa-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
+          // Long-press-the-icon launcher shortcut straight into quick add.
+          shortcuts: [
+            {
+              name: "Add expense",
+              short_name: "Add",
+              description: "Log a new expense",
+              url: "/add",
+              icons: [{ src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" }],
+            },
+          ],
         },
         // App-shell PRECACHE ONLY. Deliberately no runtimeCaching and no
         // background sync: offline behavior of API calls is owned elsewhere.
