@@ -9,6 +9,8 @@ import * as incomeHooks from "@/Hooks/queries/useIncomes";
 import * as plannedHooks from "@/Hooks/queries/usePlannedTransactions";
 import * as categoryHooks from "@/Hooks/queries/useCategories";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
+import * as insightHooks from "@/Hooks/queries/useInsights";
+import * as cashflowHooks from "@/Hooks/queries/useCashflow";
 import { AmountType, CategoryType } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { BudgetStatus } from "@/Models/Budget";
@@ -16,6 +18,8 @@ import type { Category } from "@/Models/Category";
 import type { Expense } from "@/Models/Expense";
 import type { PlannedTransaction } from "@/Models/PlannedTransaction";
 import type { Income } from "@/Models/Income";
+import type { Insights } from "@/Models/Insights";
+import type { CashflowProjection } from "@/Models/Cashflow";
 import { PlannedKind, Recurrence } from "@/Enums/enums";
 
 // The dashboard is almost entirely derived data. This renders the real page
@@ -29,6 +33,8 @@ vi.mock("@/Hooks/queries/useIncomes");
 vi.mock("@/Hooks/queries/usePlannedTransactions");
 vi.mock("@/Hooks/queries/useCategories");
 vi.mock("@/Hooks/queries/useBudgets");
+vi.mock("@/Hooks/queries/useInsights");
+vi.mock("@/Hooks/queries/useCashflow");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -200,6 +206,63 @@ const overallBudget = budgetStatus({
   percentUsed: 83.97,
 });
 
+/** What the insights endpoint reports for July: eating out hot, groceries cooling. */
+const insightsFixture: Insights = {
+  month: "2026-07",
+  baseCurrency: "EUR",
+  hasMissingRates: false,
+  monthsWithHistory: 3,
+  currentMonthTotal: 1232.61,
+  previousMonthTotal: 1100,
+  trailingAverage: 1000,
+  overallVsAveragePct: 23.26,
+  categories: [
+    {
+      categoryId: "cat-eat",
+      categoryName: "Eating out",
+      categoryColor: null,
+      currentMonthTotal: 280,
+      previousMonthTotal: 210,
+      momChangeAmount: 70,
+      momChangePct: 33.33,
+      trailingAverage: 200,
+      vsAveragePct: 40,
+    },
+    {
+      categoryId: "cat-gro",
+      categoryName: "Groceries",
+      categoryColor: null,
+      currentMonthTotal: 264,
+      previousMonthTotal: 300,
+      momChangeAmount: -36,
+      momChangePct: -12,
+      trailingAverage: 270,
+      // Too close to the average for a sentence, so the MoM drop speaks.
+      vsAveragePct: -2.22,
+    },
+  ],
+};
+
+const cashflowFixture: CashflowProjection = {
+  month: "2026-07",
+  baseCurrency: "EUR",
+  hasMissingRates: false,
+  today: "2026-07-27",
+  endOfMonth: "2026-07-31",
+  startingBalance: 2937,
+  dailyBurnRate: 14.76,
+  projectedEndOfMonthBalance: 2878.96,
+  projectedEndBalance: 2495.2,
+  points: [
+    { date: "2026-07-27", projectedBalance: 2937, plannedOutflow: 0, plannedInflow: 0 },
+    { date: "2026-07-28", projectedBalance: 2922.24, plannedOutflow: 0, plannedInflow: 0 },
+    { date: "2026-07-29", projectedBalance: 2907.48, plannedOutflow: 0, plannedInflow: 0 },
+    { date: "2026-07-30", projectedBalance: 2892.72, plannedOutflow: 0, plannedInflow: 0 },
+    { date: "2026-07-31", projectedBalance: 2878.96, plannedOutflow: 0, plannedInflow: 0 },
+    { date: "2026-08-26", projectedBalance: 2495.2, plannedOutflow: 0, plannedInflow: 0 },
+  ],
+};
+
 function mockQueries(statuses: BudgetStatus[]) {
   vi.mocked(accountHooks).useAccountsQuery.mockReturnValue({
     data: accounts,
@@ -230,6 +293,14 @@ function mockQueries(statuses: BudgetStatus[]) {
   } as never);
   vi.mocked(budgetHooks).useBudgetStatusQuery.mockReturnValue({
     data: statuses,
+    isLoading: false,
+  } as never);
+  vi.mocked(insightHooks).useInsightsQuery.mockReturnValue({
+    data: insightsFixture,
+    isLoading: false,
+  } as never);
+  vi.mocked(cashflowHooks).useCashflowProjectionQuery.mockReturnValue({
+    data: cashflowFixture,
     isLoading: false,
   } as never);
 }
@@ -341,6 +412,61 @@ describe("HomePage dashboard", () => {
     expect(screen.getByTitle("27 July — €3.20")).toBeInTheDocument();
     expect(screen.getByTitle("2 July — nothing logged")).toBeInTheDocument();
     expect(screen.getByTitle("31 July — still to come")).toBeInTheDocument();
+  });
+
+  it("reads the month's insights as sentences, biggest signal first", () => {
+    renderDashboard();
+
+    const panel = within(screen.getByTestId("insights-panel"));
+    expect(panel.getByText("Overall spending is 23% above your usual month.")).toBeInTheDocument();
+    expect(panel.getByText("Eating out is 40% above your usual.")).toBeInTheDocument();
+    expect(panel.getByText("Groceries down 12% vs last month.")).toBeInTheDocument();
+  });
+
+  it("admits it cannot compare against history it does not have", () => {
+    vi.mocked(insightHooks).useInsightsQuery.mockReturnValue({
+      data: {
+        ...insightsFixture,
+        monthsWithHistory: 0,
+        trailingAverage: null,
+        overallVsAveragePct: null,
+        previousMonthTotal: 0,
+      },
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    const panel = within(screen.getByTestId("insights-panel"));
+    expect(panel.getByText(/Not enough history yet/)).toBeInTheDocument();
+    expect(panel.queryByText(/above your usual/)).not.toBeInTheDocument();
+  });
+
+  it("projects the cash flow to the end of the month", () => {
+    renderDashboard();
+
+    // The headline carries the number on phones, where the chart is hidden.
+    expect(screen.getByTestId("cashflow-projected")).toHaveTextContent("€2878.96");
+    expect(screen.getByText(/Burn €14\.76\/day/)).toBeInTheDocument();
+    // The window's lowest day and where it ends, date left to the locale.
+    expect(screen.getByTestId("cashflow-note")).toHaveTextContent(
+      /Lowest point €2495\.20 around .*, ending the window at €2495\.20\./,
+    );
+  });
+
+  it("warns when the projection dips below zero", () => {
+    vi.mocked(cashflowHooks).useCashflowProjectionQuery.mockReturnValue({
+      data: {
+        ...cashflowFixture,
+        points: [
+          ...cashflowFixture.points,
+          { date: "2026-08-01", projectedBalance: -120.5, plannedOutflow: 1150, plannedInflow: 0 },
+        ],
+      },
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    expect(screen.getByTestId("cashflow-note")).toHaveTextContent(/Dips below zero around/);
   });
 
   it("falls back to plain spend when nothing budgets the whole month", () => {
