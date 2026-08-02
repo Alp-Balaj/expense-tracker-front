@@ -10,6 +10,7 @@ import { usePreferences, type UserPreferences } from "@/Authorization/UserPrefer
 import { AccountSettings } from "./AccountSettings";
 import { PasswordChange } from "./PasswordChange";
 import { Preferences } from "./Preferences";
+import { NotificationSettingsPanel } from "./NotificationSettings";
 import type { UserSettings } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
@@ -70,6 +71,7 @@ export function UserSettingsModal({ triggerClassName }: { triggerClassName?: str
           <TabsList className="w-full px-6">
             <TabsTrigger value="settings">User Settings</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings" className="p-6">
@@ -79,6 +81,13 @@ export function UserSettingsModal({ triggerClassName }: { triggerClassName?: str
 
           <TabsContent value="preferences" className="p-6">
             <Preferences initialPreferences={initialPreferences} currencies={currencies} onSave={handlePreferencesSave} />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="p-6">
+            {/* Gated on the tab being open: reading push state asks the service
+                worker for a subscription, and there is no reason to do that on
+                every render of the sidebar. */}
+            <NotificationSettingsPanel active={open && activeTab === "notifications"} />
           </TabsContent>
         </Tabs>
       </DialogContent>

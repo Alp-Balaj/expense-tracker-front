@@ -52,6 +52,12 @@ export default defineConfig(({ command }) => {
           globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
           // Never let SPA navigation fallback swallow API-ish paths.
           navigateFallbackDenylist: [/^\/api\//],
+          // Stream P: push + notificationclick handlers, pulled into the
+          // generated worker instead of replacing it with a custom one. That
+          // keeps Stream A's precache contract exactly as verified, and leaves
+          // Stream O free to extend the same generated worker for background
+          // sync without inheriting this file.
+          importScripts: ["/push-sw.js"],
         },
       }),
     ],
