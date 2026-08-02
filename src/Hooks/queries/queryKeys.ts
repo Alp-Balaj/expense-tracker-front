@@ -14,4 +14,8 @@ export const queryKeys = {
   plannedOccurrences: ["plannedOccurrences"] as const,
   savingGoals: ["savingGoals"] as const,
   transfers: ["transfers"] as const,
+  // Server-computed analytics: single objects, not lists. Writes to the data
+  // they derive from list them as dependants, the same way budgetStatus works.
+  insights: ["insights"] as const,
+  cashflowProjection: ["cashflowProjection"] as const,
 };

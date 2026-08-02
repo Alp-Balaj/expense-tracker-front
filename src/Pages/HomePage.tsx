@@ -24,6 +24,8 @@ import { SpendCalendar } from "@/Components/Dashboard/SpendCalendar";
 import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
+import { InsightsPanel } from "@/Components/Dashboard/InsightsPanel";
+import { CashflowPanel } from "@/Components/Dashboard/CashflowPanel";
 import CommitOccurrenceDialog from "@/Components/Planned/CommitOccurrenceDialog";
 import { useQuickLog } from "@/Components/Layout/useQuickLog";
 
@@ -42,6 +44,8 @@ import {
   usePlannedTransactionsQuery,
 } from "@/Hooks/queries/usePlannedTransactions";
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
+import { useInsightsQuery } from "@/Hooks/queries/useInsights";
+import { useCashflowProjectionQuery } from "@/Hooks/queries/useCashflow";
 import { currentMonth, formatMonth, overallBudgetStatus, shiftMonth } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
 import {
@@ -87,6 +91,10 @@ export default function HomePage() {
   const { data: categories = [], isLoading: isLoadingCategories } = useCategoriesQuery();
   const { data: budgetStatuses = [], isLoading: isLoadingBudgets } =
     useBudgetStatusQuery(month);
+  // Server-computed panels: always about the current month, wherever the
+  // month cursor stands — like the recurring widget, they answer "now".
+  const { data: insights, isLoading: isLoadingInsights } = useInsightsQuery();
+  const { data: cashflow, isLoading: isLoadingCashflow } = useCashflowProjectionQuery();
 
   const isLoading =
     isLoadingAccounts ||
@@ -265,6 +273,14 @@ export default function HomePage() {
 
           <div className="order-5 lg:col-span-5 lg:col-start-8 lg:row-start-3">
             <RecurringSpend expenses={expenses} isLoading={isLoading} />
+          </div>
+
+          <div className="order-6 lg:col-span-7 lg:col-start-1 lg:row-start-4">
+            <CashflowPanel projection={cashflow} isLoading={isLoadingCashflow} />
+          </div>
+
+          <div className="order-7 lg:col-span-5 lg:col-start-8 lg:row-start-4">
+            <InsightsPanel insights={insights} isLoading={isLoadingInsights} />
           </div>
         </div>
       </main>

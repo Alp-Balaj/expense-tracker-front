@@ -23,7 +23,7 @@ import type {
  * A consequence worth knowing: editing a template can change what is due, so
  * template writes invalidate the queue as well as the list.
  */
-const QUEUE = [queryKeys.plannedOccurrences];
+const QUEUE = [queryKeys.plannedOccurrences, queryKeys.cashflowProjection];
 
 export const usePlannedTransactionsQuery = () =>
   useResourceQuery<PlannedTransaction>(queryKeys.plannedTransactions, PLANNED_API);
@@ -59,6 +59,8 @@ function useOccurrenceInvalidator() {
       queryKeys.transfers,
       queryKeys.savingGoals,
       queryKeys.budgetStatusRoot,
+      queryKeys.insights,
+      queryKeys.cashflowProjection,
     ].forEach((queryKey) => client.invalidateQueries({ queryKey }));
   };
 }
