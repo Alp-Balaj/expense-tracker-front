@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Menu, PieChart, Plus, ReceiptText, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useQuickLog } from "./useQuickLog";
 
 /** The routes each tab stands for; "More" covers everything not listed here. */
 const TABS: { label: string; icon: LucideIcon; to: string; covers: string[] }[] = [
@@ -24,7 +23,6 @@ function covered(pathname: string, routes: string[]): boolean {
 export function MobileTabBar({ onOpenNav }: { onOpenNav: () => void }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { logExpense } = useQuickLog();
 
   const everything = TABS.flatMap((tab) => tab.covers);
   const moreIsActive = !covered(pathname, everything);
@@ -48,7 +46,9 @@ export function MobileTabBar({ onOpenNav }: { onOpenNav: () => void }) {
       <div className="flex w-[76px] shrink-0 items-center justify-center">
         <button
           type="button"
-          onClick={logExpense}
+          // The quick-add screen, not the modal: /add prefills category,
+          // account and date from history, tuned for one-handed phone entry.
+          onClick={() => navigate("/add")}
           aria-label="Log expense"
           className="-mt-4 flex size-14 items-center justify-center rounded-[18px] border-2 border-card bg-primary text-primary-foreground shadow-[0_6px_16px_-4px_color-mix(in_srgb,var(--primary)_55%,transparent)]"
         >
