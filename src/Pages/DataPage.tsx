@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { ImportWizard } from "@/Components/Import/ImportWizard";
+import { ExportPanel } from "@/Components/Export/ExportPanel";
 
 /**
  * Stream G's home: getting history in, and getting everything back out.
@@ -42,7 +43,7 @@ export default function DataPage() {
         </TabsContent>
 
         <TabsContent value="export" className="pt-4">
-          <p className="text-sm text-muted-foreground">Coming in this stream's second half.</p>
+          <ExportPanel />
         </TabsContent>
       </Tabs>
     </div>
