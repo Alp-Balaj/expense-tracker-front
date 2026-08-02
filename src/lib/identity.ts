@@ -10,9 +10,12 @@ export function initials(name: string | null | undefined): string {
 
 /**
  * The symbol a currency code prints as — "EUR" -> "€". Falls back to the code
- * itself for currencies the runtime has no symbol for.
+ * itself for currencies the runtime has no symbol for, and to "€" (the app's
+ * base currency) when no code is known yet — e.g. a form before an account
+ * is picked.
  */
-export function currencySymbol(code: string): string {
+export function currencySymbol(code?: string | null): string {
+  if (!code) return "€";
   try {
     const part = new Intl.NumberFormat(undefined, {
       style: "currency",

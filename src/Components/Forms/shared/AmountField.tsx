@@ -2,23 +2,6 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/** "EUR" -> "€"; falls back to the code itself (or €) when Intl can't help. */
-export function currencySymbol(code?: string | null): string {
-  if (!code) return "€";
-  try {
-    const part = new Intl.NumberFormat("en", {
-      style: "currency",
-      currency: code,
-      currencyDisplay: "narrowSymbol",
-    })
-      .formatToParts(0)
-      .find((p) => p.type === "currency");
-    return part?.value ?? code;
-  } catch {
-    return code;
-  }
-}
-
 export interface AmountFieldProps {
   value: number;
   onChange: (value: number) => void;

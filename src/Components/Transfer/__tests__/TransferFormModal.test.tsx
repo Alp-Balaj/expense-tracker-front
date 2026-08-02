@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -81,11 +81,25 @@ function renderForm(onSubmit = vi.fn()) {
 }
 
 async function pickAccount(user: ReturnType<typeof userEvent.setup>, label: string, option: string) {
-  await user.click(screen.getByLabelText(label));
-  await user.click(await screen.findByRole("option", { name: new RegExp(option) }));
+  const picker = screen.getByRole("radiogroup", { name: label });
+  await user.click(within(picker).getByRole("radio", { name: new RegExp(option) }));
 }
 
 describe("TransferFormModal", () => {
+  // jsdom has no matchMedia; FormShell's useIsMobile needs one to pick a variant.
+  beforeAll(() => {
+    window.matchMedia = ((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -95,10 +109,11 @@ describe("TransferFormModal", () => {
     renderForm();
 
     await pickAccount(user, "From", "Main Checking");
-    await user.click(screen.getByLabelText("To"));
 
-    const options = await screen.findAllByRole("option");
-    const names = options.map((o) => o.textContent);
+    const toPicker = screen.getByRole("radiogroup", { name: "To" });
+    const names = within(toPicker)
+      .getAllByRole("radio")
+      .map((o) => o.textContent);
 
     expect(names.some((n) => n?.includes("Rainy Day"))).toBe(true);
     // Different currency, and the source itself, are both unusable.

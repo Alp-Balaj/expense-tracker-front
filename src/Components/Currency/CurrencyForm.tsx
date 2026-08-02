@@ -1,15 +1,7 @@
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/Components/ui/dialog";
-import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
+import { FormShell } from "@/Components/Forms/shared/FormShell";
 import type { Currency } from "@/Models/Currency";
 
 interface CurrencyEditDialogProps {
@@ -49,7 +41,8 @@ export function CurrencyForm({
     }
   }, [currency]);
 
-  const handleSave = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     onSave({
       id: currency?.id || null,
       code: code.toUpperCase(),
@@ -61,94 +54,91 @@ export function CurrencyForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Currency" : "New Currency"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the currency details below."
-              : "Add a new currency to track exchange rates."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="code">Code</Label>
-              <Input
-                id="code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.slice(0, 3))}
-                placeholder="USD"
-                maxLength={3}
-                className="uppercase"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input
-                id="symbol"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.slice(0, 3))}
-                placeholder="$"
-                maxLength={3}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="US Dollar"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="rate">Exchange Rate to {baseCode}</Label>
-            <div className="relative">
-              <Input
-                id="rate"
-                type="number"
-                step="0.0001"
-                min="0"
-                value={exchangeRate}
-                onChange={(e) => setExchangeRate(e.target.value)}
-                placeholder="1.0000"
-                className="pr-16"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                {baseCode} per {code || "unit"}
-              </span>
-            </div>
-            {/* This label used to say the exact opposite ("How many X equal 1 EUR"),
-                which is the inverse of what the backend stores and what the rate
-                fetcher writes. */}
-            <p className="text-xs text-muted-foreground">
-              How many {baseCode} one {code || "unit"} is worth. Rates for major
-              currencies refresh automatically — enter one by hand only for
-              currencies the daily update doesn't cover.
-            </p>
-          </div>
+    <FormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? "Edit Currency" : "New Currency"}
+      description={
+        isEditing
+          ? "Update the currency details below."
+          : "Add a new currency to track exchange rates."
+      }
+      submitLabel={isEditing ? "Save Changes" : "Add Currency"}
+      submitDisabled={!code.trim() || !symbol.trim() || !name?.trim()}
+      onSubmit={handleSubmit}
+      desktopClassName="sm:max-w-[425px]"
+    >
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="code" className="text-sm font-medium">
+            Code
+          </Label>
+          <Input
+            id="code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.slice(0, 3))}
+            placeholder="USD"
+            maxLength={3}
+            className="h-11 uppercase"
+          />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="symbol" className="text-sm font-medium">
+            Symbol
+          </Label>
+          <Input
+            id="symbol"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.slice(0, 3))}
+            placeholder="$"
+            maxLength={3}
+            className="h-11"
+          />
+        </div>
+      </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!code.trim() || !symbol.trim() || !name?.trim()}
-          >
-            {isEditing ? "Save Changes" : "Add Currency"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium">
+          Name
+        </Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="US Dollar"
+          className="h-11"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="rate" className="text-sm font-medium">
+          Exchange Rate to {baseCode}
+        </Label>
+        <div className="relative">
+          <Input
+            id="rate"
+            type="number"
+            inputMode="decimal"
+            step="0.0001"
+            min="0"
+            value={exchangeRate}
+            onChange={(e) => setExchangeRate(e.target.value)}
+            placeholder="1.0000"
+            className="h-11 pr-16"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            {baseCode} per {code || "unit"}
+          </span>
+        </div>
+        {/* This label used to say the exact opposite ("How many X equal 1 EUR"),
+            which is the inverse of what the backend stores and what the rate
+            fetcher writes. */}
+        <p className="text-xs text-muted-foreground">
+          How many {baseCode} one {code || "unit"} is worth. Rates for major
+          currencies refresh automatically — enter one by hand only for
+          currencies the daily update doesn't cover.
+        </p>
+      </div>
+    </FormShell>
   );
 }

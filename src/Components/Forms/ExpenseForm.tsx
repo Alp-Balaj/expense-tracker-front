@@ -6,10 +6,8 @@ import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
 import { FormShell } from "@/Components/Forms/shared/FormShell";
-import {
-  AmountField,
-  currencySymbol,
-} from "@/Components/Forms/shared/AmountField";
+import { AmountField } from "@/Components/Forms/shared/AmountField";
+import { currencySymbol } from "@/lib/identity";
 import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
 import { DateField } from "@/Components/Forms/shared/DateField";
 

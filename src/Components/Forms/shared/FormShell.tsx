@@ -61,7 +61,9 @@ export function FormShell({
             // Undo the centered-dialog positioning: cover the viewport.
             "top-0 left-0 h-dvh max-w-none translate-x-0 translate-y-0",
             "gap-0 rounded-none border-0 p-0",
-            "grid-rows-[auto_minmax(0,1fr)_auto]",
+            // minmax(0,1fr) column: without it, nowrap header text sets the
+            // track's min-content width and the whole form overflows the phone.
+            "grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto]",
             "data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4"
           )}
         >
@@ -89,7 +91,7 @@ export function FormShell({
 
           <form
             onSubmit={onSubmit}
-            className="grid grid-rows-[minmax(0,1fr)_auto] min-h-0"
+            className="grid min-h-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto]"
           >
             <div className="min-h-0 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
               {children}

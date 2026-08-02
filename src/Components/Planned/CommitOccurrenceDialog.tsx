@@ -1,24 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, Landmark, Wallet } from "lucide-react";
 
-import { Button } from "@/Components/ui/button";
-import { Input } from "@/Components/ui/input";
-import { Label } from "@/Components/ui/label";
 import { Checkbox } from "@/Components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/Components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/Components/ui/dialog";
+import { FormShell } from "@/Components/Forms/shared/FormShell";
+import { AmountField } from "@/Components/Forms/shared/AmountField";
+import { currencySymbol } from "@/lib/identity";
+import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
+import { DateField } from "@/Components/Forms/shared/DateField";
 
 import { PlannedKind } from "@/Enums/enums";
 import type { CommitOccurrence, PlannedOccurrence } from "@/Models/PlannedTransaction";
@@ -89,10 +76,9 @@ export default function CommitOccurrenceDialog({
     Boolean(data.fromAccountId) &&
     data.fromAccountId === data.toAccountId;
 
-  const toNumber = (value: string) => {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
-  };
+  const primaryAccount = accounts.find(
+    (a) => a.id === (roles.from ? data.fromAccountId : data.toAccountId),
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -115,151 +101,83 @@ export default function CommitOccurrenceDialog({
     onOpenChange(false);
   };
 
-  const accountSelect = (
-    id: string,
+  const accountChips = (
+    label: string,
     value: string,
     onChange: (next: string) => void,
-    placeholder: string,
   ) => (
-    <div className="relative">
-      <Wallet className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="h-11 border-border bg-background pl-10">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {accounts.map((account) => (
-            <SelectItem key={account.id} value={account.id}>
-              {account.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <ChipPicker
+      label={label}
+      items={accounts.map((account) => ({ id: account.id, label: account.name }))}
+      value={value}
+      onChange={onChange}
+    />
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>{occurrence.title}</DialogTitle>
-          <DialogDescription>
-            {standing.label} · planned for {toISODate(occurrence.dueDate)}. Change
-            anything that did not go to plan — nothing is recorded until you confirm.
-          </DialogDescription>
-        </DialogHeader>
+    <FormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={occurrence.title}
+      description={`${standing.label} · planned for ${toISODate(occurrence.dueDate)}. Change anything that did not go to plan — nothing is recorded until you confirm.`}
+      submitLabel="Confirm"
+      submitDisabled={submitting || missingAccount || sameAccount || data.amount <= 0}
+      onSubmit={handleSubmit}
+      desktopClassName="sm:max-w-[520px]"
+    >
+      <AmountField
+        id="commit-amount"
+        value={data.amount}
+        onChange={(amount) => setData({ ...data, amount })}
+        currencySymbol={currencySymbol(primaryAccount?.currencyCode)}
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="commit-amount" className="text-sm font-medium text-foreground">
-              Amount
-            </Label>
-            <div className="relative">
-              <Landmark className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="commit-amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={data.amount || ""}
-                onChange={(e) => setData({ ...data, amount: toNumber(e.target.value) })}
-                className="h-11 border-border bg-background pl-10"
-                required
-              />
-            </div>
-          </div>
+      <div className="space-y-2">
+        <DateField
+          value={data.date}
+          onChange={(date) => setData({ ...data, date })}
+        />
+        <p className="text-xs text-muted-foreground">
+          When the money actually moved, which is often not the day it was due.
+        </p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="commit-date" className="text-sm font-medium text-foreground">
-              Date
-            </Label>
-            <div className="relative">
-              <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="commit-date"
-                type="date"
-                value={data.date}
-                onChange={(e) => setData({ ...data, date: e.target.value })}
-                className="h-11 border-border bg-background pl-10"
-                required
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              When the money actually moved, which is often not the day it was due.
-            </p>
-          </div>
+      {roles.from &&
+        accountChips(
+          occurrence.kind === PlannedKind.Transfer ? "From account" : "Paid from",
+          data.fromAccountId,
+          (v) => setData({ ...data, fromAccountId: v }),
+        )}
 
-          {roles.from && (
-            <div className="space-y-2">
-              <Label htmlFor="commit-from" className="text-sm font-medium text-foreground">
-                {occurrence.kind === PlannedKind.Transfer ? "From account" : "Paid from"}
-              </Label>
-              {accountSelect(
-                "commit-from",
-                data.fromAccountId,
-                (v) => setData({ ...data, fromAccountId: v }),
-                "Choose an account",
-              )}
-            </div>
-          )}
+      {roles.to &&
+        accountChips(
+          occurrence.kind === PlannedKind.Transfer ? "To account" : "Paid into",
+          data.toAccountId,
+          (v) => setData({ ...data, toAccountId: v }),
+        )}
 
-          {roles.to && (
-            <div className="space-y-2">
-              <Label htmlFor="commit-to" className="text-sm font-medium text-foreground">
-                {occurrence.kind === PlannedKind.Transfer ? "To account" : "Paid into"}
-              </Label>
-              {accountSelect(
-                "commit-to",
-                data.toAccountId,
-                (v) => setData({ ...data, toAccountId: v }),
-                "Choose an account",
-              )}
-            </div>
-          )}
+      {sameAccount && (
+        <p role="alert" className="text-xs text-destructive">
+          A transfer needs two different accounts.
+        </p>
+      )}
 
-          {sameAccount && (
-            <p role="alert" className="text-xs text-destructive">
-              A transfer needs two different accounts.
-            </p>
-          )}
-
-          {/* Only worth asking once the number has actually changed. */}
-          {amountChanged && (
-            <label className="flex items-start gap-2.5 rounded-lg bg-muted/50 p-3 text-sm">
-              <Checkbox
-                checked={data.updateTemplateAmount}
-                onCheckedChange={(checked) =>
-                  setData({ ...data, updateTemplateAmount: checked === true })
-                }
-                className="mt-0.5"
-              />
-              <span className="text-muted-foreground">
-                Also make {data.amount.toFixed(2)} the expected amount from now on.
-                Leave this off if it was a one-off change.
-              </span>
-            </label>
-          )}
-
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-11 border-border bg-transparent px-6 hover:bg-muted"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={submitting || missingAccount || sameAccount || data.amount <= 0}
-              className="h-11 gap-2 px-6"
-            >
-              Confirm
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {/* Only worth asking once the number has actually changed. */}
+      {amountChanged && (
+        <label className="flex items-start gap-2.5 rounded-lg bg-muted/50 p-3 text-sm">
+          <Checkbox
+            checked={data.updateTemplateAmount}
+            onCheckedChange={(checked) =>
+              setData({ ...data, updateTemplateAmount: checked === true })
+            }
+            className="mt-0.5"
+          />
+          <span className="text-muted-foreground">
+            Also make {data.amount.toFixed(2)} the expected amount from now on.
+            Leave this off if it was a one-off change.
+          </span>
+        </label>
+      )}
+    </FormShell>
   );
 }
