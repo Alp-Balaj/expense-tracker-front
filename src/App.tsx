@@ -4,6 +4,9 @@ import { Toaster } from "sonner";
 
 import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
+import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
+import ConfirmEmailPage from "./Pages/ConfirmEmailPage";
 import AccountPage from "./Pages/AccountPage";
 import NotFoundPage from "./Pages/NotFoundPage";
 
@@ -36,6 +39,10 @@ function App() {
               <Routes>
                 {/* Public */}
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                {/* The emailed links land on these two with email+token query params. */}
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
                 {/* Protected */}
                 <Route element={<RequireAuth />}>

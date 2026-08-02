@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useEffect, useState } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
-import { Navigate, useLocation, useNavigate } from "react-router-dom"
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { Button } from "../ui/button"
@@ -98,13 +98,12 @@ export function LoginForm({ className, data, changePageState, ...props }: LoginF
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
+                  <Link
+                    to="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                    onClick={(e) => e.preventDefault()}
                   >
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
 
                 <Input
