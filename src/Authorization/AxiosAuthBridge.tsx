@@ -31,6 +31,10 @@ const AUTH_EXEMPT_PATHS = [
   "/api/user/login",
   "/api/user/signup",
   "/api/user/logout",
+  // Anonymous by design: reached from an emailed link, possibly with no session.
+  "/api/user/forgot-password",
+  "/api/user/reset-password",
+  "/api/user/confirm-email",
   REFRESH_PATH,
 ];
 

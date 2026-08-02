@@ -15,3 +15,11 @@ export type AuthResponse = {
   token?: string;
   message?: string;
 };
+
+export type MeResponse = {
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  emailConfirmed: boolean;
+};

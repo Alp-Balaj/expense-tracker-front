@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Check } from "lucide-react";
 import type { UserSettings } from "@/Models/UserSettings";
+import { getMeApi, sendConfirmationEmailApi } from "@/Services/loginServices";
 
 interface AccountSettingsProps {
   initialSettings: UserSettings;
@@ -15,6 +16,35 @@ export function AccountSettings({ initialSettings, onSave }: AccountSettingsProp
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Confirmation is informational only — nothing in the app is gated on it, so
+  // the hint stays subtle and any failure to load it shows nothing at all.
+  const [emailConfirmed, setEmailConfirmed] = useState<boolean | null>(null);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+
+  useEffect(() => {
+    let cancelled = false;
+    getMeApi()
+      .then((me) => {
+        if (!cancelled) setEmailConfirmed(me.emailConfirmed);
+      })
+      .catch(() => {
+        /* non-blocking: no hint is better than a scary error */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      await sendConfirmationEmailApi();
+      setResendState("sent");
+    } catch {
+      setResendState("failed");
+    }
+  };
 
   const handleSave = async () => {
     setError("");
@@ -38,6 +68,26 @@ export function AccountSettings({ initialSettings, onSave }: AccountSettingsProp
         <Label>Email</Label>
         <Input value={initialSettings.email} disabled />
         <p className="text-xs text-muted-foreground">Email is used to log in and can't be changed here.</p>
+        {emailConfirmed === false && (
+          <p className="text-xs text-muted-foreground">
+            {resendState === "sent" ? (
+              "Confirmation email sent — check your inbox."
+            ) : (
+              <>
+                Email not confirmed yet.{" "}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendState === "sending"}
+                  className="underline underline-offset-2 hover:no-underline disabled:opacity-50"
+                >
+                  {resendState === "sending" ? "Sending…" : "Resend confirmation"}
+                </button>
+                {resendState === "failed" && " Sending failed — try again later."}
+              </>
+            )}
+          </p>
+        )}
       </div>
       <div className="space-y-2">
         <Label>Username</Label>
