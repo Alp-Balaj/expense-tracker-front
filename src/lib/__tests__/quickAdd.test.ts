@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { lastUsedAccountId, rankCategoriesByUsage } from "@/lib/quickAdd";
+import {
+  buildMerchantIndex,
+  lastUsedAccountId,
+  rankCategoriesByUsage,
+  suggestMerchants,
+} from "@/lib/quickAdd";
 import { CategoryType } from "@/Enums/enums";
 import type { Category } from "@/Models/Category";
 import type { Expense } from "@/Models/Expense";
@@ -97,5 +102,91 @@ describe("lastUsedAccountId", () => {
 
   it("returns empty string with no history", () => {
     expect(lastUsedAccountId([])).toBe("");
+  });
+});
+
+describe("buildMerchantIndex", () => {
+  const withAmount = (e: Expense, amount: number, title: string): Expense => ({
+    ...e,
+    amount,
+    title,
+  });
+
+  it("groups titles case-insensitively and keeps the most recent casing", () => {
+    const index = buildMerchantIndex([
+      withAmount(expense("e1", "cat-a", "acc-1", "2026-07-01"), 10, "netflix"),
+      withAmount(expense("e2", "cat-a", "acc-1", "2026-07-15"), 12, "Netflix"),
+    ]);
+
+    expect(index).toHaveLength(1);
+    expect(index[0].title).toBe("Netflix");
+    expect(index[0].count).toBe(2);
+    expect(index[0].lastDate).toBe("2026-07-15");
+  });
+
+  it("remembers the most frequent category and the median amount", () => {
+    const index = buildMerchantIndex([
+      withAmount(expense("e1", "cat-a", "acc-1", "2026-07-01"), 40, "Groceries"),
+      withAmount(expense("e2", "cat-a", "acc-1", "2026-07-08"), 60, "Groceries"),
+      withAmount(expense("e3", "cat-b", "acc-1", "2026-07-15"), 500, "Groceries"),
+    ]);
+
+    expect(index[0].categoryId).toBe("cat-a"); // 2 vs 1
+    expect(index[0].amount).toBe(60); // median resists the 500 outlier
+  });
+
+  it("skips expenses with empty titles", () => {
+    const index = buildMerchantIndex([
+      withAmount(expense("e1", "cat-a", "acc-1", "2026-07-01"), 5, "  "),
+    ]);
+    expect(index).toHaveLength(0);
+  });
+});
+
+describe("suggestMerchants", () => {
+  const index = buildMerchantIndex([
+    { id: "e1", title: "Grocery run", amount: 40, date: "2026-07-01", description: "", accountId: "a", categoryId: "cat-a" },
+    { id: "e2", title: "Grocery run", amount: 45, date: "2026-07-10", description: "", accountId: "a", categoryId: "cat-a" },
+    { id: "e3", title: "Gross Café", amount: 8, date: "2026-07-12", description: "", accountId: "a", categoryId: "cat-b" },
+    { id: "e4", title: "Big grocery haul", amount: 90, date: "2026-07-05", description: "", accountId: "a", categoryId: "cat-a" },
+  ]);
+
+  it("suggests nothing for an empty query", () => {
+    expect(suggestMerchants(index, "")).toEqual([]);
+    expect(suggestMerchants(index, "   ")).toEqual([]);
+  });
+
+  it("ranks prefix matches above substring matches, then by frequency", () => {
+    const titles = suggestMerchants(index, "gro").map((e) => e.title);
+    // Both prefix matches first (Grocery run twice beats Gross Café once),
+    // then the substring match.
+    expect(titles).toEqual(["Grocery run", "Gross Café", "Big grocery haul"]);
+  });
+
+  it("matches case-insensitively", () => {
+    const titles = suggestMerchants(index, "GROCERY").map((e) => e.title);
+    expect(titles).toEqual(["Grocery run", "Big grocery haul"]);
+  });
+
+  it("drops an exact match — nothing left to complete", () => {
+    expect(suggestMerchants(index, "Gross Café")).toEqual([]);
+    // Other candidates still surface around a suppressed exact match.
+    const titles = suggestMerchants(index, "grocery").map((e) => e.title);
+    expect(titles).toEqual(["Grocery run", "Big grocery haul"]);
+  });
+
+  it("caps the list", () => {
+    const many = buildMerchantIndex(
+      Array.from({ length: 10 }, (_, i) => ({
+        id: `e${i}`,
+        title: `Shop ${i}`,
+        amount: 5,
+        date: "2026-07-01",
+        description: "",
+        accountId: "a",
+        categoryId: "cat-a",
+      }))
+    );
+    expect(suggestMerchants(many, "shop")).toHaveLength(5);
   });
 });

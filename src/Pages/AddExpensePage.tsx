@@ -17,7 +17,13 @@ import { CategoryType } from "@/Enums/enums";
 import { todayISO } from "@/lib/dates";
 import { getApiErrorMessage } from "@/lib/errors";
 import { currencySymbol } from "@/lib/identity";
-import { lastUsedAccountId, rankCategoriesByUsage } from "@/lib/quickAdd";
+import {
+  buildMerchantIndex,
+  lastUsedAccountId,
+  rankCategoriesByUsage,
+  suggestMerchants,
+  type MerchantEntry,
+} from "@/lib/quickAdd";
 import type { Expense } from "@/Models/Expense";
 
 type Draft = Omit<Expense, "id">;
@@ -70,6 +76,27 @@ export default function AddExpensePage() {
 
   const selectedAccount = accounts.find((a) => a.id === data.accountId);
   const selectedCategory = categories.find((c) => c.id === data.categoryId);
+
+  // Merchant memory: typing in the title matches previous expense titles;
+  // picking one refills its usual category and typical amount.
+  const merchantIndex = React.useMemo(() => buildMerchantIndex(expenses), [expenses]);
+  const [suggestionsOpen, setSuggestionsOpen] = React.useState(false);
+  const suggestions = React.useMemo(
+    () => (suggestionsOpen ? suggestMerchants(merchantIndex, data.title) : []),
+    [suggestionsOpen, merchantIndex, data.title]
+  );
+
+  const applySuggestion = (entry: MerchantEntry) => {
+    setSuggestionsOpen(false);
+    setData((d) => ({
+      ...d,
+      title: entry.title,
+      // The usual category always follows the merchant; the typical amount
+      // only fills in when nothing was typed yet (amount-first flow wins).
+      categoryId: entry.categoryId || d.categoryId,
+      amount: d.amount > 0 ? d.amount : entry.amount,
+    }));
+  };
 
   const canSubmit =
     data.amount > 0 && data.categoryId !== "" && data.accountId !== "";
@@ -147,11 +174,56 @@ export default function AddExpensePage() {
           <Input
             id="quick-title"
             value={data.title}
-            onChange={(e) => setData((d) => ({ ...d, title: e.target.value }))}
+            onChange={(e) => {
+              setSuggestionsOpen(true);
+              setData((d) => ({ ...d, title: e.target.value }));
+            }}
+            onFocus={() => setSuggestionsOpen(true)}
+            onBlur={() => setSuggestionsOpen(false)}
             placeholder={selectedCategory ? selectedCategory.name : "e.g., Grocery shopping"}
             autoComplete="off"
             className="h-11 pl-10"
+            role="combobox"
+            aria-expanded={suggestions.length > 0}
+            aria-controls="merchant-suggestions"
+            aria-autocomplete="list"
           />
+          {suggestions.length > 0 && (
+            <ul
+              id="merchant-suggestions"
+              role="listbox"
+              aria-label="Previous titles"
+              className="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+            >
+              {suggestions.map((entry) => {
+                const usualCategory = categories.find(
+                  (c) => c.id === entry.categoryId
+                );
+                return (
+                  <li key={entry.title.toLowerCase()}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      // Runs before the input's blur closes the list.
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        applySuggestion(entry);
+                      }}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm hover:bg-accent"
+                    >
+                      <span className="truncate font-medium">{entry.title}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {usualCategory ? `${usualCategory.name} · ` : ""}
+                        {currencySymbol(selectedAccount?.currencyCode)}
+                        {entry.amount.toFixed(2)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </div>
 

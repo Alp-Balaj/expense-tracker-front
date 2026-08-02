@@ -209,6 +209,49 @@ describe("AddExpensePage", () => {
     expect(submit).toBeEnabled();
   });
 
+  it("suggests previous titles while typing and prefills category and amount on pick", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText(/Title/), "Tak");
+
+    const listbox = await screen.findByRole("listbox", { name: "Previous titles" });
+    const option = within(listbox).getByRole("option", { name: /Takeaway/ });
+    expect(option).toHaveTextContent("Food"); // its usual category
+    await user.click(option);
+
+    // Title, usual category and typical amount all prefilled.
+    expect(screen.getByLabelText(/Title/)).toHaveValue("Takeaway");
+    expect(screen.getByRole("radio", { name: /Food/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByLabelText("Amount")).toHaveValue("25");
+    // The list closes after picking.
+    expect(screen.queryByRole("listbox", { name: "Previous titles" })).toBeNull();
+  });
+
+  it("does not overwrite an already-typed amount when picking a suggestion", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "99");
+    await user.type(screen.getByLabelText(/Title/), "Tak");
+    await user.click(
+      within(
+        await screen.findByRole("listbox", { name: "Previous titles" }),
+      ).getByRole("option", { name: /Takeaway/ }),
+    );
+
+    expect(screen.getByLabelText("Amount")).toHaveValue("99");
+    expect(screen.getByLabelText(/Title/)).toHaveValue("Takeaway");
+  });
+
+  it("shows no suggestions before typing", () => {
+    renderPage();
+    expect(screen.queryByRole("listbox", { name: "Previous titles" })).toBeNull();
+  });
+
   it("keeps the draft when the create fails", async () => {
     mutateAsync.mockRejectedValueOnce(new Error("boom"));
     const user = userEvent.setup();
