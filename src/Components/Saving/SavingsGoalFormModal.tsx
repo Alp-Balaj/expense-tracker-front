@@ -1,30 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/Components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/Components/ui/dialog";
-import {
-  FileText,
-  DollarSign,
-  Calendar,
-  PlusCircle,
-  Wallet,
-  Tag,
-  Target,
-} from "lucide-react";
+import { FormShell } from "@/Components/Forms/shared/FormShell";
+import { AmountField } from "@/Components/Forms/shared/AmountField";
+import { currencySymbol } from "@/lib/identity";
+import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
+import { DateField } from "@/Components/Forms/shared/DateField";
+import { FileText, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import type { SavingGoals, AddSavingsGoal } from "@/Models/SavingGoals";
@@ -74,6 +57,7 @@ export default function SavingsGoalFormModal({
       title: row?.title ?? "",
       targetAmount: row?.targetAmount ?? 0,
       savedAmount: row?.savedAmount ?? 0,
+      // toISODate falls back to today, so the required deadline is never empty.
       deadline: toISODate(row?.deadline),
       description: row?.description ?? "",
       accountId: row?.accountId ?? "",
@@ -113,241 +97,135 @@ export default function SavingsGoalFormModal({
     onOpenChange(false);
   };
 
-  const handleCancel = () => {
-    onCancel?.();
-    onOpenChange(false);
-  };
-
   // Filter for Savings categories (CategoryType.Savings = 2)
   const savingsCategories = categories.filter((c) => c.categoryType === 2);
 
+  const selectedAccount = accounts.find((a) => a.id === data.accountId);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>
-            {row ? "Edit Savings Goal" : "New Savings Goal"}
-          </DialogTitle>
-        </DialogHeader>
+    <FormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      onCancel={onCancel}
+      title={row ? "Edit Savings Goal" : "New Savings Goal"}
+      submitLabel={row ? "Update Goal" : "Save Goal"}
+      onSubmit={handleSubmit}
+      desktopClassName="sm:max-w-[550px]"
+    >
+      <AmountField
+        id="goal-target"
+        label="Money goal"
+        value={data.targetAmount}
+        onChange={(targetAmount) => setData({ ...data, targetAmount })}
+        currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
+        autoFocus={!row}
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="goal-title"
-              className="text-sm font-medium text-foreground"
-            >
-              My goal is
-            </Label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="goal-title"
-                value={data.title}
-                onChange={(e) => setData({ ...data, title: e.target.value })}
-                placeholder="e.g., Emergency fund, Vacation"
-                className="pl-10 h-11 border-border bg-background"
-                required
-              />
-            </div>
-          </div>
+      {/* Title */}
+      <div className="space-y-2">
+        <Label
+          htmlFor="goal-title"
+          className="text-sm font-medium text-foreground"
+        >
+          My goal is
+        </Label>
+        <div className="relative">
+          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="goal-title"
+            value={data.title}
+            onChange={(e) => setData({ ...data, title: e.target.value })}
+            placeholder="e.g., Emergency fund, Vacation"
+            className="pl-10 h-11 border-border bg-background"
+            required
+          />
+        </div>
+      </div>
 
-          {/* Target Amount + Deadline */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label
-                htmlFor="goal-target"
-                className="text-sm font-medium text-foreground"
-              >
-                Money goal
-              </Label>
-              <div className="relative">
-                <Target className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="goal-target"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={data.targetAmount || ""}
-                  onChange={(e) =>
-                    setData({ ...data, targetAmount: toNumber(e.target.value) })
-                  }
-                  placeholder="10,000.00"
-                  className="pl-10 h-11 border-border bg-background"
-                  required
-                />
-              </div>
-            </div>
+      {/* Deadline (required by the backend; toISODate guarantees a value) */}
+      <DateField
+        label="Deadline"
+        value={data.deadline}
+        onChange={(deadline) => setData({ ...data, deadline })}
+      />
 
-            <div className="space-y-2">
-              <Label
-                htmlFor="goal-deadline"
-                className="text-sm font-medium text-foreground"
-              >
-                Deadline
-              </Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="goal-deadline"
-                  type="date"
-                  value={data.deadline}
-                  onChange={(e) =>
-                    setData({ ...data, deadline: e.target.value })
-                  }
-                  className="pl-10 h-11 border-border bg-background"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Initial Saved Amount (only on create) */}
-          {!row && (
-            <div className="space-y-2">
-              <Label
-                htmlFor="goal-saved"
-                className="text-sm font-medium text-foreground"
-              >
-                Already saved
-                <span className="text-muted-foreground font-normal ml-1">
-                  (optional)
-                </span>
-              </Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="goal-saved"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={data.savedAmount || ""}
-                  onChange={(e) =>
-                    setData({ ...data, savedAmount: toNumber(e.target.value) })
-                  }
-                  placeholder="0.00"
-                  className="pl-10 h-11 border-border bg-background"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Account + Category */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">
-                Account
-              </Label>
-              <div className="relative">
-                <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Select
-                  value={data.accountId}
-                  onValueChange={(v) => setData({ ...data, accountId: v })}
-                >
-                  <SelectTrigger className="pl-10 h-11 border-border bg-background">
-                    <SelectValue placeholder="Select account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.name}
-                      </SelectItem>
-                    ))}
-                    <div className="border-t mt-1 pt-1">
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
-                        onPointerDown={(e) => e.preventDefault()}
-                        onClick={() => { onOpenChange(false); navigate("/account"); }}
-                      >
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        Add new account
-                      </button>
-                    </div>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">
-                Category
-              </Label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Select
-                  value={data.categoryId}
-                  onValueChange={(v) => setData({ ...data, categoryId: v })}
-                >
-                  <SelectTrigger className="pl-10 h-11 border-border bg-background">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {savingsCategories.length > 0
-                      ? savingsCategories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))
-                      : categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                    <div className="border-t mt-1 pt-1">
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
-                        onPointerDown={(e) => e.preventDefault()}
-                        onClick={() => { onOpenChange(false); navigate("/categoryAndCurrency"); }}
-                      >
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        Add new category
-                      </button>
-                    </div>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Description
-              <span className="text-muted-foreground font-normal ml-1">
-                (optional)
-              </span>
-            </Label>
-            <Textarea
-              value={data.description}
+      {/* Initial Saved Amount (only on create) */}
+      {!row && (
+        <div className="space-y-2">
+          <Label
+            htmlFor="goal-saved"
+            className="text-sm font-medium text-foreground"
+          >
+            Already saved
+            <span className="text-muted-foreground font-normal ml-1">
+              (optional)
+            </span>
+          </Label>
+          <div className="relative">
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="goal-saved"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={data.savedAmount || ""}
               onChange={(e) =>
-                setData({ ...data, description: e.target.value })
+                setData({ ...data, savedAmount: toNumber(e.target.value) })
               }
-              placeholder="Why is this goal important to you?"
-              className="min-h-20 resize-none border-border bg-background"
+              placeholder="0.00"
+              className="pl-10 h-11 border-border bg-background"
             />
           </div>
+        </div>
+      )}
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              className="px-6 h-11 border-border hover:bg-muted bg-transparent"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="px-6 h-11 bg-green-600 text-white hover:bg-green-700"
-            >
-              {row ? "Update Goal" : "Save Goal"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <ChipPicker
+        label="Account"
+        items={accounts.map((a) => ({ id: a.id, label: a.name }))}
+        value={data.accountId}
+        onChange={(accountId) => setData({ ...data, accountId })}
+        onAddNew={() => {
+          onOpenChange(false);
+          navigate("/account");
+        }}
+        addNewLabel="New account"
+        emptyHint="No accounts yet."
+      />
+
+      <ChipPicker
+        label="Category"
+        items={(savingsCategories.length > 0
+          ? savingsCategories
+          : categories
+        ).map((c) => ({ id: c.id, label: c.name, color: c.color }))}
+        value={data.categoryId}
+        onChange={(categoryId) => setData({ ...data, categoryId })}
+        onAddNew={() => {
+          onOpenChange(false);
+          navigate("/categoryAndCurrency");
+        }}
+        addNewLabel="New category"
+        emptyHint="No savings categories yet."
+      />
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-foreground">
+          Description
+          <span className="text-muted-foreground font-normal ml-1">
+            (optional)
+          </span>
+        </Label>
+        <Textarea
+          value={data.description}
+          onChange={(e) =>
+            setData({ ...data, description: e.target.value })
+          }
+          placeholder="Why is this goal important to you?"
+          className="min-h-20 resize-none border-border bg-background"
+        />
+      </div>
+    </FormShell>
   );
 }

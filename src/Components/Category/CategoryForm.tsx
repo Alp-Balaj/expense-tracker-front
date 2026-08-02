@@ -1,25 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/Components/ui/dialog";
-import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Textarea } from "@/Components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/Components/ui/select";
+import { FormShell } from "@/Components/Forms/shared/FormShell";
+import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
 import type { AddCategory } from "@/Models/Category";
 import { CategoryType } from "@/Enums/enums";
 
@@ -41,6 +27,12 @@ const predefinedColors = [
   "#8b5cf6", // violet
   "#ec4899", // pink
   "#6b7280", // gray
+];
+
+const categoryTypes: { value: CategoryType; label: string }[] = [
+  { value: CategoryType.Expense, label: "Expense" },
+  { value: CategoryType.Income, label: "Income" },
+  { value: CategoryType.Savings, label: "Savings" },
 ];
 
 export function CategoryForm({
@@ -71,7 +63,8 @@ export function CategoryForm({
     }
   }, [category, defaultType]);
 
-  const handleSave = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     onSave({
       id: category?.id || null,
       name,
@@ -84,84 +77,80 @@ export function CategoryForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Category" : "New Category"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the category details below."
-              : "Create a new category for tracking your finances."}
-          </DialogDescription>
-        </DialogHeader>
+    <FormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? "Edit Category" : "New Category"}
+      description={
+        isEditing
+          ? "Update the category details below."
+          : "Create a new category for tracking your finances."
+      }
+      submitLabel={isEditing ? "Save Changes" : "Create Category"}
+      submitDisabled={!name.trim()}
+      onSubmit={handleSubmit}
+      desktopClassName="sm:max-w-[425px]"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium">
+          Name
+        </Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Groceries"
+          className="h-11"
+        />
+      </div>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Groceries"
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-medium">
+          Description
+        </Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g., Weekly grocery shopping expenses"
+          rows={2}
+        />
+      </div>
+
+      <ChipPicker
+        label="Type"
+        items={categoryTypes.map((t) => ({
+          id: String(t.value),
+          label: t.label,
+        }))}
+        value={String(categoryType)}
+        onChange={(id) => {
+          // Type is required: ignore the picker's tap-again deselect.
+          if (id !== "") setCategoryType(Number(id) as CategoryType);
+        }}
+      />
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Color</Label>
+        <div role="radiogroup" aria-label="Color" className="flex flex-wrap gap-2">
+          {predefinedColors.map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={color === c}
+              aria-label={c}
+              className={`size-9 rounded-full border-2 transition-all ${
+                color === c
+                  ? "border-foreground scale-110"
+                  : "border-transparent hover:scale-105"
+              }`}
+              style={{ backgroundColor: c }}
+              onClick={() => setColor(c)}
             />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., Weekly grocery shopping expenses"
-              rows={2}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={String(categoryType)} onValueChange={(v) => setCategoryType(Number(v) as CategoryType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={String(CategoryType.Expense)}>Expense</SelectItem>
-                <SelectItem value={String(CategoryType.Income)}>Income</SelectItem>
-                <SelectItem value={String(CategoryType.Savings)}>Savings</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Color</Label>
-            <div className="flex flex-wrap gap-2">
-              {predefinedColors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === c
-                      ? "border-foreground scale-110"
-                      : "border-transparent hover:scale-105"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setColor(c)}
-                />
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!name.trim()}>
-            {isEditing ? "Save Changes" : "Create Category"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </FormShell>
   );
 }

@@ -62,7 +62,7 @@ export function SavingsGoalProgressRing({
 
       {/* Center text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-foreground">
+        <span className="text-2xl font-bold">
           {clamped.toFixed(0)}%
         </span>
         {label && (

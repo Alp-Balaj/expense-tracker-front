@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -73,6 +73,20 @@ function renderDialog(
   return onSubmit;
 }
 
+// jsdom has no matchMedia; FormShell's useIsMobile needs one to pick a layout.
+beforeAll(() => {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as unknown as typeof window.matchMedia;
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(accountHooks).useAccountsQuery.mockReturnValue({
@@ -85,8 +99,8 @@ describe("CommitOccurrenceDialog", () => {
   it("pre-fills the expected amount and the due date so the ordinary case is one click", async () => {
     const onSubmit = renderDialog(occurrence());
 
-    expect(screen.getByLabelText("Amount")).toHaveValue(800);
-    expect(screen.getByLabelText("Date")).toHaveValue("2026-07-01");
+    expect(screen.getByLabelText("Amount")).toHaveValue("800");
+    expect(screen.getByRole("radio", { name: /jul 1, 2026/i })).toBeChecked();
 
     await userEvent.click(screen.getByRole("button", { name: /confirm/i }));
 
@@ -101,9 +115,8 @@ describe("CommitOccurrenceDialog", () => {
   it("submits the corrected date, because the money rarely moves on the day it was due", async () => {
     const onSubmit = renderDialog(occurrence());
 
-    const date = screen.getByLabelText("Date");
-    await userEvent.clear(date);
-    await userEvent.type(date, "2026-07-03");
+    await userEvent.click(screen.getByRole("radio", { name: /jul 1, 2026/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /july 3rd/i }));
 
     await userEvent.click(screen.getByRole("button", { name: /confirm/i }));
 

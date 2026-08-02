@@ -1,26 +1,11 @@
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PlusCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/Components/ui/dialog";
-import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/Components/ui/select";
 import { Textarea } from "@/Components/ui/textarea";
+import { FormShell } from "@/Components/Forms/shared/FormShell";
+import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
 import type { AddAccount } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
 import { useCurrenciesQuery } from "@/Hooks/queries/useCurrencies";
@@ -32,6 +17,14 @@ interface AddAccountDialogProps {
   onSave: (account: AddAccount) => void;
   defaultType?: AmountType;
 }
+
+const accountTypes: { value: AmountType; label: string }[] = [
+  { value: AmountType.CheckingAccount, label: "Checking" },
+  { value: AmountType.Cash, label: "Cash" },
+  { value: AmountType.SavingsAccount, label: "Savings" },
+  { value: AmountType.CreditCard, label: "Credit card" },
+  { value: AmountType.Investment, label: "Investment" },
+];
 
 export function AccountForm({
   open,
@@ -74,7 +67,8 @@ export function AccountForm({
     }
   }, [account, defaultType]);
 
-  const handleSave = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     onSave({
       id: account?.id || null,
       name,
@@ -87,127 +81,93 @@ export function AccountForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Account" : "Add New Account"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update your account details below."
-              : "Create a new account to track your finances."}
-          </DialogDescription>
-        </DialogHeader>
+    <FormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? "Edit Account" : "Add New Account"}
+      description={
+        isEditing
+          ? "Update your account details below."
+          : "Create a new account to track your finances."
+      }
+      submitLabel={isEditing ? "Save Changes" : "Create Account"}
+      submitDisabled={!name.trim()}
+      onSubmit={handleSubmit}
+      desktopClassName="sm:max-w-[425px]"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium">
+          Account Name
+        </Label>
+        <Input
+          id="name"
+          placeholder="e.g., Main Checking"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="h-11"
+        />
+      </div>
 
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Account Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g., Main Checking"
-              value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
-            />
-          </div>
+      <ChipPicker
+        label="Type"
+        items={accountTypes.map((t) => ({
+          id: String(t.value),
+          label: t.label,
+        }))}
+        value={String(amountType)}
+        onChange={(id) => {
+          // Type is required: ignore the picker's tap-again deselect.
+          if (id !== "") setAmountType(Number(id) as AmountType);
+        }}
+      />
 
-          <div className="grid gap-2">
-              <Label htmlFor="type">Type</Label>
-              <Select value={String(amountType)} onValueChange={(v) => setAmountType(Number(v) as AmountType)}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={String(AmountType.CheckingAccount)}>CheckingAccount</SelectItem>
-                    <SelectItem value={String(AmountType.Cash)}>Cash</SelectItem>
-                    <SelectItem value={String(AmountType.SavingsAccount)}>SavingsAccount</SelectItem>
-                    <SelectItem value={String(AmountType.CreditCard)}>CreditCard</SelectItem>
-                    <SelectItem value={String(AmountType.Investment)}>Investment</SelectItem>
-                </SelectContent>
-              </Select>
-          </div>
+      <div className="space-y-2">
+        <Label htmlFor="balance" className="text-sm font-medium">
+          Initial Balance
+        </Label>
+        <Input
+          id="balance"
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          placeholder="0.00"
+          value={balance}
+          onChange={(e) => setBalance(toNumber(e.target.value))}
+          className="h-11"
+        />
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="balance">Initial Balance</Label>
-              <Input
-                id="balance"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={balance}
-                onChange={(e) => setBalance(toNumber(e.target.value))}
-              />
-            </div>
+      <ChipPicker
+        label="Currency"
+        items={currencies.map((c) => ({
+          id: c.id ?? "",
+          label: c.symbol ? `${c.code} ${c.symbol}` : c.code,
+        }))}
+        value={currencyId}
+        onChange={setCurrencyId}
+        onAddNew={() => {
+          onOpenChange(false);
+          navigate("/categoryAndCurrency");
+        }}
+        addNewLabel="New currency"
+        emptyHint={
+          isLoadingCurrencies ? "Loading currencies..." : "No currencies yet."
+        }
+        error={currencyLoadError}
+      />
 
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-
-              <Select
-                value={currencyId}
-                onValueChange={setCurrencyId}
-                disabled={isLoadingCurrencies || !!currencyLoadError}
-              >
-                <SelectTrigger className="w-full" id="currency">
-                  <SelectValue
-                    placeholder={
-                      isLoadingCurrencies
-                        ? "Loading currencies..."
-                        : currencyLoadError
-                        ? "Failed to load"
-                        : "Select currency"
-                    }
-                  />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {currencies.map((c) => (
-                    <SelectItem key={c.id} value={c.id ?? ""}>
-                      {c.code} - {c.symbol}
-                    </SelectItem>
-                  ))}
-                  <div className="border-t mt-1 pt-1">
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-primary hover:bg-accent rounded-sm cursor-pointer"
-                      onPointerDown={(e) => e.preventDefault()}
-                      onClick={() => { onOpenChange(false); navigate("/categoryAndCurrency"); }}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      Add new currency
-                    </button>
-                  </div>
-                </SelectContent>
-              </Select>
-
-              {currencyLoadError && (
-                <p className="text-sm text-destructive">{currencyLoadError}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., Weekly grocery shopping expenses"
-              rows={2}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!name.trim()}>
-            {isEditing ? "Save Changes" : "Create Account"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-medium">
+          Description
+        </Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g., Weekly grocery shopping expenses"
+          rows={2}
+        />
+      </div>
+    </FormShell>
   );
 }
