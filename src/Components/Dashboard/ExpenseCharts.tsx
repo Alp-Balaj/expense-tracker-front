@@ -120,7 +120,9 @@ export function ExpenseCharts({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-5">
+    // Charts are desktop-only: on phones they eat the whole first screen and
+    // the summary cards + history table carry the same information.
+    <div className="hidden gap-4 md:grid lg:grid-cols-5">
       {/* Line Chart - 3 columns */}
       <Card className="bg-card border-border lg:col-span-3">
         <CardHeader>
