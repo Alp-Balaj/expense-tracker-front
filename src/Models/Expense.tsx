@@ -27,6 +27,11 @@ export type Expense = {
    * would sit in the list looking saved for ever.
    */
   pending?: boolean;
+  /** What others owe you on this expense. null/absent = not a split bill. */
+  expectedReimbursement?: number | null;
+  /** server-owned, response only */
+  settledReimbursement?: number;
+  openReimbursement?: number;
 };
 
 export type ExpenseFormProps = {

@@ -257,6 +257,101 @@ describe("AddExpensePage", () => {
     expect(screen.queryByRole("listbox", { name: "Previous titles" })).toBeNull();
   });
 
+  it("sends only the derived receivable when the bill is split", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "60");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+    await user.click(screen.getByRole("button", { name: "Split bill" }));
+    await user.type(screen.getByLabelText("Your share"), "20");
+
+    // The derived figure is visible before submitting.
+    expect(screen.getByText(/Owed to you/)).toHaveTextContent("€40.00");
+
+    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    const payload = mutateAsync.mock.calls[0][0];
+    // Gross stays the account truth; only the receivable is derived.
+    expect(payload).toMatchObject({ amount: 60, expectedReimbursement: 40 });
+    // "my share" is a client-side notion and must never be sent.
+    expect(payload).not.toHaveProperty("myShare");
+  });
+
+  // Regression pin: an expense nobody owes anything on has to leave this form
+  // byte-for-byte the way it did before splits existed.
+  it("sends no reimbursement field at all for a plain expense", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // The block is a collapsed affordance until it is asked for.
+    expect(screen.queryByLabelText("Your share")).toBeNull();
+
+    await user.type(screen.getByLabelText("Amount"), "12.50");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync).toHaveBeenCalledWith({
+      id: null,
+      title: "Food",
+      amount: 12.5,
+      date: todayISO(),
+      description: "",
+      accountId: "acc-card",
+      categoryId: "cat-food",
+    });
+    expect(mutateAsync.mock.calls[0][0]).not.toHaveProperty(
+      "expectedReimbursement",
+    );
+  });
+
+  it("does not carry the split over to the next entry", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "60");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+    await user.click(screen.getByRole("button", { name: "Split bill" }));
+    await user.type(screen.getByLabelText("Your share"), "20");
+    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+
+    // Back to the collapsed affordance for the next receipt.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Split bill" })).toBeVisible(),
+    );
+    expect(screen.queryByLabelText("Your share")).toBeNull();
+  });
+
+  it("refuses a share that is not smaller than the total", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "60");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+    await user.click(screen.getByRole("button", { name: "Split bill" }));
+    await user.type(screen.getByLabelText("Your share"), "60");
+
+    expect(screen.getByLabelText("Your share")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(
+      screen.getByText("Your share has to be less than the total."),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    // A share equal to the total is "not a split" — never a zero receivable.
+    expect(mutateAsync.mock.calls[0][0]).not.toHaveProperty(
+      "expectedReimbursement",
+    );
+  });
+
   it("keeps the draft when the create fails", async () => {
     mutateAsync.mockRejectedValueOnce(new Error("boom"));
     const user = userEvent.setup();

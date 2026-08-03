@@ -10,6 +10,7 @@ import { AmountField } from "@/Components/Forms/shared/AmountField";
 import { currencySymbol } from "@/lib/identity";
 import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
 import { DateField } from "@/Components/Forms/shared/DateField";
+import { SplitBillField } from "@/Components/Forms/shared/SplitBillField";
 
 import type { Expense as ModelExpense } from "@/Models/Expense";
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
@@ -64,6 +65,9 @@ export default function ExpenseFormModal({
       }),
       // Keep the date as a plain "yyyy-MM-dd" string; no Date round-trip.
       date: toISODate(row?.date),
+      // An edited row carries its own receivable, so the split block reopens
+      // with the right share; a new one starts unsplit.
+      expectedReimbursement: row?.expectedReimbursement ?? null,
     }),
     [row]
   );
@@ -102,6 +106,15 @@ export default function ExpenseFormModal({
         onChange={(amount) => setData({ ...data, amount } as FormState)}
         currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
         autoFocus={!row}
+      />
+
+      <SplitBillField
+        amount={data.amount}
+        value={data.expectedReimbursement}
+        onChange={(expectedReimbursement) =>
+          setData({ ...data, expectedReimbursement } as FormState)
+        }
+        currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
       />
 
       <div className="space-y-2">

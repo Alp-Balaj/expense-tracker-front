@@ -9,6 +9,7 @@ import { FormShell } from "@/Components/Forms/shared/FormShell";
 import { AmountField } from "@/Components/Forms/shared/AmountField";
 import { ChipPicker } from "@/Components/Forms/shared/ChipPicker";
 import { DateField } from "@/Components/Forms/shared/DateField";
+import { SplitBillField } from "@/Components/Forms/shared/SplitBillField";
 
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
@@ -36,6 +37,9 @@ const emptyDraft = (): Draft => ({
   description: "",
   accountId: "",
   categoryId: "",
+  // Split bills are the exception, and a split is never inherited by the next
+  // entry — see the reset in handleSubmit.
+  expectedReimbursement: null,
 });
 
 /**
@@ -103,8 +107,17 @@ export default function AddExpensePage() {
     }));
   };
 
+  // The split block only ever reports a receivable inside (0, amount); this is
+  // a belt-and-braces guard so an impossible one can never reach the server.
+  const splitValid =
+    data.expectedReimbursement == null ||
+    (data.expectedReimbursement > 0 && data.expectedReimbursement < data.amount);
+
   const canSubmit =
-    data.amount > 0 && data.categoryId !== "" && data.accountId !== "";
+    data.amount > 0 &&
+    data.categoryId !== "" &&
+    data.accountId !== "" &&
+    splitValid;
 
   const close = () => navigate(-1);
 
@@ -112,11 +125,16 @@ export default function AddExpensePage() {
     e.preventDefault();
     if (!canSubmit) return;
 
+    const { expectedReimbursement, ...rest } = data;
+
     const payload: Expense = {
       id: null,
-      ...data,
+      ...rest,
       // Optional title: derive from the category when left empty.
       title: data.title.trim() || selectedCategory?.name || "Expense",
+      // Absent, not zero, when this is not a split — an unsplit expense has to
+      // look exactly the way it did before splits existed.
+      ...(expectedReimbursement != null ? { expectedReimbursement } : {}),
     };
 
     let outcome: "sent" | "queued";
@@ -137,7 +155,8 @@ export default function AddExpensePage() {
         : "Expense added"
     );
     // Reset for the next entry, keeping the picked account and date —
-    // logging several receipts in a row shouldn't repeat those taps.
+    // logging several receipts in a row shouldn't repeat those taps. The
+    // split is deliberately NOT kept: it belongs to the one bill.
     setData((d) => ({ ...emptyDraft(), accountId: d.accountId, date: d.date }));
     document.getElementById("amount")?.focus();
   };
@@ -161,6 +180,15 @@ export default function AddExpensePage() {
         onChange={(amount) => setData((d) => ({ ...d, amount }))}
         currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
         autoFocus
+      />
+
+      <SplitBillField
+        amount={data.amount}
+        value={data.expectedReimbursement}
+        onChange={(expectedReimbursement) =>
+          setData((d) => ({ ...d, expectedReimbursement }))
+        }
+        currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
       />
 
       <ChipPicker
