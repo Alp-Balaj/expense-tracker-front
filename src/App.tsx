@@ -1,14 +1,8 @@
-import type { CSSProperties } from "react";
+import { Suspense, lazy, type CSSProperties } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
-import HomePage from "./Pages/HomePage";
 import LoginPage from "./Pages/LoginPage";
-import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
-import ResetPasswordPage from "./Pages/ResetPasswordPage";
-import ConfirmEmailPage from "./Pages/ConfirmEmailPage";
-import AccountPage from "./Pages/AccountPage";
-import NotFoundPage from "./Pages/NotFoundPage";
 
 import { AuthorizationProvider } from "./Authorization/AuthContext";
 import RequireAuth from "./Authorization/RequireAuthentication";
@@ -16,17 +10,39 @@ import AxiosAuthBridge from "./Authorization/AxiosAuthBridge";
 
 import AppLayout from "./Components/Layout/AppLayout";
 import { SidebarProvider } from "./Components/ui/sidebar";
-import CategoryAndCurrencyPage from "./Pages/CategoryAndCurrencyPage";
-import ReportsPage from "./Pages/ReportPage";
 import { UserPreferencesProvider } from "./Authorization/UserPreferencesContext";
 import { ThemeProvider } from "./Components/Layout/ThemeProvider";
-import IncomePage from "./Pages/IncomePage";
-import ExpensePage from "./Pages/ExpensePage";
-import SavingPage from "./Pages/SavingPage";
-import BudgetPage from "./Pages/BudgetPage";
-import PlannedPage from "./Pages/PlannedPage";
-import AddExpensePage from "./Pages/AddExpensePage";
-import DataPage from "./Pages/DataPage";
+import LoadingSpinner from "./Components/General/LoadingSpinner";
+
+/**
+ * Suggestion-12: every page is loaded on demand.
+ *
+ * Every route used to be a static import, so opening /login downloaded the
+ * whole application — including recharts, the report builder and the CSV import
+ * screen — before it could render a password field. On a phone on mobile data
+ * that is the first impression, and it is the one thing the installable PWA
+ * Stream A shipped is selling.
+ *
+ * LoginPage is deliberately *not* lazy: it is the one route a signed-out visitor
+ * is guaranteed to need, and splitting it would only add a round trip before the
+ * first paint. Everything behind RequireAuth is split, because reaching it means
+ * the shell is already up and a chunk fetch is invisible under the spinner.
+ */
+const HomePage = lazy(() => import("./Pages/HomePage"));
+const ForgotPasswordPage = lazy(() => import("./Pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./Pages/ResetPasswordPage"));
+const ConfirmEmailPage = lazy(() => import("./Pages/ConfirmEmailPage"));
+const AccountPage = lazy(() => import("./Pages/AccountPage"));
+const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
+const CategoryAndCurrencyPage = lazy(() => import("./Pages/CategoryAndCurrencyPage"));
+const ReportsPage = lazy(() => import("./Pages/ReportPage"));
+const IncomePage = lazy(() => import("./Pages/IncomePage"));
+const ExpensePage = lazy(() => import("./Pages/ExpensePage"));
+const SavingPage = lazy(() => import("./Pages/SavingPage"));
+const BudgetPage = lazy(() => import("./Pages/BudgetPage"));
+const PlannedPage = lazy(() => import("./Pages/PlannedPage"));
+const AddExpensePage = lazy(() => import("./Pages/AddExpensePage"));
+const DataPage = lazy(() => import("./Pages/DataPage"));
 
 function App() {
   return (
@@ -38,34 +54,39 @@ function App() {
             <SidebarProvider style={{ "--sidebar-width": "252px" } as CSSProperties}>
               <AxiosAuthBridge />
               <Toaster richColors position="top-right" />
-              <Routes>
-                {/* Public */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                {/* The emailed links land on these two with email+token query params. */}
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+              {/* One boundary around the whole router rather than one per route:
+                  a chunk fetch on a warm connection is a few milliseconds, and a
+                  spinner per route would flicker on every navigation. */}
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  {/* Public */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  {/* The emailed links land on these two with email+token query params. */}
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
-                {/* Protected */}
-                <Route element={<RequireAuth />}>
-                  <Route element={<AppLayout />}>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/add" element={<AddExpensePage />} />
-                    <Route path="/account" element={<AccountPage />} />
-                    <Route path="/expenses" element={<ExpensePage />} />
-                    <Route path="/income" element={<IncomePage />} />
-                    <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
-                    <Route path="/data" element={<DataPage />} />
-                    <Route path="/savings" element={<SavingPage />} />
-                    <Route path="/budgets" element={<BudgetPage />} />
-                    <Route path="/planned" element={<PlannedPage />} />
-                    <Route path="/reports" element={<ReportsPage />} />
+                  {/* Protected */}
+                  <Route element={<RequireAuth />}>
+                    <Route element={<AppLayout />}>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/add" element={<AddExpensePage />} />
+                      <Route path="/account" element={<AccountPage />} />
+                      <Route path="/expenses" element={<ExpensePage />} />
+                      <Route path="/income" element={<IncomePage />} />
+                      <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
+                      <Route path="/data" element={<DataPage />} />
+                      <Route path="/savings" element={<SavingPage />} />
+                      <Route path="/budgets" element={<BudgetPage />} />
+                      <Route path="/planned" element={<PlannedPage />} />
+                      <Route path="/reports" element={<ReportsPage />} />
+                    </Route>
                   </Route>
-                </Route>
 
-                {/* Fallback */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
+                  {/* Fallback */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
             </SidebarProvider>
           </UserPreferencesProvider>
         </ThemeProvider>
