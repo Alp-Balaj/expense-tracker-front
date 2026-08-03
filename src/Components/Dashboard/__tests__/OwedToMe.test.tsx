@@ -1,14 +1,24 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { OwedToMe } from "@/Components/Dashboard/OwedToMe";
+import * as accountHooks from "@/Hooks/queries/useAccounts";
+import * as reimbursementHooks from "@/Hooks/queries/useReimbursements";
+import { AmountType } from "@/Enums/enums";
+import type { Account } from "@/Models/Account";
 import type { Expense } from "@/Models/Expense";
 import type { Reimbursement } from "@/Models/Reimbursement";
 
 // The dashboard panel for money that left the account but was never yours to
-// spend. Two things matter here: it must be invisible to the many users who
-// never split a bill, and when it does appear it must lead with the oldest
-// debt, because age is what makes a receivable worth acting on.
+// spend. Three things matter here: it must be invisible to the many users who
+// never split a bill; when it does appear it must lead with the oldest debt,
+// because age is what makes a receivable worth acting on; and it must be able
+// to clear one, since noticing a debt and doing nothing about it is what the
+// panel exists to prevent.
+
+vi.mock("@/Hooks/queries/useAccounts");
+vi.mock("@/Hooks/queries/useReimbursements");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -103,6 +113,41 @@ const reimbursements: Reimbursement[] = [
   }),
 ];
 
+const accounts: Account[] = [
+  {
+    id: "acc-card",
+    name: "Visa Credit",
+    amountType: AmountType.CreditCard,
+    balance: -200,
+    currencyId: "eur",
+    currencyCode: "EUR",
+    description: "",
+  },
+  {
+    id: "acc-cash",
+    name: "Cash Wallet",
+    amountType: AmountType.Cash,
+    balance: 60,
+    currencyId: "eur",
+    currencyCode: "EUR",
+    description: "",
+  },
+];
+
+const settle = vi.fn();
+
+function mockQueries() {
+  vi.mocked(accountHooks).useAccountsQuery.mockReturnValue({
+    data: accounts,
+    isLoading: false,
+    isError: false,
+  } as ReturnType<typeof accountHooks.useAccountsQuery>);
+
+  vi.mocked(reimbursementHooks).useSettleReimbursement.mockReturnValue({
+    mutateAsync: settle,
+  } as unknown as ReturnType<typeof reimbursementHooks.useSettleReimbursement>);
+}
+
 describe("OwedToMe panel", () => {
   beforeAll(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -111,6 +156,11 @@ describe("OwedToMe panel", () => {
 
   afterAll(() => {
     vi.useRealTimers();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQueries();
   });
 
   // The rule Alp set: a user who never splits a bill must not gain a dead card.
@@ -172,5 +222,82 @@ describe("OwedToMe panel", () => {
     expect(screen.getByTestId("owed-note")).toHaveTextContent(
       "You fronted €320.00 for others this month; €140.00 is still out.",
     );
+  });
+
+  // The rows are three near-identical lines of text, so "Settle" on its own
+  // would name every button on the panel the same thing to a screen reader.
+  it("names each settle button by the receivable it clears", () => {
+    render(<OwedToMe reimbursements={reimbursements} expenses={expenses} isLoading={false} />);
+
+    expect(
+      screen.getByRole("button", { name: "Settle Concert tickets, €100.00 open" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Settle Dinner Sat, €40.00 open" }),
+    ).toBeInTheDocument();
+  });
+
+  it("puts the button inside the row it belongs to", () => {
+    render(<OwedToMe reimbursements={reimbursements} expenses={expenses} isLoading={false} />);
+
+    const rows = screen.getAllByTestId("owed-row");
+    expect(within(rows[0]).getByRole("button", { name: /Concert tickets/ })).toBeInTheDocument();
+    expect(within(rows[1]).getByRole("button", { name: /Dinner Sat/ })).toBeInTheDocument();
+  });
+
+  it("settles from the panel, against the right receivable and into the chosen account", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<OwedToMe reimbursements={reimbursements} expenses={expenses} isLoading={false} />);
+
+    await user.click(screen.getByRole("button", { name: /Settle Dinner Sat/ }));
+
+    // Same dialog the expense list opens: defaulted to the whole remainder.
+    expect(await screen.findByLabelText("Paid back")).toHaveValue("40");
+
+    await user.click(await screen.findByRole("radio", { name: "Cash Wallet" }));
+    await user.click(screen.getByRole("button", { name: "Record settlement" }));
+
+    expect(settle).toHaveBeenCalledTimes(1);
+    expect(settle.mock.calls[0][0]).toMatchObject({
+      id: "r1",
+      settlement: { accountId: "acc-cash", amount: 40 },
+    });
+  });
+
+  it("records a partial payback for less than what is open", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<OwedToMe reimbursements={reimbursements} expenses={expenses} isLoading={false} />);
+
+    await user.click(screen.getByRole("button", { name: /Settle Concert tickets/ }));
+
+    const amount = await screen.findByLabelText("Paid back");
+    await user.clear(amount);
+    await user.type(amount, "60");
+    expect(screen.getByTestId("settle-remainder")).toHaveTextContent(
+      "€100.00 open — €40.00 will still be out after this.",
+    );
+
+    await user.click(await screen.findByRole("radio", { name: "Visa Credit" }));
+    await user.click(screen.getByRole("button", { name: "Record settlement" }));
+
+    expect(settle.mock.calls[0][0]).toMatchObject({
+      id: "r2",
+      settlement: { accountId: "acc-card", amount: 60 },
+    });
+  });
+
+  // Same contract the expense list has with this dialog: a rejected mutation
+  // leaves it open with the entry intact so it can be corrected and retried.
+  it("keeps the dialog open when the settlement is rejected", async () => {
+    settle.mockRejectedValueOnce(new Error("nope"));
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<OwedToMe reimbursements={reimbursements} expenses={expenses} isLoading={false} />);
+
+    await user.click(screen.getByRole("button", { name: /Settle Dinner Sat/ }));
+    await user.click(await screen.findByRole("radio", { name: "Cash Wallet" }));
+    await user.click(screen.getByRole("button", { name: "Record settlement" }));
+
+    expect(screen.getByLabelText("Paid back")).toHaveValue("40");
+    expect(screen.getByRole("button", { name: "Record settlement" })).toBeInTheDocument();
   });
 });

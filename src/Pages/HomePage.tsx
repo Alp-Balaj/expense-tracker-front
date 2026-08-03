@@ -23,7 +23,6 @@ import { SafeToSpend } from "@/Components/Dashboard/SafeToSpend";
 import { SpendCalendar } from "@/Components/Dashboard/SpendCalendar";
 import { RecentActivity } from "@/Components/Dashboard/RecentActivity";
 import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
-import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
 import { InsightsPanel } from "@/Components/Dashboard/InsightsPanel";
 import { CashflowPanel } from "@/Components/Dashboard/CashflowPanel";
 import { OwedToMe } from "@/Components/Dashboard/OwedToMe";
@@ -284,28 +283,32 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="order-5 lg:col-span-5 lg:col-start-8 lg:row-start-3">
-            <RecurringSpend expenses={expenses} isLoading={isLoading} />
-          </div>
-
-          <div className="order-6 lg:col-span-7 lg:col-start-1 lg:row-start-4">
+          <div className="order-5 lg:col-span-7 lg:col-start-1 lg:row-start-4">
             <CashflowPanel projection={cashflow} isLoading={isLoadingCashflow} />
           </div>
 
-          <div className="order-7 lg:col-span-5 lg:col-start-8 lg:row-start-4">
+          {/*
+            Row 3's narrow slot is where the subscriptions card used to sit, and
+            Insights is the only panel that can take it — the ledger spans rows
+            2 and 3 of the wide column, so nothing seven columns across fits
+            beside it. The phone order is untouched: this still reads after the
+            cash flow there, exactly as it did before.
+          */}
+          <div className="order-6 lg:col-span-5 lg:col-start-8 lg:row-start-3">
             <InsightsPanel insights={insights} isLoading={isLoadingInsights} />
           </div>
 
           {/*
-            Appended rather than slotted in among the others: it renders nothing
-            for anyone without a receivable, and a panel most users never see
-            should not push the ones they always do out of their places. It
+            Still last, and deliberately so even though a slot freed up above it:
+            it renders nothing for anyone without a receivable, and a panel most
+            users never see must not leave a hole in the middle of the grid on
+            the days it is absent. In the last row its absence costs nothing. It
             takes the narrow column, which is where the app's short lists and
             sentences live. Placed on the panel itself rather than on a wrapper,
             because an empty wrapper would still cost this column a gap.
           */}
           <OwedToMe
-            className="order-8 lg:col-span-5 lg:col-start-8 lg:row-start-5"
+            className="order-7 lg:col-span-5 lg:col-start-8 lg:row-start-4 lg:self-start"
             reimbursements={reimbursements}
             expenses={expenses}
             isLoading={isLoadingReimbursements}

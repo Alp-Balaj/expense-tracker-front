@@ -418,13 +418,12 @@ describe("HomePage dashboard", () => {
     expect(screen.getByText(/€1591\.00 in 14d/)).toBeInTheDocument();
   });
 
-  it("infers the monthly subscription from three months of history", () => {
+  // The subscriptions card was taken off the dashboard; detectRecurring itself
+  // is still covered in lib/__tests__/dashboard.test.ts, which is where the rule
+  // it encodes actually lives.
+  it("no longer carries the subscriptions card", () => {
     renderDashboard();
-
-    const panel = within(screen.getByTestId("recurring-panel"));
-    expect(panel.getByText("Spotify Premium")).toBeInTheDocument();
-    expect(panel.getByText(/1 subscription found/i)).toBeInTheDocument();
-    expect(screen.getByTestId("recurring-total")).toHaveTextContent("€10.99");
+    expect(screen.queryByTestId("recurring-panel")).not.toBeInTheDocument();
   });
 
   it("shows the ledger newest first, with income marked apart from spend", () => {
