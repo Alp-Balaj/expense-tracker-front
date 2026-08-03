@@ -86,7 +86,8 @@ export default function SavingsGoalFormModal({
       savedAmount: data.savedAmount,
       deadline: data.deadline,
       description: data.description,
-      accountId: data.accountId,
+      // Optional since Stream V: nothing about the goal's money depends on it.
+      accountId: data.accountId || null,
       categoryId: data.categoryId,
     };
     try {
@@ -180,18 +181,31 @@ export default function SavingsGoalFormModal({
         </div>
       )}
 
-      <ChipPicker
-        label="Account"
-        items={accounts.map((a) => ({ id: a.id, label: a.name }))}
-        value={data.accountId}
-        onChange={(accountId) => setData({ ...data, accountId })}
-        onAddNew={() => {
-          onOpenChange(false);
-          navigate("/account");
-        }}
-        addNewLabel="New account"
-        emptyHint="No accounts yet."
-      />
+      {/*
+        The goal itself holds no money — each contribution names the account it
+        is reserved against, and one goal can span several. This picker only
+        pre-selects the account the first contribution form suggests, so it is
+        optional and binds nothing.
+      */}
+      <div className="space-y-1.5">
+        <ChipPicker
+          label="Where you expect to keep this money"
+          items={accounts.map((a) => ({ id: a.id, label: a.name }))}
+          value={data.accountId}
+          onChange={(accountId) => setData({ ...data, accountId })}
+          onAddNew={() => {
+            onOpenChange(false);
+            navigate("/account");
+          }}
+          addNewLabel="New account"
+          emptyHint="No accounts yet."
+          optionalTag
+        />
+        <p className="text-xs text-muted-foreground">
+          Just a suggestion for your first contribution — you can save toward
+          this goal from any account.
+        </p>
+      </div>
 
       <ChipPicker
         label="Category"

@@ -17,9 +17,11 @@ import {
   Pencil,
   Trash2,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import type { Account } from "@/Models/Account";
 import { AmountType } from "@/Enums/enums";
+import { usableBalance } from "@/lib/dashboard";
 
 interface AccountCardProps {
   account: Account;
@@ -90,6 +92,12 @@ export function AccountCard({
 }: AccountCardProps) {
   const colorStyle = amountTypeColors[account.amountType];
 
+  // Both extra lines below are rendered only when there is something to say.
+  // Most people have no savings goals, and they must not pay for this feature
+  // with a taller card or an empty row where the reserved figure would go.
+  const reserved = account.reservedAmount ?? 0;
+  const shortfall = reserved - (account.balance ?? 0);
+
   return (
     <Card
       className={`${colorStyle.bg} ${colorStyle.text} border-0 overflow-hidden py-0 gap-0`}
@@ -141,8 +149,38 @@ export function AccountCard({
         <div className="mb-4">
           <p className="text-xs opacity-60 mb-1">Available balance</p>
           <p className="text-2xl font-bold">
-            <ConvertedAmount amount={account.balance} fromCode={account.currencyCode} />
+            <ConvertedAmount
+              amount={usableBalance(account)}
+              fromCode={account.currencyCode}
+            />
           </p>
+
+          {reserved > 0 && (
+            <p className="text-xs opacity-60 mt-1" data-testid="account-reserved">
+              <ConvertedAmount amount={reserved} fromCode={account.currencyCode} /> reserved
+              by goals
+            </p>
+          )}
+
+          {/*
+            Information, not an error: spending reserved money is allowed, and
+            an account can legitimately sit short between a contribution and the
+            transfer that funds it. The card paints its own dark surface in both
+            themes, so it takes one fixed amber rather than the light/dark pair
+            the rest of the app uses on --card.
+          */}
+          {shortfall > 0 && (
+            <p
+              className="flex items-start gap-1.5 mt-2 text-xs text-amber-300"
+              data-testid="account-underfunded"
+            >
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+              <span>
+                <ConvertedAmount amount={shortfall} fromCode={account.currencyCode} /> short
+                of what goals reserved
+              </span>
+            </p>
+          )}
         </div>
 
         {account.description && (

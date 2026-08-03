@@ -16,6 +16,7 @@ import {
   recurringMonthlyTotal,
   splitAmountParts,
   upcomingBills,
+  usableBalance,
 } from "@/lib/dashboard";
 import { AmountType, PlannedKind, PlannedOccurrenceState, Recurrence } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
@@ -42,6 +43,7 @@ function account(overrides: Partial<Account> = {}): Account {
     name: "Main Checking",
     amountType: AmountType.CheckingAccount,
     balance: 1000,
+    reservedAmount: 0,
     currencyId: "cur1",
     currencyCode: "EUR",
     description: "",
@@ -251,6 +253,84 @@ describe("liquidPosition", () => {
     ];
     const convert = (amount: number, code: string) => (code === "USD" ? amount / 2 : amount);
     expect(liquidPosition(accounts, convert).total).toBe(150);
+  });
+
+  // The promise made when envelopes landed: the overwhelming majority of users
+  // have no savings goals, and for them not one figure on the dashboard may
+  // move. Same accounts as the first test, stated again with the field present
+  // and zero, so a regression in the subtraction shows up here first.
+  it("is unchanged for a user with no goals", () => {
+    const accounts = [
+      account({ id: "1", amountType: AmountType.CheckingAccount, balance: 2000, reservedAmount: 0 }),
+      account({ id: "2", amountType: AmountType.Cash, balance: 137, reservedAmount: 0 }),
+      account({ id: "3", amountType: AmountType.SavingsAccount, balance: 800, reservedAmount: 0 }),
+      account({ id: "4", amountType: AmountType.CreditCard, balance: -450, reservedAmount: 0 }),
+      account({ id: "5", amountType: AmountType.Investment, balance: 5000, reservedAmount: 0 }),
+    ];
+    const position = liquidPosition(accounts, identity);
+    expect(position.total).toBe(2937);
+    expect(position.reserved).toBe(0);
+    expect(position.liquidCount).toBe(3);
+    expect(position.accountCount).toBe(5);
+    expect(cashRunwayDays(position.total, 60)).toBe(48);
+  });
+
+  it("treats an account payload with no reserved field as nothing reserved", () => {
+    // What an offline cache written before envelopes existed looks like.
+    const stale = { ...account({ balance: 500 }) } as Partial<Account> & Account;
+    delete (stale as { reservedAmount?: number }).reservedAmount;
+    expect(usableBalance(stale)).toBe(500);
+    expect(liquidPosition([stale], identity)).toMatchObject({ total: 500, reserved: 0 });
+  });
+
+  it("leaves reserved money out of the usable total and reports it separately", () => {
+    const accounts = [
+      account({ id: "1", balance: 2000, reservedAmount: 500 }),
+      account({ id: "2", amountType: AmountType.Cash, balance: 137, reservedAmount: 37 }),
+      // Reserved on an account you cannot spend from is nobody's business here.
+      account({ id: "3", amountType: AmountType.Investment, balance: 5000, reservedAmount: 900 }),
+    ];
+    const position = liquidPosition(accounts, identity);
+    expect(position.total).toBe(1600);
+    expect(position.reserved).toBe(537);
+    expect(position.liquidCount).toBe(2);
+  });
+
+  it("shortens the runway by what the goals hold back", () => {
+    const accounts = [account({ balance: 3000, reservedAmount: 1200 })];
+    const { total } = liquidPosition(accounts, identity);
+    // 1800 usable at 60/day, not 3000 — the reserved 1200 is spoken for.
+    expect(cashRunwayDays(total, 60)).toBe(30);
+  });
+
+  it("lets an over-reserved account go negative rather than clamping it", () => {
+    // Contributing more than the account holds is allowed — warn, never block —
+    // so the shortfall has to eat into the rest of the position, not vanish.
+    const accounts = [
+      account({ id: "1", balance: 100, reservedAmount: 400 }),
+      account({ id: "2", amountType: AmountType.Cash, balance: 500, reservedAmount: 0 }),
+    ];
+    expect(usableBalance(accounts[0])).toBe(-300);
+    expect(liquidPosition(accounts, identity).total).toBe(200);
+  });
+
+  it("subtracts reserved before converting, in the account's own currency", () => {
+    // 100 USD reserved is 50 EUR of usable money lost, not 100. Netting the two
+    // converted totals afterwards would come to the same figure only by luck.
+    const accounts = [
+      account({ id: "1", balance: 100, currencyCode: "EUR", reservedAmount: 40 }),
+      account({
+        id: "2",
+        balance: 300,
+        currencyCode: "USD",
+        amountType: AmountType.Cash,
+        reservedAmount: 100,
+      }),
+    ];
+    const convert = (amount: number, code: string) => (code === "USD" ? amount / 2 : amount);
+    const position = liquidPosition(accounts, convert);
+    expect(position.total).toBe(160);
+    expect(position.reserved).toBe(90);
   });
 });
 

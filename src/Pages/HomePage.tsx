@@ -149,6 +149,11 @@ export default function HomePage() {
 
   const overall = useMemo(() => overallBudgetStatus(budgetStatuses), [budgetStatuses]);
 
+  // Usable, not raw: `liquid.total` is already net of what savings goals
+  // reserved, so the Liquid stat and the runway below both answer "what can I
+  // actually spend" rather than "what does the bank say". The whole position is
+  // handed to the card, reserved figure included, so the breakdown is there for
+  // the panel to show without another prop.
   const liquid = useMemo(
     () => liquidPosition(accounts, convert),
     // convert closes over the currency table, which changes with the query;
@@ -156,6 +161,8 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accounts],
   );
+  // Reserved money is spoken for, so counting it would promise a runway the
+  // goals have already claimed.
   const runwayDays = useMemo(
     () => cashRunwayDays(liquid.total, dailyBurn(expenses)),
     [liquid.total, expenses],

@@ -8,13 +8,17 @@ interface SavingsAchievementCardProps {
 }
 
 export function SavingsAchievementCard({ goals }: SavingsAchievementCardProps) {
-  const { format, userCurrencyCode } = useCurrency()
+  const { convert, format, userCurrencyCode } = useCurrency()
   const totalGoals = goals.length
   const completed = goals.filter(
     (g) => g.savedAmount >= g.targetAmount
   ).length
-  const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0)
-  const totalSaved = goals.reduce((sum, g) => sum + g.savedAmount, 0)
+  // Each goal carries its own currency, so the cross-goal totals are converted
+  // per goal before being added rather than summed as raw numbers.
+  const inBase = (amount: number, goal: SavingGoals) =>
+    convert(amount, goal.currencyCode ?? userCurrencyCode)
+  const totalTarget = goals.reduce((sum, g) => sum + inBase(g.targetAmount, g), 0)
+  const totalSaved = goals.reduce((sum, g) => sum + inBase(g.savedAmount, g), 0)
 
   const stats = [
     {

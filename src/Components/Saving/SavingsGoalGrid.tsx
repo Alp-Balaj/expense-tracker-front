@@ -5,7 +5,10 @@ interface SavingsGoalGridProps {
   goals: SavingGoals[]
   onEdit: (goal: SavingGoals) => void
   onDelete: (goal: SavingGoals) => void
-  onAddContribution: (goalId: string, contribution: SavingContributions) => void
+  onAddContribution: (
+    goalId: string,
+    contribution: SavingContributions
+  ) => void | Promise<void>
 }
 
 export function SavingsGoalGrid({

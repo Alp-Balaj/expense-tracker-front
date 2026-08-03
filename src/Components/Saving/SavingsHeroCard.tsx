@@ -11,9 +11,14 @@ interface SavingsHeroCardProps {
 }
 
 export function SavingsHeroCard({ goals, onNewGoal }: SavingsHeroCardProps) {
-  const { format, userCurrencyCode } = useCurrency()
-  const totalSaved = goals.reduce((sum, g) => sum + g.savedAmount, 0)
-  const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0)
+  const { convert, format, userCurrencyCode } = useCurrency()
+  // Goals are denominated one by one now — a dollar goal and a euro goal can
+  // sit side by side — so the across-all-goals totals have to be converted
+  // before they are added, not summed as if every figure were already base.
+  const inBase = (amount: number, goal: SavingGoals) =>
+    convert(amount, goal.currencyCode ?? userCurrencyCode)
+  const totalSaved = goals.reduce((sum, g) => sum + inBase(g.savedAmount, g), 0)
+  const totalTarget = goals.reduce((sum, g) => sum + inBase(g.targetAmount, g), 0)
   const overallPercentage = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0
   const completedCount = goals.filter((g) => g.savedAmount >= g.targetAmount).length
 
