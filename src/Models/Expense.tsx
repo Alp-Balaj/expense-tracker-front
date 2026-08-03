@@ -8,6 +8,7 @@ import {
 } from "@/Components/General/Columns"
 import type { Account } from "@/Models/Account"
 import type { Category } from "@/Models/Category"
+import { openReceivable } from "@/lib/dashboard"
 
 export type Expense = {
   id: string | null;
@@ -43,25 +44,44 @@ export type ExpenseFormProps = {
 export function buildExpenseColumns(handlers?: {
   onEdit?: (row: Expense) => void
   onDelete?: (row: Expense) => void
+  /** Offered only on rows that still have something owed on them. */
+  onSettle?: (row: Expense) => void
   accounts?: Account[]
   categories?: Category[]
   formatter?: (value: number) => string
 }) {
-  const { onEdit, onDelete, accounts = [], categories = [], formatter } = handlers ?? {}
+  const { onEdit, onDelete, onSettle, accounts = [], categories = [], formatter } = handlers ?? {}
+
+  const money = (value: number) => (formatter ? formatter(value) : value.toFixed(2))
 
   return [
     {
       ...sortableColumn<Expense>("title", "Title"),
-      cell: ({ row }) => (
-        <span className="inline-flex items-center gap-2">
-          {row.original.title}
-          {row.original.pending && (
-            <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-              waiting
-            </span>
-          )}
-        </span>
-      ),
+      cell: ({ row }) => {
+        // The amount column shows the gross, because gross is what left the
+        // account. This says the rest of the story: part of that 60 is coming
+        // back. Quiet on purpose — it is a note, not a warning.
+        const open = openReceivable(row.original)
+        return (
+          <span className="inline-flex items-center gap-2">
+            {row.original.title}
+            {row.original.pending && (
+              <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                waiting
+              </span>
+            )}
+            {open > 0 && (
+              <span
+                data-testid="owed-badge"
+                title={`${money(open)} owed to you on this expense`}
+                className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
+              >
+                owed {money(open)}
+              </span>
+            )}
+          </span>
+        )
+      },
     } as ColumnDef<Expense>,
     currencyColumn<Expense>("amount", "Amount", {
       formatter,
@@ -92,6 +112,13 @@ export function buildExpenseColumns(handlers?: {
       {
         label: "Edit",
         onClick: (e) => onEdit?.(e),
+      },
+      // Recording a payback is only ever meaningful on a row that still has one
+      // outstanding, so the entry is absent rather than disabled everywhere else.
+      {
+        label: "Settle",
+        onClick: (e) => onSettle?.(e),
+        visible: (e) => Boolean(onSettle) && openReceivable(e) > 0,
       },
       {
         label: "Delete",

@@ -10,6 +10,8 @@ export const queryKeys = {
   expenses: ["expenses"] as const,
   incomes: ["incomes"] as const,
   plannedTransactions: ["plannedTransactions"] as const,
+  /** Open receivables on split expenses. Expense writes can create or clear one. */
+  reimbursements: ["reimbursements"] as const,
   /** The due queue. Separate from the templates: confirming one changes only this. */
   plannedOccurrences: ["plannedOccurrences"] as const,
   savingGoals: ["savingGoals"] as const,

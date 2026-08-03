@@ -11,6 +11,7 @@ import * as categoryHooks from "@/Hooks/queries/useCategories";
 import * as budgetHooks from "@/Hooks/queries/useBudgets";
 import * as insightHooks from "@/Hooks/queries/useInsights";
 import * as cashflowHooks from "@/Hooks/queries/useCashflow";
+import * as reimbursementHooks from "@/Hooks/queries/useReimbursements";
 import { AmountType, CategoryType } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { BudgetStatus } from "@/Models/Budget";
@@ -20,6 +21,7 @@ import type { PlannedTransaction } from "@/Models/PlannedTransaction";
 import type { Income } from "@/Models/Income";
 import type { Insights } from "@/Models/Insights";
 import type { CashflowProjection } from "@/Models/Cashflow";
+import type { Reimbursement } from "@/Models/Reimbursement";
 import { PlannedKind, Recurrence } from "@/Enums/enums";
 
 // The dashboard is almost entirely derived data. This renders the real page
@@ -35,6 +37,7 @@ vi.mock("@/Hooks/queries/useCategories");
 vi.mock("@/Hooks/queries/useBudgets");
 vi.mock("@/Hooks/queries/useInsights");
 vi.mock("@/Hooks/queries/useCashflow");
+vi.mock("@/Hooks/queries/useReimbursements");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -263,6 +266,28 @@ const cashflowFixture: CashflowProjection = {
   ],
 };
 
+/** An 80 dinner of which 40 is coming back — the only split in the fixtures. */
+const splitDinner: Expense = {
+  ...expense("e4", "2026-07-20", "Dinner Sat", 80),
+  expectedReimbursement: 40,
+  settledReimbursement: 0,
+  openReimbursement: 40,
+};
+
+const dinnerReceivable: Reimbursement = {
+  id: "r4",
+  expenseId: "e4",
+  expenseTitle: "Dinner Sat",
+  expenseDate: "2026-07-20",
+  expenseAmount: 80,
+  expectedAmount: 40,
+  settledAmount: 0,
+  openAmount: 40,
+  currencyCode: "EUR",
+  daysOpen: 7,
+  settlements: [],
+};
+
 function mockQueries(statuses: BudgetStatus[]) {
   vi.mocked(accountHooks).useAccountsQuery.mockReturnValue({
     data: accounts,
@@ -301,6 +326,12 @@ function mockQueries(statuses: BudgetStatus[]) {
   } as never);
   vi.mocked(cashflowHooks).useCashflowProjectionQuery.mockReturnValue({
     data: cashflowFixture,
+    isLoading: false,
+  } as never);
+  // Nothing in the July fixtures is a split bill; the receivable tests below
+  // install their own answer.
+  vi.mocked(reimbursementHooks).useReimbursementsQuery.mockReturnValue({
+    data: [],
     isLoading: false,
   } as never);
 }
@@ -467,6 +498,52 @@ describe("HomePage dashboard", () => {
     renderDashboard();
 
     expect(screen.getByTestId("cashflow-note")).toHaveTextContent(/Dips below zero around/);
+  });
+
+  // Alp's rule for this panel: a user who never splits a bill must not gain a
+  // dead card. None of the July fixtures is split, so it must not be here.
+  it("carries no receivables panel when nobody owes you anything", () => {
+    renderDashboard();
+    expect(screen.queryByTestId("owed-panel")).not.toBeInTheDocument();
+  });
+
+  it("puts what is still out on the dashboard once a bill has been split", () => {
+    vi.mocked(expenseHooks).useExpensesQuery.mockReturnValue({
+      data: [...expenses, splitDinner],
+      isLoading: false,
+    } as never);
+    vi.mocked(reimbursementHooks).useReimbursementsQuery.mockReturnValue({
+      data: [dinnerReceivable],
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    const panel = within(screen.getByTestId("owed-panel"));
+    expect(panel.getByTestId("owed-total")).toHaveTextContent("€40.00");
+    expect(panel.getByTestId("owed-note")).toHaveTextContent(
+      "You fronted €40.00 for others this month; €40.00 is still out.",
+    );
+    expect(panel.getByTestId("owed-row")).toHaveTextContent("Dinner Sat");
+    expect(panel.getByTestId("owed-row")).toHaveTextContent("7d open");
+  });
+
+  // The other half of the same change: the burn behind the runway now nets out
+  // what others owe, and the unsplit figure must not have moved.
+  it("leaves the runway untouched by a split bill's gross", () => {
+    vi.mocked(expenseHooks).useExpensesQuery.mockReturnValue({
+      data: [...expenses, splitDinner],
+      isLoading: false,
+    } as never);
+    vi.mocked(reimbursementHooks).useReimbursementsQuery.mockReturnValue({
+      data: [dinnerReceivable],
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    // €1254.59 + the 40 that was actually yours, over the same 85 days, is
+    // €15.23/day — 192 days of runway. Counting the gross 80 would have read
+    // €15.70/day and clipped it to 187.
+    expect(screen.getByText("192 days")).toBeInTheDocument();
   });
 
   it("falls back to plain spend when nothing budgets the whole month", () => {

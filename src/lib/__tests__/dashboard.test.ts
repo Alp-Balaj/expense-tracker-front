@@ -8,9 +8,11 @@ import {
   daysBetween,
   daysInMonth,
   detectRecurring,
+  frontedThisMonth,
   greeting,
   liquidPosition,
   monthCursor,
+  owedToMe,
   recurringMonthlyTotal,
   splitAmountParts,
   upcomingBills,
@@ -280,6 +282,114 @@ describe("dailyBurn", () => {
 
   it("is zero with no history", () => {
     expect(dailyBurn([], TODAY)).toBe(0);
+  });
+});
+
+/**
+ * A split bill on an expense named `expected`, of which `settled` has come
+ * back. The gross stays on `amount` — that is what left the account.
+ */
+function split(
+  date: string,
+  amount: number,
+  expected: number,
+  settled = 0,
+  title = "Dinner",
+): Expense {
+  return {
+    ...expense(date, amount, title),
+    expectedReimbursement: expected,
+    settledReimbursement: settled,
+    openReimbursement: expected - settled,
+  };
+}
+
+describe("dailyBurn nets out what others owe", () => {
+  // The regression pin, and the point of it: the burn rate feeds the runway,
+  // which is a number people plan around. Nothing about a history without a
+  // single split bill may move by a cent.
+  it("is unchanged to the cent for a history with no splits", () => {
+    const history = [
+      expense(TODAY, 12.34),
+      expense(addDaysISO(TODAY, -1), 7.5),
+      expense(addDaysISO(TODAY, -9), 100),
+    ];
+    // 119.84 over the 10 days the history covers — what it returned before
+    // reimbursements existed.
+    expect(dailyBurn(history, TODAY, 90)).toBeCloseTo(11.984, 10);
+  });
+
+  it("treats an absent, null or zero receivable as no receivable at all", () => {
+    const plain = expense(TODAY, 60);
+    expect(dailyBurn([plain], TODAY, 90)).toBe(60);
+    expect(dailyBurn([{ ...plain, expectedReimbursement: null }], TODAY, 90)).toBe(60);
+    expect(dailyBurn([{ ...plain, expectedReimbursement: undefined }], TODAY, 90)).toBe(60);
+    expect(dailyBurn([{ ...plain, expectedReimbursement: 0 }], TODAY, 90)).toBe(60);
+  });
+
+  it("counts only your own share of a split bill", () => {
+    // A 60 dinner with 40 coming back is 20 of your spending, not 60.
+    expect(dailyBurn([split(TODAY, 60, 40)], TODAY, 90)).toBeCloseTo(20, 10);
+  });
+
+  it("does not change once the receivable is settled", () => {
+    // Settling moves money, not history: the burn nets the expectation, so
+    // being paid back must not retroactively lower a past day's spending.
+    expect(dailyBurn([split(TODAY, 60, 40, 40)], TODAY, 90)).toBeCloseTo(20, 10);
+  });
+
+  it("mixes split and unsplit history without disturbing either", () => {
+    const history = [expense(TODAY, 30), split(addDaysISO(TODAY, -1), 60, 40)];
+    // 30 of groceries plus 20 of dinner over the two days covered.
+    expect(dailyBurn(history, TODAY, 90)).toBeCloseTo(25, 10);
+  });
+});
+
+describe("owedToMe", () => {
+  it("is zero without a single split bill", () => {
+    expect(owedToMe([expense(TODAY, 60), expense(addDaysISO(TODAY, -3), 12)])).toBe(0);
+    expect(owedToMe([])).toBe(0);
+  });
+
+  it("sums what is still open rather than what was expected", () => {
+    expect(owedToMe([split(TODAY, 60, 40, 15), split(TODAY, 120, 100, 0, "Tickets")])).toBe(125);
+  });
+
+  it("has no window — an old debt is still a debt", () => {
+    // Deliberately outside the 90-day burn window.
+    expect(owedToMe([split(addDaysISO(TODAY, -400), 50, 25)])).toBe(25);
+  });
+
+  it("falls back to the expectation on a row the server has not answered for", () => {
+    // A queued offline split has no settlements by definition, so the whole
+    // expectation is open.
+    const queued: Expense = { ...expense(TODAY, 60), expectedReimbursement: 40 };
+    expect(owedToMe([queued])).toBe(40);
+  });
+
+  it("drops out once everything has come back", () => {
+    expect(owedToMe([split(TODAY, 60, 40, 40)])).toBe(0);
+  });
+});
+
+describe("frontedThisMonth", () => {
+  it("is zero without a single split bill", () => {
+    expect(frontedThisMonth([expense(TODAY, 60)], TODAY)).toBe(0);
+  });
+
+  it("counts the whole expectation, settled or not", () => {
+    // What you carried this month is the question, not what is left of it.
+    expect(frontedThisMonth([split(TODAY, 60, 40, 40)], TODAY)).toBe(40);
+  });
+
+  it("dates at the expense, never at the payback", () => {
+    const lastMonth = split("2026-06-20", 100, 80);
+    const thisMonth = split("2026-07-02", 60, 40);
+    expect(frontedThisMonth([lastMonth, thisMonth], TODAY)).toBe(40);
+  });
+
+  it("counts a whole month, including days still to come", () => {
+    expect(frontedThisMonth([split("2026-07-31", 50, 25)], TODAY)).toBe(25);
   });
 });
 

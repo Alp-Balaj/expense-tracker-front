@@ -26,6 +26,7 @@ import { UpcomingExpenses } from "@/Components/Dashboard/UpcomingExpenses";
 import { RecurringSpend } from "@/Components/Dashboard/RecurringSpend";
 import { InsightsPanel } from "@/Components/Dashboard/InsightsPanel";
 import { CashflowPanel } from "@/Components/Dashboard/CashflowPanel";
+import { OwedToMe } from "@/Components/Dashboard/OwedToMe";
 import CommitOccurrenceDialog from "@/Components/Planned/CommitOccurrenceDialog";
 import { useQuickLog } from "@/Components/Layout/useQuickLog";
 
@@ -46,6 +47,7 @@ import {
 import { useBudgetStatusQuery } from "@/Hooks/queries/useBudgets";
 import { useInsightsQuery } from "@/Hooks/queries/useInsights";
 import { useCashflowProjectionQuery } from "@/Hooks/queries/useCashflow";
+import { useReimbursementsQuery } from "@/Hooks/queries/useReimbursements";
 import { currentMonth, formatMonth, overallBudgetStatus, shiftMonth } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
 import {
@@ -95,6 +97,11 @@ export default function HomePage() {
   // month cursor stands — like the recurring widget, they answer "now".
   const { data: insights, isLoading: isLoadingInsights } = useInsightsQuery();
   const { data: cashflow, isLoading: isLoadingCashflow } = useCashflowProjectionQuery();
+  // Open receivables. Kept out of the `isLoading` gate below: the panel that
+  // uses them hides itself entirely when there are none, so it must not hold
+  // the rest of the dashboard back for the many users who never split a bill.
+  const { data: reimbursements = [], isLoading: isLoadingReimbursements } =
+    useReimbursementsQuery();
 
   const isLoading =
     isLoadingAccounts ||
@@ -282,6 +289,21 @@ export default function HomePage() {
           <div className="order-7 lg:col-span-5 lg:col-start-8 lg:row-start-4">
             <InsightsPanel insights={insights} isLoading={isLoadingInsights} />
           </div>
+
+          {/*
+            Appended rather than slotted in among the others: it renders nothing
+            for anyone without a receivable, and a panel most users never see
+            should not push the ones they always do out of their places. It
+            takes the narrow column, which is where the app's short lists and
+            sentences live. Placed on the panel itself rather than on a wrapper,
+            because an empty wrapper would still cost this column a gap.
+          */}
+          <OwedToMe
+            className="order-8 lg:col-span-5 lg:col-start-8 lg:row-start-5"
+            reimbursements={reimbursements}
+            expenses={expenses}
+            isLoading={isLoadingReimbursements}
+          />
         </div>
       </main>
 

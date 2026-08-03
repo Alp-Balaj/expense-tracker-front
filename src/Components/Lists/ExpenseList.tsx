@@ -1,13 +1,16 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { DataTable } from "../General/DataTable"
 import ExpenseForm from "../Forms/ExpenseForm"
+import SettleReimbursementDialog from "../Reimbursements/SettleReimbursementDialog"
 import { buildExpenseColumns, type Expense } from "@/Models/Expense"
+import type { Reimbursement, SettleReimbursement } from "@/Models/Reimbursement"
 import { useCrudDialogs } from "@/Hooks/useCrudLists"
 import ConfirmDelete from "../General/ConfirmDelete"
 import { useCurrency } from "@/Hooks/useCurrency"
 import { getApiErrorMessage } from "@/lib/errors"
 import { useExpensesQuery, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/Hooks/queries/useExpenses"
+import { useReimbursementsQuery, useSettleReimbursement } from "@/Hooks/queries/useReimbursements"
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts"
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories"
 
@@ -35,6 +38,7 @@ export default function ExpenseList({ data }: ExpenseListProps = {}) {
   const { data: allExpenses = [] } = useExpensesQuery()
   const { data: accounts = [] } = useAccountsQuery()
   const { data: categories = [] } = useCategoriesQuery()
+  const { data: reimbursements = [] } = useReimbursementsQuery()
   const { format, userCurrencyCode } = useCurrency()
 
   const expenses = data ?? allExpenses
@@ -42,6 +46,16 @@ export default function ExpenseList({ data }: ExpenseListProps = {}) {
   const createExpense = useCreateExpense()
   const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
+
+  // The row knows what is still owed on it, but only the receivable knows its
+  // own id — which is what a settlement is posted against.
+  const [settling, setSettling] = useState<Reimbursement | null>(null)
+  const settleReimbursement = useSettleReimbursement()
+
+  const receivableByExpense = useMemo(
+    () => new Map(reimbursements.map((r) => [r.expenseId, r])),
+    [reimbursements]
+  )
 
   const submit = async (data: Expense) => {
     try {
@@ -67,16 +81,35 @@ export default function ExpenseList({ data }: ExpenseListProps = {}) {
     closeModal()
   }
 
+  const submitSettle = async (id: string, settlement: SettleReimbursement) => {
+    try {
+      await settleReimbursement.mutateAsync({ id, settlement })
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, "Settling failed."))
+      throw e // keeps the dialog open so the user can correct it
+    }
+    toast.success("Settlement recorded")
+    setSettling(null)
+  }
+
   const columns = useMemo(
     () =>
       buildExpenseColumns({
         onEdit: (row) => startEdit(row),
         onDelete: (row) => startDelete(row),
+        onSettle: (row) => {
+          const receivable = row.id ? receivableByExpense.get(row.id) : undefined
+          if (!receivable) {
+            toast.error("Nothing left to settle on this expense.")
+            return
+          }
+          setSettling(receivable)
+        },
         accounts,
         categories,
         formatter: (value) => format(value, userCurrencyCode),
       }),
-    [startEdit, startDelete, accounts, categories, format, userCurrencyCode]
+    [startEdit, startDelete, receivableByExpense, accounts, categories, format, userCurrencyCode]
   )
 
   return (
@@ -102,6 +135,13 @@ export default function ExpenseList({ data }: ExpenseListProps = {}) {
           if (!isOpen) closeForm()
         }}
         onCancel={closeForm}
+      />
+
+      <SettleReimbursementDialog
+        reimbursement={settling}
+        open={settling !== null}
+        onOpenChange={(isOpen) => !isOpen && setSettling(null)}
+        onSubmit={submitSettle}
       />
 
       <ConfirmDelete

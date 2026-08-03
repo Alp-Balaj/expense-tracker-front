@@ -123,6 +123,11 @@ export function currencyColumn<T>(
 export type RowAction<T> = {
   label: string
   onClick: (row: T) => void
+  /**
+   * Offer this action only on the rows it can actually do something to.
+   * Omitted means "every row", which is what every action was before.
+   */
+  visible?: (row: T) => boolean
 }
 
 export function actionsColumn<T>(
@@ -146,14 +151,16 @@ export function actionsColumn<T>(
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{label}</DropdownMenuLabel>
 
-            {actions.map((action, idx) => (
-              <DropdownMenuItem
-                key={idx}
-                onClick={() => action.onClick(data)}
-              >
-                {action.label}
-              </DropdownMenuItem>
-            ))}
+            {actions
+              .filter((action) => action.visible?.(data) ?? true)
+              .map((action) => (
+                <DropdownMenuItem
+                  key={action.label}
+                  onClick={() => action.onClick(data)}
+                >
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
 
             <DropdownMenuSeparator />
           </DropdownMenuContent>

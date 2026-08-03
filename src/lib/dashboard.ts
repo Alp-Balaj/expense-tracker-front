@@ -217,9 +217,35 @@ export function liquidPosition(
 }
 
 /**
+ * What an expense really cost you: the gross minus whatever others owe on it.
+ *
+ * Gross is account truth — a 60 dinner debits 60 whoever eventually pays their
+ * share back — but analysis is about your own money, so every rate and average
+ * here works off the net. An expense with no split is its own net, which is why
+ * nothing about an unsplit history changes.
+ */
+export function netAmount(expense: Expense): number {
+  return expense.amount - (expense.expectedReimbursement ?? 0);
+}
+
+/**
+ * What is still out on one expense: the server's open figure when it has been
+ * returned, falling back to the full expectation for a row that has not been
+ * round-tripped yet (a queued offline split has no settlements by definition).
+ * Zero for anything that is not a split bill.
+ */
+export function openReceivable(expense: Expense): number {
+  return expense.openReimbursement ?? expense.expectedReimbursement ?? 0;
+}
+
+/**
  * Average spend per day over the trailing window. Short histories divide by
  * the days actually covered, so a week-old account does not read as a burn
  * rate seven times lower than it is.
+ *
+ * Sums net: the half of a split bill a friend owes you was never your spending,
+ * and counting it would inflate the burn — and shorten the runway — for anyone
+ * who happens to be the one who picks up the tab.
  */
 export function dailyBurn(
   expenses: Expense[],
@@ -234,7 +260,7 @@ export function dailyBurn(
   for (const expense of expenses) {
     const date = toISODate(expense.date);
     if (date < start || date > todayKey) continue;
-    sum += expense.amount;
+    sum += netAmount(expense);
     if (earliest === null || date < earliest) earliest = date;
   }
 
@@ -247,6 +273,34 @@ export function dailyBurn(
 export function cashRunwayDays(liquid: number, burn: number): number | null {
   if (burn <= 0 || liquid <= 0) return null;
   return Math.floor(liquid / burn);
+}
+
+// #endregion
+
+// #region ── Money owed to you ────────────────────────────────────────
+
+/**
+ * Everything still out across the whole history, whenever it was fronted.
+ * Unlike the burn window this has no horizon: a receivable does not stop being
+ * owed because it got old — that is precisely when it matters most.
+ */
+export function owedToMe(expenses: Expense[]): number {
+  return expenses.reduce((sum, expense) => sum + openReceivable(expense), 0);
+}
+
+/**
+ * What you put on the table for other people this month — the whole
+ * expectation, settled or not, dated at the expense rather than at the payback.
+ * Paired with {@link owedToMe} it makes the fronted-delta sentence: how much
+ * went out for others, and how much of it has not come back.
+ */
+export function frontedThisMonth(expenses: Expense[], today: string = todayISO()): number {
+  const month = monthKey(today);
+  return expenses.reduce(
+    (sum, expense) =>
+      monthKey(expense.date) === month ? sum + (expense.expectedReimbursement ?? 0) : sum,
+    0,
+  );
 }
 
 // #endregion

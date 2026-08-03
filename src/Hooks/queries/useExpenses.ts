@@ -5,8 +5,15 @@ import type { Expense } from "@/Models/Expense";
 const ENDPOINT = "api/Expense";
 
 // Budget status, the insight sentences and the cashflow projection are all
-// computed from expenses, so every write here invalidates them.
-const DEPENDANTS = [queryKeys.budgetStatusRoot, queryKeys.insights, queryKeys.cashflowProjection];
+// computed from expenses, so every write here invalidates them. The receivable
+// list belongs here too: an expense write is what creates, changes or clears
+// the reimbursement hanging off it.
+const DEPENDANTS = [
+  queryKeys.budgetStatusRoot,
+  queryKeys.insights,
+  queryKeys.cashflowProjection,
+  queryKeys.reimbursements,
+];
 
 export const useExpensesQuery = () => useResourceQuery<Expense>(queryKeys.expenses, ENDPOINT);
 export const useCreateExpense = () => useCreateResource<Expense>(queryKeys.expenses, ENDPOINT, DEPENDANTS);

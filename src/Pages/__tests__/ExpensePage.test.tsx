@@ -7,6 +7,7 @@ import ExpensePage from "@/Pages/ExpensePage";
 import * as accountHooks from "@/Hooks/queries/useAccounts";
 import * as expenseHooks from "@/Hooks/queries/useExpenses";
 import * as categoryHooks from "@/Hooks/queries/useCategories";
+import * as reimbursementHooks from "@/Hooks/queries/useReimbursements";
 import { CategoryType } from "@/Enums/enums";
 import type { Account } from "@/Models/Account";
 import type { Category } from "@/Models/Category";
@@ -19,6 +20,7 @@ import type { Expense } from "@/Models/Expense";
 vi.mock("@/Hooks/queries/useAccounts");
 vi.mock("@/Hooks/queries/useExpenses");
 vi.mock("@/Hooks/queries/useCategories");
+vi.mock("@/Hooks/queries/useReimbursements");
 
 vi.mock("@/Hooks/useCurrency", () => ({
   useCurrency: () => ({
@@ -89,6 +91,17 @@ function mockQueries() {
     isLoading: false,
     isError: false,
   } as ReturnType<typeof expenseHooks.useExpensesQuery>);
+
+  // None of these fixtures is a split bill, so the list has no receivable to
+  // badge or settle.
+  vi.mocked(reimbursementHooks).useReimbursementsQuery.mockReturnValue({
+    data: [],
+    isLoading: false,
+    isError: false,
+  } as ReturnType<typeof reimbursementHooks.useReimbursementsQuery>);
+  vi.mocked(reimbursementHooks).useSettleReimbursement.mockReturnValue({
+    mutateAsync: vi.fn(),
+  } as unknown as ReturnType<typeof reimbursementHooks.useSettleReimbursement>);
 
   // The list holds mutation handles; nothing here submits.
   vi.mocked(expenseHooks).useCreateExpense.mockReturnValue({
