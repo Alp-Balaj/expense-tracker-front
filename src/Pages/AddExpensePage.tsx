@@ -73,6 +73,12 @@ export default function AddExpensePage() {
   );
 
   const [data, setData] = React.useState<Draft>(emptyDraft);
+  // Identity for the split block, bumped on every successful submit. It holds
+  // the typed share itself and reports an unusable one (empty, or bigger than
+  // the total) as `null` — the same value the reset lands on — so from the
+  // draft alone it cannot tell a reset from an echo of its own last emission
+  // and would stay open with a stale share. A new identity is unambiguous.
+  const [entryNo, setEntryNo] = React.useState(0);
   // Set once the queries land; never re-applied after the user touches the
   // account chips (so deselecting doesn't snap back to the default).
   const [accountTouched, setAccountTouched] = React.useState(false);
@@ -158,6 +164,7 @@ export default function AddExpensePage() {
     // logging several receipts in a row shouldn't repeat those taps. The
     // split is deliberately NOT kept: it belongs to the one bill.
     setData((d) => ({ ...emptyDraft(), accountId: d.accountId, date: d.date }));
+    setEntryNo((n) => n + 1);
     document.getElementById("amount")?.focus();
   };
 
@@ -183,6 +190,7 @@ export default function AddExpensePage() {
       />
 
       <SplitBillField
+        key={entryNo}
         amount={data.amount}
         value={data.expectedReimbursement}
         onChange={(expectedReimbursement) =>

@@ -326,6 +326,31 @@ describe("AddExpensePage", () => {
     expect(screen.queryByLabelText("Your share")).toBeNull();
   });
 
+  // The block reports an unusable share as `null` — which is also what the
+  // draft resets to — so this is the path where a reset looks exactly like an
+  // echo of its own last emission, and the block used to stay open with the
+  // stale share still in it for every entry that followed.
+  it.each([
+    ["an empty share", ""],
+    ["a share bigger than the total", "70"],
+  ])("does not carry %s over to the next entry", async (_label, share) => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "60");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+    await user.click(screen.getByRole("button", { name: "Split bill" }));
+    if (share) await user.type(screen.getByLabelText("Your share"), share);
+    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Split bill" })).toBeVisible(),
+    );
+    expect(screen.queryByLabelText("Your share")).toBeNull();
+  });
+
   it("refuses a share that is not smaller than the total", async () => {
     const user = userEvent.setup();
     renderPage();
