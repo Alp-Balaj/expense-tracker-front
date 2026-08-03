@@ -57,7 +57,9 @@ export default defineConfig(({ command }) => {
           // keeps Stream A's precache contract exactly as verified, and leaves
           // Stream O free to extend the same generated worker for background
           // sync without inheriting this file.
-          importScripts: ["/push-sw.js"],
+          // Stream O adds the outbox's Background Sync doorbell the same way, so
+          // both streams extend the generated worker without either owning it.
+          importScripts: ["/push-sw.js", "/outbox-sw.js"],
         },
       }),
     ],

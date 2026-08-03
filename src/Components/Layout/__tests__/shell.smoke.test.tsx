@@ -36,6 +36,10 @@ vi.mock("@/Components/UserPreferences/UserSettingsModal", () => ({
   UserSettingsModal: () => null,
 }));
 vi.mock("@/Components/General/ModeToggle", () => ({ ModeToggle: () => null }));
+// Stream O: the top bar hosts the outbox indicator, which reads IndexedDB and
+// needs a QueryClient. It renders nothing when the queue is empty, which is
+// the state this smoke test is asserting the shell in anyway.
+vi.mock("@/Components/Layout/OutboxIndicator", () => ({ OutboxIndicator: () => null }));
 vi.mock("@/Components/Forms/ExpenseForm", () => ({ default: () => null }));
 vi.mock("@/Components/Income/IncomeFormModal", () => ({ default: () => null }));
 vi.mock("@/Components/Saving/SavingsGoalFormModal", () => ({ default: () => null }));

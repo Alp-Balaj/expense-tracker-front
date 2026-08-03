@@ -7,6 +7,7 @@ import AddExpensePage from "@/Pages/AddExpensePage";
 import * as accountHooks from "@/Hooks/queries/useAccounts";
 import * as categoryHooks from "@/Hooks/queries/useCategories";
 import * as expenseHooks from "@/Hooks/queries/useExpenses";
+import * as queuedExpense from "@/Hooks/useQueuedExpense";
 import { CategoryType } from "@/Enums/enums";
 import { todayISO } from "@/lib/dates";
 import type { Account } from "@/Models/Account";
@@ -20,6 +21,9 @@ import type { Expense } from "@/Models/Expense";
 vi.mock("@/Hooks/queries/useAccounts");
 vi.mock("@/Hooks/queries/useCategories");
 vi.mock("@/Hooks/queries/useExpenses");
+// Stream O: /add writes through the outbox-aware hook now. Mocked here for the
+// same reason useCreateExpense was — these tests are about the form.
+vi.mock("@/Hooks/useQueuedExpense");
 
 const accounts: Account[] = [
   {
@@ -94,6 +98,7 @@ function mockQueries() {
     isError: false,
   } as ReturnType<typeof expenseHooks.useExpensesQuery>);
 
+  vi.mocked(queuedExpense).useQueuedCreateExpense.mockReturnValue(mutateAsync);
   vi.mocked(expenseHooks).useCreateExpense.mockReturnValue({
     mutateAsync,
     isPending: false,
@@ -117,7 +122,7 @@ function categoryChips() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockQueries();
-  mutateAsync.mockResolvedValue({});
+  mutateAsync.mockResolvedValue("sent");
 });
 
 describe("AddExpensePage", () => {
