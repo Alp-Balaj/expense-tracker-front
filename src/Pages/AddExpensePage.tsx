@@ -119,11 +119,19 @@ export default function AddExpensePage() {
     data.expectedReimbursement == null ||
     (data.expectedReimbursement > 0 && data.expectedReimbursement < data.amount);
 
+  // False only while the split block is open with a share it cannot turn into
+  // a receivable. The draft alone cannot tell that from "not a split" — both
+  // are a null receivable — and submitting on the strength of the draft would
+  // save a plain expense and say "Expense added", quietly binning a split the
+  // user was halfway through typing.
+  const [splitUsable, setSplitUsable] = React.useState(true);
+
   const canSubmit =
     data.amount > 0 &&
     data.categoryId !== "" &&
     data.accountId !== "" &&
-    splitValid;
+    splitValid &&
+    splitUsable;
 
   const close = () => navigate(-1);
 
@@ -196,6 +204,7 @@ export default function AddExpensePage() {
         onChange={(expectedReimbursement) =>
           setData((d) => ({ ...d, expectedReimbursement }))
         }
+        onValidityChange={setSplitUsable}
         currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
       />
 

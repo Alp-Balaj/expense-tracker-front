@@ -14,6 +14,17 @@ export interface SplitBillFieldProps {
    */
   value?: number | null;
   onChange: (expectedReimbursement: number | null) => void;
+  /**
+   * Told whenever the block starts or stops being able to produce a receivable.
+   *
+   * `onChange(null)` is ambiguous on its own — it is what a collapsed block
+   * emits ("not a split", a perfectly good answer) and also what an open one
+   * emits while the share is empty or too big. A form that only sees the value
+   * cannot tell those apart, and would save the split away silently. This says
+   * which of the two it is: false only while the block is open with a share
+   * that cannot become a receivable. Called on mount and on every change.
+   */
+  onValidityChange?: (usable: boolean) => void;
   currencySymbol?: string;
   id?: string;
 }
@@ -60,11 +71,18 @@ const expectedFrom = (share: number, amount: number): number | null =>
  * momentarily impossible share (bigger than the total that has been typed so
  * far) reports null and says so in place, rather than collapsing the block
  * out from under a half-finished edit.
+ *
+ * <h3>An unusable share is not a silent "no split"</h3>
+ * Because null covers both, `onValidityChange` says which one it is, and the
+ * forms hold their submit shut until the block can produce a receivable. The
+ * alternative — saving a plain expense with a cheerful "Expense added" — throws
+ * away something the user was in the middle of saying.
  */
 export function SplitBillField({
   amount,
   value,
   onChange,
+  onValidityChange,
   currencySymbol: symbol = "€",
   id = "split-my-share",
 }: SplitBillFieldProps) {
@@ -115,6 +133,33 @@ export function SplitBillField({
     emit(expectedFrom(parse(next), amount));
   };
 
+  const share = parse(raw);
+  const owed = expectedFrom(share, amount);
+
+  // Only ever a problem while the block is open. Collapsed means "not a
+  // split", which is never wrong — so closing the block is always a way out.
+  const problem = !expanded
+    ? null
+    : amount <= 0
+      ? "Enter the bill total first."
+      : raw === "" || share <= 0
+        ? "Enter your share of the bill."
+        : share >= amount
+          ? "Your share has to be less than the total."
+          : null;
+
+  const usable = problem === null;
+
+  // Reported through a ref rather than on every render: the parent turns this
+  // straight into a disabled submit, and a setState per keystroke that mostly
+  // sets the same boolean is a re-render nobody asked for.
+  const lastUsable = React.useRef<boolean | null>(null);
+  React.useEffect(() => {
+    if (lastUsable.current === usable) return;
+    lastUsable.current = usable;
+    onValidityChange?.(usable);
+  }, [usable, onValidityChange]);
+
   const open = () => setExpanded(true);
 
   const close = () => {
@@ -141,18 +186,6 @@ export function SplitBillField({
       </div>
     );
   }
-
-  const share = parse(raw);
-  const owed = expectedFrom(share, amount);
-
-  const problem =
-    amount <= 0
-      ? "Enter the bill total first."
-      : raw === "" || share <= 0
-        ? "Enter your share of the bill."
-        : share >= amount
-          ? "Your share has to be less than the total."
-          : null;
 
   const messageId = `${id}-message`;
 

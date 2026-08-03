@@ -329,7 +329,9 @@ describe("AddExpensePage", () => {
   // The block reports an unusable share as `null` — which is also what the
   // draft resets to — so this is the path where a reset looks exactly like an
   // echo of its own last emission, and the block used to stay open with the
-  // stale share still in it for every entry that followed.
+  // stale share still in it for every entry that followed. The submit is now
+  // held shut while the share is unusable, so each case corrects it before
+  // submitting; the ambiguous null still goes out on the way through.
   it.each([
     ["an empty share", ""],
     ["a share bigger than the total", "70"],
@@ -341,9 +343,17 @@ describe("AddExpensePage", () => {
     await user.click(screen.getByRole("radio", { name: /Food/ }));
     await user.click(screen.getByRole("button", { name: "Split bill" }));
     if (share) await user.type(screen.getByLabelText("Your share"), share);
+
+    expect(screen.getByRole("button", { name: "Add Expense" })).toBeDisabled();
+
+    await user.clear(screen.getByLabelText("Your share"));
+    await user.type(screen.getByLabelText("Your share"), "20");
     await user.click(screen.getByRole("button", { name: "Add Expense" }));
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync.mock.calls[0][0]).toMatchObject({
+      expectedReimbursement: 40,
+    });
 
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Split bill" })).toBeVisible(),
@@ -351,6 +361,10 @@ describe("AddExpensePage", () => {
     expect(screen.queryByLabelText("Your share")).toBeNull();
   });
 
+  // Purpose changed: this used to pin that the expense saved anyway, as a
+  // plain non-split with a cheerful success toast. That quietly binned the
+  // split the user was in the middle of expressing, so the submit is blocked
+  // instead until the share is a real slice of the bill.
   it("refuses a share that is not smaller than the total", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -368,13 +382,35 @@ describe("AddExpensePage", () => {
       screen.getByText("Your share has to be less than the total."),
     ).toBeVisible();
 
-    await user.click(screen.getByRole("button", { name: "Add Expense" }));
+    const submit = screen.getByRole("button", { name: "Add Expense" });
+    expect(submit).toBeDisabled();
+    await user.click(submit);
+    expect(mutateAsync).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
-    // A share equal to the total is "not a split" — never a zero receivable.
-    expect(mutateAsync.mock.calls[0][0]).not.toHaveProperty(
-      "expectedReimbursement",
-    );
+    // Correcting the share is the way out.
+    await user.clear(screen.getByLabelText("Your share"));
+    await user.type(screen.getByLabelText("Your share"), "20");
+    expect(submit).toBeEnabled();
+  });
+
+  it("holds the submit shut while the split block is open with nothing in it", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText("Amount"), "60");
+    await user.click(screen.getByRole("radio", { name: /Food/ }));
+
+    const submit = screen.getByRole("button", { name: "Add Expense" });
+    expect(submit).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Split bill" }));
+    expect(submit).toBeDisabled();
+    expect(screen.getByText("Enter your share of the bill.")).toBeVisible();
+
+    // Taking the split back is the other way out, for anyone who opened the
+    // block by mistake.
+    await user.click(screen.getByRole("button", { name: "Not a split" }));
+    expect(submit).toBeEnabled();
   });
 
   it("keeps the draft when the create fails", async () => {

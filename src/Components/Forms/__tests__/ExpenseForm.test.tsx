@@ -171,6 +171,38 @@ describe("ExpenseFormModal split bill", () => {
     expect(payload.expectedReimbursement ?? null).toBeNull();
   });
 
+  it("holds the update shut while the share cannot become a receivable", async () => {
+    const user = userEvent.setup();
+    renderForm(splitRow);
+
+    const submit = screen.getByRole("button", { name: "Update Expense" });
+    expect(submit).toBeEnabled();
+
+    await user.clear(screen.getByLabelText("Your share"));
+
+    expect(submit).toBeDisabled();
+    expect(screen.getByText("Enter your share of the bill.")).toBeVisible();
+    await user.click(submit);
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText("Your share"), "25");
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      amount: 60,
+      expectedReimbursement: 35,
+    });
+  });
+
+  // Regression pin: the new guard is about the split block and nothing else.
+  // Everything this dialog accepted before it must still go straight through.
+  it("never disables the submit for an expense without a split", () => {
+    renderForm(plainRow);
+    expect(screen.getByRole("button", { name: "Update Expense" })).toBeEnabled();
+  });
+
   it("splits a brand new expense from the dialog", async () => {
     const user = userEvent.setup();
     renderForm(null);

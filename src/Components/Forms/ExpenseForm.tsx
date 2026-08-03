@@ -74,6 +74,11 @@ export default function ExpenseFormModal({
 
   const [data, setData] = useState<FormState>(initial);
 
+  // False only while the split block is open with a share it cannot turn into
+  // a receivable. This dialog has no other submit guard and is not gaining
+  // one: everything else it accepts today it must go on accepting.
+  const [splitUsable, setSplitUsable] = useState(true);
+
   React.useEffect(() => {
     setData(initial);
   }, [open, initial]);
@@ -98,6 +103,7 @@ export default function ExpenseFormModal({
       onCancel={onCancel}
       title={row ? "Edit Expense" : "Add New Expense"}
       submitLabel={row ? "Update Expense" : "Add Expense"}
+      submitDisabled={!splitUsable}
       onSubmit={handleSubmit}
       desktopClassName="sm:max-w-[550px]"
     >
@@ -114,6 +120,7 @@ export default function ExpenseFormModal({
         onChange={(expectedReimbursement) =>
           setData({ ...data, expectedReimbursement } as FormState)
         }
+        onValidityChange={setSplitUsable}
         currencySymbol={currencySymbol(selectedAccount?.currencyCode)}
       />
 
