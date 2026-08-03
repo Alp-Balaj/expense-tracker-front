@@ -65,10 +65,14 @@ function SavingPage() {
     try {
       await addContribution.mutateAsync({ goalId, contribution })
     } catch (e) {
+      // The server's own words matter here: a currency mismatch comes back as
+      // "This goal holds EUR..." and tells the user exactly what to change.
       toast.error(getApiErrorMessage(e, "Failed to add contribution."))
-      return
+      throw e // the modal keeps the dialog open so the user can retry
     }
-    toast.success("Contribution added")
+    toast.success(
+      contribution.amount < 0 ? "Money released" : "Contribution added"
+    )
   }
 
   return (

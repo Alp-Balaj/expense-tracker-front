@@ -197,20 +197,47 @@ const LIQUID_TYPES: readonly AmountType[] = [
   AmountType.Cash,
 ];
 
+/**
+ * What one account can actually pay for: the balance minus whatever savings
+ * goals have spoken for. Goals are virtual envelopes — no money moves when you
+ * contribute to one — so the bank's figure is the money you would otherwise be
+ * free to spend twice.
+ *
+ * This is the single place reserved is subtracted, the way {@link netAmount} is
+ * the single place a reimbursement is. Anything summing balances into a "what
+ * can I spend" figure goes through here or it is wrong.
+ *
+ * It is allowed to come out negative: goals reserving more than the account
+ * holds is the underfunded case, and clamping it at zero would quietly hide the
+ * shortfall from every total downstream. The `?? 0` covers payloads that predate
+ * the field — an offline cache written before envelopes existed.
+ */
+export function usableBalance(account: Account): number {
+  return (account.balance ?? 0) - (account.reservedAmount ?? 0);
+}
+
 export type LiquidPosition = {
-  /** Converted into the user's base currency. */
+  /** Usable money — balances net of what goals reserved — in the base currency. */
   total: number;
+  /** How much of those same accounts the goals hold back, for the "of which" line. */
+  reserved: number;
   liquidCount: number;
   accountCount: number;
 };
 
+/**
+ * Reserved comes off each balance before conversion, because it is quoted in
+ * the account's own currency; netting the two totals after the fact would apply
+ * the wrong rate to the envelope half.
+ */
 export function liquidPosition(
   accounts: Account[],
   convert: (amount: number, fromCode: string) => number,
 ): LiquidPosition {
   const liquid = accounts.filter((a) => LIQUID_TYPES.includes(a.amountType));
   return {
-    total: liquid.reduce((sum, a) => sum + convert(a.balance ?? 0, a.currencyCode), 0),
+    total: liquid.reduce((sum, a) => sum + convert(usableBalance(a), a.currencyCode), 0),
+    reserved: liquid.reduce((sum, a) => sum + convert(a.reservedAmount ?? 0, a.currencyCode), 0),
     liquidCount: liquid.length,
     accountCount: accounts.length,
   };

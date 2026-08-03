@@ -11,8 +11,9 @@ import type { Account } from "@/Models/Account";
 import type { SavingGoals } from "@/Models/SavingGoals";
 
 // The form's job is to only ever offer combinations the API accepts: a
-// destination sharing the source's currency, and a goal actually backed by
-// that destination.
+// destination sharing the source's currency, and — since Stream V — a goal
+// whose currency the destination can actually hold. A goal is no longer tied
+// to one account, so where it was opened no longer restricts anything.
 
 vi.mock("@/Hooks/queries/useAccounts");
 vi.mock("@/Hooks/queries/useSavingGoals");
@@ -23,6 +24,7 @@ const accounts: Account[] = [
     name: "Main Checking",
     amountType: AmountType.CheckingAccount,
     balance: 2000,
+    reservedAmount: 0,
     currencyId: "eur",
     currencyCode: "EUR",
     description: "",
@@ -32,6 +34,7 @@ const accounts: Account[] = [
     name: "Rainy Day",
     amountType: AmountType.SavingsAccount,
     balance: 500,
+    reservedAmount: 0,
     currencyId: "eur",
     currencyCode: "EUR",
     description: "",
@@ -41,6 +44,7 @@ const accounts: Account[] = [
     name: "Dollar Account",
     amountType: AmountType.CheckingAccount,
     balance: 100,
+    reservedAmount: 0,
     currencyId: "usd",
     currencyCode: "USD",
     description: "",
@@ -57,6 +61,7 @@ const goals: SavingGoals[] = [
     description: "",
     accountId: "acc-savings",
     categoryId: "cat-1",
+    currencyCode: "EUR",
     contributions: [],
   },
 ];
@@ -121,16 +126,21 @@ describe("TransferFormModal", () => {
     expect(names.some((n) => n?.includes("Main Checking"))).toBe(false);
   });
 
-  it("offers the savings-goal link only once the destination backs a goal", async () => {
+  // Rewritten by Stream V — this used to assert the opposite second half, that
+  // a destination not backing the goal could not credit it. It can now: the
+  // contribution books wherever the money lands.
+  it("offers the savings-goal link for any destination the goal's currency fits", async () => {
     const user = userEvent.setup();
     renderForm();
 
+    // Nothing to credit into until a destination is chosen.
     await pickAccount(user, "From", "Rainy Day");
     expect(screen.queryByText(/count this toward a savings goal/i)).not.toBeInTheDocument();
 
+    // Main Checking is not the account the goal was opened against, and the
+    // link is offered all the same — both are euro accounts.
     await pickAccount(user, "To", "Main Checking");
-    // Main Checking backs no goal.
-    expect(screen.queryByText(/count this toward a savings goal/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/count this toward a savings goal/i)).toBeInTheDocument();
   });
 
   it("sends the goal id when the destination's goal is credited", async () => {
@@ -159,7 +169,10 @@ describe("TransferFormModal", () => {
     });
   });
 
-  it("drops a chosen goal when the destination moves away from it", async () => {
+  // Also rewritten by Stream V: moving the destination between two euro
+  // accounts no longer invalidates the link, so what has to clear the goal is a
+  // source change that makes the destination itself unusable.
+  it("drops a chosen goal when the source change clears the destination", async () => {
     const user = userEvent.setup();
     const onSubmit = renderForm();
 
@@ -167,9 +180,15 @@ describe("TransferFormModal", () => {
     await pickAccount(user, "To", "Rainy Day");
     await user.click(screen.getByLabelText(/count this toward a savings goal/i));
 
-    // Repointing at an account with no goal must clear the stale link.
-    await pickAccount(user, "From", "Rainy Day");
-    await pickAccount(user, "To", "Main Checking");
+    // A dollar source cannot reach the euro destination, so both it and the
+    // goal riding on it go.
+    await pickAccount(user, "From", "Dollar Account");
+    expect(screen.queryByText(/count this toward a savings goal/i)).not.toBeInTheDocument();
+
+    // Coming back to a workable pair must not resurrect the link the user
+    // never re-ticked.
+    await pickAccount(user, "From", "Main Checking");
+    await pickAccount(user, "To", "Rainy Day");
 
     const amount = screen.getByLabelText("Amount");
     await user.clear(amount);
@@ -178,8 +197,8 @@ describe("TransferFormModal", () => {
     await user.click(screen.getByRole("button", { name: "Transfer" }));
 
     expect(onSubmit.mock.calls[0][0]).toMatchObject({
-      fromAccountId: "acc-savings",
-      toAccountId: "acc-checking",
+      fromAccountId: "acc-checking",
+      toAccountId: "acc-savings",
       savingGoalId: null,
     });
   });

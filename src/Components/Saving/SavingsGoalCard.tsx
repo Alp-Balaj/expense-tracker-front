@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Card,
   CardContent,
@@ -20,11 +20,13 @@ import {
   Pencil,
   Trash2,
   Calendar,
+  AlertTriangle,
 } from "lucide-react"
 import type { SavingGoals, SavingContributions } from "@/Models/SavingGoals"
 import { SavingsGoalProgressRing } from "./SavingsGoalProgressRing"
 import SavingContributionsModal from "./SavingContributionsModal"
 import { useCurrency } from "@/Hooks/useCurrency"
+import { useAccountsQuery } from "@/Hooks/queries/useAccounts"
 import { parseISO } from "date-fns"
 import { toISODate } from "@/lib/dates"
 
@@ -32,7 +34,10 @@ interface SavingsGoalCardProps {
   goal: SavingGoals
   onEdit: (goal: SavingGoals) => void
   onDelete: (goal: SavingGoals) => void
-  onAddContribution: (goalId: string, contribution: SavingContributions) => void
+  onAddContribution: (
+    goalId: string,
+    contribution: SavingContributions
+  ) => void | Promise<void>
 }
 
 function formatDate(d: string): string {
@@ -52,8 +57,15 @@ export function SavingsGoalCard({
   onAddContribution,
 }: SavingsGoalCardProps) {
   const [contribOpen, setContribOpen] = useState(false)
-  const { format, userCurrencyCode } = useCurrency()
-  
+  const { formatOriginal, userCurrencyCode } = useCurrency()
+  const { data: accounts = [] } = useAccountsQuery()
+
+  // A goal is denominated in the currency of the account its money sits in;
+  // until it holds any, there is nothing to denominate and the user's base
+  // currency is the honest placeholder.
+  const goalCurrency = goal.currencyCode ?? userCurrencyCode
+  const money = (amount: number) => formatOriginal(amount, goalCurrency)
+
   const percentage =
     goal.targetAmount > 0
       ? (goal.savedAmount / goal.targetAmount) * 100
@@ -76,6 +88,34 @@ export function SavingsGoalCard({
   const sortedContribs = [...(goal.contributions ?? [])].sort((a, b) =>
     toISODate(b.date).localeCompare(toISODate(a.date))
   )
+
+  // Where the money actually sits. A goal is virtual, but every euro of it is
+  // reserved against a real account, and several accounts can back one goal —
+  // so the card names them rather than leaving the total unaddressed.
+  const perAccount = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const c of goal.contributions ?? []) {
+      // Contributions predating Stream V carry no account; they still count
+      // toward the goal, they just have no address to show.
+      const key = c.accountId ?? ""
+      totals.set(key, (totals.get(key) ?? 0) + c.amount)
+    }
+    return [...totals.entries()]
+      // A released-to-zero account is no longer holding anything for the goal.
+      .filter(([, amount]) => amount !== 0)
+      .map(([id, amount]) => {
+        const account = accounts.find((a) => a.id === id)
+        return { id, account, name: account?.name ?? "Unassigned", amount }
+      })
+      .sort((a, b) => b.amount - a.amount)
+  }, [goal.contributions, accounts])
+
+  // Reserved money that has since been spent. Nothing in the data says which
+  // goal was dipped into, so every goal holding money in the account is warned
+  // rather than inventing an allocation of the shortfall.
+  const overReservedNames = perAccount
+    .filter(({ account }) => account && account.reservedAmount > account.balance)
+    .map(({ name }) => name)
 
   return (
     <>
@@ -150,10 +190,10 @@ export function SavingsGoalCard({
               <div>
                 <p className="text-xs text-muted-foreground">You have reached</p>
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {format(goal.savedAmount, userCurrencyCode)}
+                  {money(goal.savedAmount)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  of your {format(goal.targetAmount, userCurrencyCode)} goal
+                  of your {money(goal.targetAmount)} goal
                 </p>
               </div>
 
@@ -162,7 +202,7 @@ export function SavingsGoalCard({
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Remaining</span>
                 <span className="font-medium text-foreground">
-                  {format(remaining, userCurrencyCode)}
+                  {money(remaining)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -181,6 +221,31 @@ export function SavingsGoalCard({
               </div>
             </div>
           </div>
+
+          {/* Where the reserved money is held */}
+          {perAccount.length > 0 && (
+            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+              {perAccount.map(({ id, name, amount }, i) => (
+                <span key={id} className="whitespace-nowrap">
+                  {i > 0 && <span className="mr-1.5">·</span>}
+                  <span className="text-foreground">{name}</span>{" "}
+                  <span className="font-medium tabular-nums">{money(amount)}</span>
+                </span>
+              ))}
+            </p>
+          )}
+
+          {overReservedNames.length > 0 && (
+            <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+              <span>
+                {overReservedNames.join(", ")}{" "}
+                {overReservedNames.length === 1 ? "holds" : "hold"} less than
+                savings goals have reserved — some of this money has already been
+                spent.
+              </span>
+            </p>
+          )}
 
           {/* Contributions section */}
           <div>
@@ -207,6 +272,9 @@ export function SavingsGoalCard({
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {sortedContribs.slice(0, 5).map((c) => {
                   const cd = c.date
+                  // A negative contribution is money taken back out; showing it
+                  // as "+ -50" in green would read as the opposite of what it is.
+                  const released = c.amount < 0
                   return (
                     <div
                       key={c.id}
@@ -222,8 +290,14 @@ export function SavingsGoalCard({
                           </span>
                         )}
                       </div>
-                      <span className="text-xs font-semibold text-green-600 dark:text-green-400 shrink-0">
-                        + {format(c.amount, userCurrencyCode)}
+                      <span
+                        className={`text-xs font-semibold shrink-0 ${
+                          released
+                            ? "text-muted-foreground"
+                            : "text-green-600 dark:text-green-400"
+                        }`}
+                      >
+                        {released ? "−" : "+"} {money(Math.abs(c.amount))}
                       </span>
                     </div>
                   )
@@ -240,8 +314,7 @@ export function SavingsGoalCard({
       </Card>
 
       <SavingContributionsModal
-        goalId={goal.id ?? ""}
-        goalTitle={goal.title}
+        goal={goal}
         open={contribOpen}
         onOpenChange={setContribOpen}
         onSubmit={(c) => onAddContribution(goal.id ?? "", c)}

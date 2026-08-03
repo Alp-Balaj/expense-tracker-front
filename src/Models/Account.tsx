@@ -5,6 +5,13 @@ export type Account = {
   name: string;
   amountType: AmountType;
   balance: number;
+  /**
+   * What savings goals have spoken for on this account, in the account's own
+   * currency. Server-derived and read-only. Usable money is `balance` minus
+   * this, and it can exceed the balance — spending reserved money warns, it
+   * never blocks.
+   */
+  reservedAmount: number;
   currencyId: string;
   currencyCode: string;
   description: string;

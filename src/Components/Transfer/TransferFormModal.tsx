@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { PiggyBank } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -21,6 +21,7 @@ import { DateField } from "@/Components/Forms/shared/DateField";
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
 import { useSavingGoalsQuery } from "@/Hooks/queries/useSavingGoals";
 import { emptyTransfer, type Transfer } from "@/Models/Transfer";
+import type { SavingGoals } from "@/Models/SavingGoals";
 import { toISODate, todayISO } from "@/lib/dates";
 
 export interface TransferFormModalProps {
@@ -72,16 +73,28 @@ export default function TransferFormModal({
     [accounts, data.fromAccountId, source],
   );
 
-  // A goal's saved amount tracks money in the account behind it, so only goals
-  // backed by the destination can be credited by this transfer.
-  const eligibleGoals = useMemo(
-    () => goals.filter((g) => g.accountId === data.toAccountId),
-    [goals, data.toAccountId],
+  // Stream V: a goal is no longer backed by one account, so any transfer may
+  // credit any goal — the contribution books on the destination, where the
+  // money actually lands. The one rule left is currency: a goal reserves in
+  // one, so a goal already holding money in another is hidden rather than
+  // offered and then refused. An empty goal has no currency yet and is always
+  // eligible, exactly as the API treats it.
+  const destination = useMemo(
+    () => accounts.find((a) => a.id === data.toAccountId),
+    [accounts, data.toAccountId],
   );
 
-  // Repointing the destination can invalidate both the chosen destination
-  // (currency) and the chosen goal (backing account); drop them rather than
-  // submitting a combination the API will refuse.
+  const isEligible = useCallback(
+    (goal: SavingGoals) =>
+      !!destination && (!goal.currencyCode || goal.currencyCode === destination.currencyCode),
+    [destination],
+  );
+
+  const eligibleGoals = useMemo(() => goals.filter(isEligible), [goals, isEligible]);
+
+  // Repointing the destination can invalidate both the chosen destination and
+  // the chosen goal (both on currency); drop them rather than submitting a
+  // combination the API will refuse.
   const handleSourceChange = (fromAccountId: string) => {
     const nextSource = accounts.find((a) => a.id === fromAccountId);
     const destination = accounts.find((a) => a.id === data.toAccountId);
@@ -98,7 +111,13 @@ export default function TransferFormModal({
   };
 
   const handleDestinationChange = (toAccountId: string) => {
-    const stillEligible = goals.some((g) => g.accountId === toAccountId && g.id === data.savingGoalId);
+    const nextDestination = accounts.find((a) => a.id === toAccountId);
+    const stillEligible = goals.some(
+      (g) =>
+        g.id === data.savingGoalId &&
+        !!nextDestination &&
+        (!g.currencyCode || g.currencyCode === nextDestination.currencyCode),
+    );
     setData((prev) => ({
       ...prev,
       toAccountId,
@@ -194,7 +213,7 @@ export default function TransferFormModal({
         onChange={(date) => setData((prev) => ({ ...prev, date }))}
       />
 
-      {/* Savings-goal linkage — only offered when the destination backs a goal */}
+      {/* Savings-goal linkage — offered once a destination the goals can hold money in is chosen */}
       {eligibleGoals.length > 0 && (
         <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
           <div className="flex items-start gap-2.5">
