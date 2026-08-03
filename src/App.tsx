@@ -26,6 +26,7 @@ import SavingPage from "./Pages/SavingPage";
 import BudgetPage from "./Pages/BudgetPage";
 import PlannedPage from "./Pages/PlannedPage";
 import AddExpensePage from "./Pages/AddExpensePage";
+import DataPage from "./Pages/DataPage";
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
                     <Route path="/expenses" element={<ExpensePage />} />
                     <Route path="/income" element={<IncomePage />} />
                     <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
+                    <Route path="/data" element={<DataPage />} />
                     <Route path="/savings" element={<SavingPage />} />
                     <Route path="/budgets" element={<BudgetPage />} />
                     <Route path="/planned" element={<PlannedPage />} />

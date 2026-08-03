@@ -1,4 +1,5 @@
 import {
+  ArrowDownUp,
   CalendarClock,
   FileText,
   Home,
@@ -59,6 +60,12 @@ export const NAV_GROUPS: NavGroup[] = [
         shortLabel: "Categories",
         to: "/categoryAndCurrency",
         icon: Tags,
+      },
+      {
+        label: "Import & Export",
+        shortLabel: "Data",
+        to: "/data",
+        icon: ArrowDownUp,
       },
     ],
   },
