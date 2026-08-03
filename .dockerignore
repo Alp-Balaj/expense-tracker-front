@@ -1,0 +1,38 @@
+# The Dockerfile does `COPY . .`, so without this everything in the working
+# directory is shipped into the build context and baked into a layer — including
+# a Windows-built node_modules that the alpine image cannot use anyway, the whole
+# git history, and the local mkcert keys.
+#
+# The .env files matter most: VITE_ variables are inlined into the bundle at
+# build time, so a stray .env in the context can put a value into JavaScript that
+# ships to every visitor.
+
+node_modules
+build
+dist
+coverage
+
+.git
+.github
+.gitignore
+
+# Local TLS for the https dev server. Never needed in an image, and a private key
+# in a layer is a private key in a registry.
+*.pem
+*.key
+
+# Real values arrive as build args (VITE_API_BASE_URL) and at runtime, never from
+# a file in the context.
+.env
+.env.*
+!.env.example
+
+.vscode
+.idea
+.claude
+docs
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
