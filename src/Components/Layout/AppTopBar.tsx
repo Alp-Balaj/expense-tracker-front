@@ -8,6 +8,7 @@ import { useCurrency } from "@/Hooks/useCurrency";
 import { currencySymbol, initials } from "@/lib/identity";
 import { pageTitle } from "./navigation";
 import { NotificationsMenu } from "./NotificationsMenu";
+import { OutboxIndicator } from "./OutboxIndicator";
 import type { NavIndicators } from "./useNavIndicators";
 
 /** The square icon button the top bar uses on both sides of the search field. */
@@ -61,6 +62,8 @@ export function AppTopBar({ indicators, onOpenSearch, onOpenNav }: AppTopBarProp
         </button>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5">
+          {/* Stream O: renders nothing unless something is actually queued. */}
+          <OutboxIndicator />
           <NotificationsMenu indicators={indicators} />
           <ModeToggle className={ICON_BUTTON} />
         </div>
@@ -81,6 +84,7 @@ export function AppTopBar({ indicators, onOpenSearch, onOpenNav }: AppTopBarProp
         </h1>
 
         <div className="flex shrink-0 items-center gap-3.5 text-muted-foreground">
+          <OutboxIndicator />
           <button type="button" onClick={onOpenSearch} aria-label="Search">
             <Search className="size-5" />
           </button>

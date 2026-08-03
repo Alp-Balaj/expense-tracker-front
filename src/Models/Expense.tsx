@@ -17,6 +17,16 @@ export type Expense = {
   description: string;
   accountId: string;
   categoryId: string;
+  /**
+   * Stream O: this row is in the offline outbox and the server has not accepted
+   * it yet. Present only on optimistic rows the outbox put in the cache; a row
+   * that came from the server never carries it.
+   *
+   * Marked rather than left indistinguishable on purpose — an unmarked
+   * provisional row is a lie about money, and the one that fails permanently
+   * would sit in the list looking saved for ever.
+   */
+  pending?: boolean;
 };
 
 export type ExpenseFormProps = {
@@ -35,7 +45,19 @@ export function buildExpenseColumns(handlers?: {
   const { onEdit, onDelete, accounts = [], categories = [], formatter } = handlers ?? {}
 
   return [
-    sortableColumn<Expense>("title", "Title"),
+    {
+      ...sortableColumn<Expense>("title", "Title"),
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-2">
+          {row.original.title}
+          {row.original.pending && (
+            <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+              waiting
+            </span>
+          )}
+        </span>
+      ),
+    } as ColumnDef<Expense>,
     currencyColumn<Expense>("amount", "Amount", {
       formatter,
     }),

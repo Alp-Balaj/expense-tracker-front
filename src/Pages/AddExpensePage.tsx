@@ -12,7 +12,8 @@ import { DateField } from "@/Components/Forms/shared/DateField";
 
 import { useAccountsQuery } from "@/Hooks/queries/useAccounts";
 import { useCategoriesQuery } from "@/Hooks/queries/useCategories";
-import { useCreateExpense, useExpensesQuery } from "@/Hooks/queries/useExpenses";
+import { useExpensesQuery } from "@/Hooks/queries/useExpenses";
+import { useQueuedCreateExpense } from "@/Hooks/useQueuedExpense";
 import { CategoryType } from "@/Enums/enums";
 import { todayISO } from "@/lib/dates";
 import { getApiErrorMessage } from "@/lib/errors";
@@ -52,7 +53,11 @@ export default function AddExpensePage() {
   const { data: allCategories = [], isError: categoriesFailed } =
     useCategoriesQuery();
   const { data: expenses = [] } = useExpensesQuery();
-  const createExpense = useCreateExpense();
+  // Stream O: the same call online, a queued one when the network is not
+  // there. /add is the write path an offline outbox exists for — it is the
+  // screen people open in a shop.
+  const createExpense = useQueuedCreateExpense();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const categories = React.useMemo(
     () =>
@@ -114,14 +119,23 @@ export default function AddExpensePage() {
       title: data.title.trim() || selectedCategory?.name || "Expense",
     };
 
+    let outcome: "sent" | "queued";
+    setIsSubmitting(true);
     try {
-      await createExpense.mutateAsync(payload);
+      outcome = await createExpense(payload);
     } catch (err) {
+      // The server was reached and refused it: a queue would only fail again.
       toast.error(getApiErrorMessage(err, "Failed to add expense."));
       return; // keep the draft so nothing typed is lost
+    } finally {
+      setIsSubmitting(false);
     }
 
-    toast.success("Expense added");
+    toast.success(
+      outcome === "queued"
+        ? "Saved on this device — it will sync when you're back online"
+        : "Expense added"
+    );
     // Reset for the next entry, keeping the picked account and date —
     // logging several receipts in a row shouldn't repeat those taps.
     setData((d) => ({ ...emptyDraft(), accountId: d.accountId, date: d.date }));
@@ -138,7 +152,7 @@ export default function AddExpensePage() {
       title="Add Expense"
       description="Log a new expense"
       submitLabel="Add Expense"
-      submitDisabled={!canSubmit || createExpense.isPending}
+      submitDisabled={!canSubmit || isSubmitting}
       onSubmit={handleSubmit}
       desktopClassName="sm:max-w-[550px]"
     >
