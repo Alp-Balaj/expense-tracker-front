@@ -125,6 +125,20 @@ export function buildInsightSentences(
     });
   }
 
+  // Money that left the account but was never yours to spend. It is a fact
+  // about the month rather than a verdict on it, so it is appended after the
+  // spending read rather than competing with it — and it stays quiet for the
+  // many people who never split a bill.
+  if (insights.frontedThisMonth > 0 || insights.stillOpen > 0) {
+    sentences.push({
+      key: "fronted",
+      tone: "info",
+      text: `You fronted ${formatAmount(
+        insights.frontedThisMonth,
+      )} for others this month; ${formatAmount(insights.stillOpen)} is still out.`,
+    });
+  }
+
   // A thin baseline changes how much the averages should be trusted, so it is
   // said out loud rather than silently producing jumpy percentages.
   if (insights.monthsWithHistory < 3) {

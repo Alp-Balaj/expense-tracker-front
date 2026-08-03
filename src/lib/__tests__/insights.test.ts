@@ -30,6 +30,8 @@ function insights(overrides: Partial<Insights> = {}): Insights {
     trailingAverage: 100,
     overallVsAveragePct: 0,
     categories: [],
+    frontedThisMonth: 0,
+    stillOpen: 0,
     ...overrides,
   };
 }
@@ -120,6 +122,41 @@ describe("buildInsightSentences", () => {
     expect(sentences.map((s) => s.text)).toContain(
       "Based on 1 month of history — comparisons sharpen as more builds up.",
     );
+  });
+
+  it("reads the fronted delta off the backend's two figures", () => {
+    const sentences = buildInsightSentences(
+      insights({ frontedThisMonth: 320, stillOpen: 140 }),
+      fmt,
+    );
+
+    expect(sentences.map((s) => s.text)).toContain(
+      "You fronted €320.00 for others this month; €140.00 is still out.",
+    );
+    expect(sentences.find((s) => s.key === "fronted")?.tone).toBe("info");
+  });
+
+  it("still says it when this month fronted nothing but something is out from before", () => {
+    const sentences = buildInsightSentences(
+      insights({ frontedThisMonth: 0, stillOpen: 60 }),
+      fmt,
+    );
+
+    expect(sentences.map((s) => s.text)).toContain(
+      "You fronted €0.00 for others this month; €60.00 is still out.",
+    );
+  });
+
+  // Regression pin: the many people who never split a bill must not gain a
+  // sentence about money they never fronted.
+  it("says nothing about fronting when there is nothing fronted and nothing out", () => {
+    const sentences = buildInsightSentences(
+      insights({ frontedThisMonth: 0, stillOpen: 0 }),
+      fmt,
+    );
+
+    expect(sentences.some((s) => s.key === "fronted")).toBe(false);
+    expect(sentences.map((s) => s.text).join(" ")).not.toMatch(/fronted/);
   });
 
   it("says nothing is unusual rather than staying silent", () => {

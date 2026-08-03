@@ -31,4 +31,11 @@ export type Insights = {
   overallVsAveragePct: number | null;
   /** Biggest month-over-month movers first. */
   categories: CategoryInsight[];
+  /**
+   * What you put on the table for other people this month: the whole expected
+   * reimbursement on expenses dated in this month, settled or not.
+   */
+  frontedThisMonth: number;
+  /** Still out across the whole history, whenever it was fronted. */
+  stillOpen: number;
 };
