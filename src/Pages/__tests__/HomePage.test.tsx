@@ -244,6 +244,9 @@ const insightsFixture: Insights = {
       vsAveragePct: -2.22,
     },
   ],
+  // Nothing split in the July fixtures; the receivable tests raise these.
+  frontedThisMonth: 0,
+  stillOpen: 0,
 };
 
 const cashflowFixture: CashflowProjection = {
@@ -544,6 +547,70 @@ describe("HomePage dashboard", () => {
     // €15.23/day — 192 days of runway. Counting the gross 80 would have read
     // €15.70/day and clipped it to 187.
     expect(screen.getByText("192 days")).toBeInTheDocument();
+  });
+
+  // The month figures in the hero are analysis, not account truth, so they net
+  // out what others owe — exactly like the budget bar and the burn beside them.
+  it("counts the month's spend net of what others owe on it", () => {
+    vi.mocked(expenseHooks).useExpensesQuery.mockReturnValue({
+      data: [...expenses, splitDinner],
+      isLoading: false,
+    } as never);
+    vi.mocked(reimbursementHooks).useReimbursementsQuery.mockReturnValue({
+      data: [dinnerReceivable],
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    // €1232.61 plus the 40 of the dinner that was actually yours, against the
+    // €270 that came in. On the gross 80 this read -€1042.61 and disagreed with
+    // every other figure on the card.
+    expect(screen.getByText("-€1002.61")).toBeInTheDocument();
+  });
+
+  it("nets the spend headline too when no budget covers the month", () => {
+    vi.clearAllMocks();
+    mockQueries([budgetStatus({ id: "b-food" })]);
+    vi.mocked(expenseHooks).useExpensesQuery.mockReturnValue({
+      data: [...expenses, splitDinner],
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    expect(screen.getByTestId("hero-amount")).toHaveTextContent("€1272.61");
+  });
+
+  // Regression pin: a history with no split bill in it has to produce the same
+  // figures, to the cent, as it did before any of this existed.
+  it("leaves the month figures untouched for a history with no splits", () => {
+    vi.clearAllMocks();
+    mockQueries([budgetStatus({ id: "b-food" })]);
+    renderDashboard();
+
+    expect(screen.getByTestId("hero-amount")).toHaveTextContent("€1232.61");
+    expect(screen.getByText("-€962.61")).toBeInTheDocument();
+  });
+
+  it("reads the fronted delta out of the insights payload as a sentence", () => {
+    vi.mocked(insightHooks).useInsightsQuery.mockReturnValue({
+      data: { ...insightsFixture, frontedThisMonth: 320, stillOpen: 140 },
+      isLoading: false,
+    } as never);
+    renderDashboard();
+
+    expect(
+      within(screen.getByTestId("insights-panel")).getByText(
+        "You fronted €320.00 for others this month; €140.00 is still out.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the insights panel silent about fronting when nothing was fronted", () => {
+    renderDashboard();
+
+    expect(
+      within(screen.getByTestId("insights-panel")).queryByText(/fronted/),
+    ).not.toBeInTheDocument();
   });
 
   it("falls back to plain spend when nothing budgets the whole month", () => {

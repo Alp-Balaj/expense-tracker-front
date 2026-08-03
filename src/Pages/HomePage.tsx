@@ -56,6 +56,7 @@ import {
   greeting,
   liquidPosition,
   monthCursor,
+  netAmount,
 } from "@/lib/dashboard";
 
 export default function HomePage() {
@@ -133,8 +134,13 @@ export default function HomePage() {
     [expenses, incomes, month],
   );
 
+  // Net, like everything else on this page that analyses money. The budget
+  // bar, the burn behind the runway, the insights and the category totals all
+  // count what was actually yours to spend, so a headline summed on the gross
+  // would have the same card reading "€30.00 of €200.00" on the budget bar and
+  // "Spent in August €70.00" an inch below it.
   const spentThisMonth = useMemo(
-    () => thisMonth.expenses.reduce((sum, e) => sum + e.amount, 0),
+    () => thisMonth.expenses.reduce((sum, e) => sum + netAmount(e), 0),
     [thisMonth],
   );
   const netThisMonth = useMemo(
