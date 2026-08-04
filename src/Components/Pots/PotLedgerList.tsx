@@ -43,6 +43,19 @@ export default function PotLedgerList({ ledger, onDeleteExpense }: PotLedgerList
     return "−";
   };
 
+  /**
+   * A top-up and a withdrawal have no title of their own — only an optional
+   * note — so the kind names them when the note is absent. Found in the browser
+   * pass: the placeholder was an em dash, which read as missing data sitting
+   * above a line that already said who did what.
+   */
+  const heading = (entry: PotLedgerEntry): string => {
+    if (entry.title) return entry.title;
+    if (entry.kind === PotLedgerEntryKind.TopUp) return "Added to the pot";
+    if (entry.kind === PotLedgerEntryKind.Withdrawal) return "Taken out";
+    return "Shared expense";
+  };
+
   const line = (entry: PotLedgerEntry): string => {
     const who = entry.actorDisplayName ?? "Someone";
 
@@ -95,9 +108,7 @@ export default function PotLedgerList({ ledger, onDeleteExpense }: PotLedgerList
 
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                      <p className="min-w-0 font-medium text-foreground">
-                        {entry.title ?? (isExpense ? "Shared expense" : "—")}
-                      </p>
+                      <p className="min-w-0 font-medium text-foreground">{heading(entry)}</p>
                       <p className="shrink-0 tabular-nums text-foreground">
                         {sign(entry)}
                         {formatPotAmount(entry.amount, ledger.currencyCode)}
