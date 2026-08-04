@@ -10,6 +10,16 @@ export const queryKeys = {
   expenses: ["expenses"] as const,
   incomes: ["incomes"] as const,
   plannedTransactions: ["plannedTransactions"] as const,
+  /**
+   * Cycle U. The list, and one entry per pot for each of its three sub-reads —
+   * so joining a pot refetches that pot's members without disturbing another
+   * pot's activity log that is also on screen.
+   */
+  pots: ["pots"] as const,
+  pot: (id: string) => ["pots", id] as const,
+  potMembers: (id: string) => ["pots", id, "members"] as const,
+  potInvites: (id: string) => ["pots", id, "invites"] as const,
+  potActivity: (id: string) => ["pots", id, "activity"] as const,
   /** Open receivables on split expenses. Expense writes can create or clear one. */
   reimbursements: ["reimbursements"] as const,
   /** The due queue. Separate from the templates: confirming one changes only this. */

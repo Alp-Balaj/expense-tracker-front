@@ -43,6 +43,9 @@ const BudgetPage = lazy(() => import("./Pages/BudgetPage"));
 const PlannedPage = lazy(() => import("./Pages/PlannedPage"));
 const AddExpensePage = lazy(() => import("./Pages/AddExpensePage"));
 const DataPage = lazy(() => import("./Pages/DataPage"));
+const PotsPage = lazy(() => import("./Pages/PotsPage"));
+const PotDetailPage = lazy(() => import("./Pages/PotDetailPage"));
+const JoinPotPage = lazy(() => import("./Pages/JoinPotPage"));
 
 function App() {
   return (
@@ -76,6 +79,13 @@ function App() {
                       <Route path="/income" element={<IncomePage />} />
                       <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
                       <Route path="/data" element={<DataPage />} />
+                      {/* Cycle U. /join/:code sits inside RequireAuth on
+                          purpose: joining a pot is an act by a specific person,
+                          so a signed-out visitor opening an invite link is sent
+                          to login and returned here afterwards. */}
+                      <Route path="/pots" element={<PotsPage />} />
+                      <Route path="/pots/:potId" element={<PotDetailPage />} />
+                      <Route path="/join/:code" element={<JoinPotPage />} />
                       <Route path="/savings" element={<SavingPage />} />
                       <Route path="/budgets" element={<BudgetPage />} />
                       <Route path="/planned" element={<PlannedPage />} />
