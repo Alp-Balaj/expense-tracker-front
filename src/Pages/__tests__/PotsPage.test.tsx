@@ -5,14 +5,23 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PotsPage from "@/Pages/PotsPage";
 import PotDetailPage from "@/Pages/PotDetailPage";
 import * as potHooks from "@/Hooks/queries/usePots";
-import { PotActivityKind, type Pot, type PotActivity, type PotMember } from "@/Models/Pot";
+import {
+  PotActivityKind,
+  type Pot,
+  type PotActivity,
+  type PotLedger,
+  type PotMember,
+} from "@/Models/Pot";
 
-// W1's frontend contract, from the reader's side: a pot has people in it and a
-// history, and it has no money in it. The last of those is the one worth a test
-// — "no balance yet" is a wave boundary, and a boundary nobody asserts is a
-// boundary that moves.
+// The pot's frontend contract from the reader's side: a pot has people in it, a
+// history, and — from W2 — money. W1 pinned the last of those as *absent*,
+// which was the wave boundary at the time; W2 moves that pin rather than
+// dropping it, so what is now asserted absent is settlement.
 
 vi.mock("@/Hooks/queries/usePots");
+vi.mock("@/Hooks/queries/useAccounts", () => ({
+  useAccountsQuery: () => ({ data: [{ id: "acc-1", name: "Main" }] }),
+}));
 
 function pot(overrides: Partial<Pot> = {}): Pot {
   return {
@@ -24,6 +33,46 @@ function pot(overrides: Partial<Pot> = {}): Pot {
     createdByDisplayName: "AlpBalaj",
     memberCount: 2,
     membershipId: "mem-1",
+    balance: 120,
+    yourPosition: 40,
+    isLow: false,
+    ...overrides,
+  };
+}
+
+function ledger(overrides: Partial<PotLedger> = {}): PotLedger {
+  return {
+    potId: "pot-1",
+    currencyCode: "EUR",
+    balance: 120,
+    isLow: false,
+    positions: [
+      {
+        membershipId: "mem-1",
+        displayName: "AlpBalaj",
+        isYou: true,
+        isActive: true,
+        toppedUp: 100,
+        outOfPocket: 0,
+        shares: 60,
+        withdrawn: 0,
+        position: 40,
+        withdrawable: 40,
+      },
+      {
+        membershipId: "mem-2",
+        displayName: "MaraIonescu",
+        isYou: false,
+        isActive: true,
+        toppedUp: 140,
+        outOfPocket: 0,
+        shares: 60,
+        withdrawn: 0,
+        position: 80,
+        withdrawable: 80,
+      },
+    ],
+    entries: [],
     ...overrides,
   };
 }
@@ -59,8 +108,16 @@ function mockDetail(options: {
   pot?: Pot | null;
   members?: PotMember[];
   activity?: PotActivity[];
+  ledger?: PotLedger | null;
   isError?: boolean;
 }) {
+  vi.mocked(potHooks).usePotLedgerQuery.mockReturnValue({
+    data: options.ledger === null ? undefined : (options.ledger ?? ledger()),
+  } as never);
+  vi.mocked(potHooks).usePotTopUp.mockReturnValue({ mutateAsync: vi.fn() } as never);
+  vi.mocked(potHooks).useLogPotExpense.mockReturnValue({ mutateAsync: vi.fn() } as never);
+  vi.mocked(potHooks).useDeletePotExpense.mockReturnValue({ mutateAsync: vi.fn() } as never);
+  vi.mocked(potHooks).usePotWithdrawal.mockReturnValue({ mutateAsync: vi.fn() } as never);
   vi.mocked(potHooks).usePotQuery.mockReturnValue({
     data: options.pot ?? undefined,
     isLoading: false,
@@ -110,9 +167,19 @@ describe("PotsPage", () => {
     expect(screen.getByRole("button", { name: "Create a pot" })).toBeInTheDocument();
   });
 
-  it("lists a pot by its people and its currency, and never by a balance", () => {
+  it("lists a pot by its people, its balance and where you stand against it", () => {
     vi.mocked(potHooks).usePotsQuery.mockReturnValue({
-      data: [pot(), pot({ id: "pot-2", name: "Ski trip", memberCount: 1, lowBalanceThreshold: 0 })],
+      data: [
+        pot(),
+        pot({
+          id: "pot-2",
+          name: "Ski trip",
+          memberCount: 1,
+          balance: 12.5,
+          yourPosition: -30,
+          isLow: true,
+        }),
+      ],
       isLoading: false,
     } as never);
     vi.mocked(potHooks).useCreatePot.mockReturnValue({ mutateAsync: vi.fn() } as never);
@@ -124,10 +191,13 @@ describe("PotsPage", () => {
     );
 
     expect(screen.getByText("The Flat")).toBeInTheDocument();
-    expect(screen.getByText(/2 members · EUR · warns below €50/)).toBeInTheDocument();
+    expect(screen.getByText(/2 members · €120\.00 in the pot/)).toBeInTheDocument();
+    expect(screen.getByText("+€40.00 yours")).toBeInTheDocument();
 
-    // A threshold of zero is the alert switched off, not a €0 warning line.
-    expect(screen.getByText("1 member · EUR")).toBeInTheDocument();
+    // Two facts, not one: a member can be down while the pot still has money,
+    // and the list has to be able to say both at once.
+    expect(screen.getByText(/1 member · €12\.50 in the pot · running low/)).toBeInTheDocument();
+    expect(screen.getByText("−€30.00 yours")).toBeInTheDocument();
   });
 });
 
@@ -148,12 +218,15 @@ describe("PotDetailPage", () => {
 
     renderDetail();
 
-    expect(screen.getByText("AlpBalaj")).toBeInTheDocument();
+    // getAllByText from W2 on: a member's name is now in two places on this
+    // screen — the member list and the positions table — which is the point of
+    // both of them.
+    expect(screen.getAllByText("AlpBalaj").length).toBeGreaterThan(0);
     expect(screen.getByText("You")).toBeInTheDocument();
 
     // Somebody who left stays visible: the activity log goes on naming them,
     // so hiding them here would leave the history full of ghosts.
-    expect(screen.getByText("MaraIonescu")).toBeInTheDocument();
+    expect(screen.getAllByText("MaraIonescu").length).toBeGreaterThan(0);
     expect(screen.getByText(/1 person in this pot, 1 who left/)).toBeInTheDocument();
   });
 
@@ -204,7 +277,130 @@ describe("PotDetailPage", () => {
     expect(screen.getByText("AlpBalaj created this pot")).toBeInTheDocument();
   });
 
-  it("shows no money anywhere — that is W2's, and it arrives with its invariant", () => {
+  it("leads with the pot's balance and your own position, and they add up", () => {
+    mockDetail({
+      pot: pot(),
+      members: [
+        member({ id: "mem-1", displayName: "AlpBalaj", isYou: true }),
+        member({ id: "mem-2", displayName: "MaraIonescu" }),
+      ],
+    });
+
+    renderDetail();
+
+    expect(screen.getByTestId("pot-balance")).toHaveTextContent("€120.00");
+    expect(screen.getByTestId("pot-your-position")).toHaveTextContent("+€40.00");
+    expect(screen.getByText("still yours in the pot")).toBeInTheDocument();
+
+    // The positions table states the invariant where a member can check it:
+    // 40 + 80 is the 120 in the pot.
+    expect(screen.getByRole("rowheader", { name: "In the pot" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Everyone's position adds up to what is in the pot — always, after every change."),
+    ).toBeInTheDocument();
+  });
+
+  it("says plainly when a member has used more than they put in", () => {
+    mockDetail({
+      pot: pot({ yourPosition: -15 }),
+      members: [member({ isYou: true })],
+      ledger: ledger({
+        balance: 0,
+        isLow: true,
+        positions: [
+          {
+            membershipId: "mem-1",
+            displayName: "AlpBalaj",
+            isYou: true,
+            isActive: true,
+            toppedUp: 20,
+            outOfPocket: 0,
+            shares: 35,
+            withdrawn: 0,
+            position: -15,
+            withdrawable: 0,
+          },
+        ],
+      }),
+    });
+
+    renderDetail();
+
+    expect(screen.getByTestId("pot-your-position")).toHaveTextContent("−€15.00");
+    expect(screen.getByText("you have used more than you put in")).toBeInTheDocument();
+
+    // Nothing to take out, so the control is disabled rather than absent — a
+    // button that comes and goes is a bigger surprise than one that says why.
+    expect(screen.getByRole("button", { name: /Take out/ })).toBeDisabled();
+    expect(screen.getByText("This pot is running low. Anyone can add to it.")).toBeInTheDocument();
+  });
+
+  it("shows an expense with its shares, and offers removal only where the server allows it", () => {
+    mockDetail({
+      pot: pot(),
+      members: [member({ isYou: true })],
+      ledger: ledger({
+        entries: [
+          {
+            id: "exp-1",
+            kind: 1,
+            date: "2026-08-14",
+            createdAt: "2026-08-14T10:00:00Z",
+            amount: 60,
+            title: "The big shop",
+            description: null,
+            actorDisplayName: "AlpBalaj",
+            actorMembershipId: "mem-1",
+            paidByDisplayName: null,
+            paidByMembershipId: null,
+            shares: [
+              { membershipId: "mem-1", displayName: "AlpBalaj", isYou: true, amount: 30 },
+              { membershipId: "mem-2", displayName: "MaraIonescu", isYou: false, amount: 30 },
+            ],
+            canDelete: true,
+          },
+          {
+            id: "exp-2",
+            kind: 1,
+            date: "2026-08-13",
+            createdAt: "2026-08-13T10:00:00Z",
+            amount: 20,
+            title: "Mara paid at the till",
+            description: null,
+            actorDisplayName: "MaraIonescu",
+            actorMembershipId: "mem-2",
+            paidByDisplayName: "MaraIonescu",
+            paidByMembershipId: "mem-2",
+            shares: [{ membershipId: "mem-1", displayName: "AlpBalaj", isYou: true, amount: 20 }],
+            // Reversing it would credit Mara's account, and nobody writes into
+            // an account they do not own. W3 is where cross-user writes arrive.
+            canDelete: false,
+          },
+        ],
+      }),
+    });
+
+    renderDetail();
+
+    expect(screen.getByText("The big shop")).toBeInTheDocument();
+    expect(screen.getByText("out of pocket")).toBeInTheDocument();
+
+    // Who a bill was for is the fact somebody is most likely to want to check,
+    // so it is on the row rather than behind a tap. The name and the amount are
+    // separate elements, hence the textContent match.
+    expect(
+      screen
+        .getAllByRole("listitem")
+        .some((li) => li.textContent?.replace(/\s+/g, " ").includes("You €30.00")),
+    ).toBe(true);
+
+    expect(screen.getByRole("button", { name: "Remove The big shop" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove Mara paid at the till" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows no settlement anywhere — that is W3's, and it arrives with the cross-user write", () => {
     mockDetail({
       pot: pot(),
       members: [member({ isYou: true })],
@@ -213,8 +409,11 @@ describe("PotDetailPage", () => {
 
     const { container } = renderDetail();
 
+    // W1 asserted this about money. Money arrived, so the boundary moves to the
+    // next wave's vocabulary rather than disappearing: a boundary nobody
+    // asserts is a boundary that moves on its own.
     const text = container.textContent ?? "";
-    for (const word of ["Balance", "Position", "Top up", "Withdraw", "Settle"]) {
+    for (const word of ["Settle", "owes you", "you owe", "Confirm payment", "Inbox"]) {
       expect(text).not.toContain(word);
     }
   });

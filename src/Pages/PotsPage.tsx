@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/Components/ui/card";
 import LoadingSpinner from "@/Components/General/LoadingSpinner";
 import PotFormModal from "@/Components/Pots/PotFormModal";
 import { getApiErrorMessage } from "@/lib/errors";
-import { currencySymbol } from "@/lib/identity";
+import { formatPosition, formatPotAmount } from "@/lib/potMoney";
+import { cn } from "@/lib/utils";
 import { useCreatePot, usePotsQuery } from "@/Hooks/queries/usePots";
 
 /**
@@ -98,10 +99,21 @@ export default function PotsPage() {
                     <p className="truncate font-medium text-foreground">{pot.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {pot.memberCount} {pot.memberCount === 1 ? "member" : "members"} ·{" "}
-                      {pot.currencyCode}
-                      {pot.lowBalanceThreshold > 0
-                        ? ` · warns below ${currencySymbol(pot.currencyCode)}${pot.lowBalanceThreshold}`
-                        : ""}
+                      {formatPotAmount(pot.balance, pot.currencyCode)} in the pot
+                      {pot.isLow ? " · running low" : ""}
+                    </p>
+                    {/* Two facts, not one: the pot's cash, then where this
+                        reader stands against it. A member can be up while the
+                        pot is nearly empty, and that is not a contradiction. */}
+                    <p
+                      className={cn(
+                        "text-sm tabular-nums",
+                        pot.yourPosition > 0 && "text-emerald-600 dark:text-emerald-400",
+                        pot.yourPosition < 0 && "text-destructive",
+                        pot.yourPosition === 0 && "text-muted-foreground",
+                      )}
+                    >
+                      {formatPosition(pot.yourPosition, pot.currencyCode)} yours
                     </p>
                   </div>
 
