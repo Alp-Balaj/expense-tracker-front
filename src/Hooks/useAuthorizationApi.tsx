@@ -12,9 +12,14 @@ export function useAuthorizationApi() {
 
   const putDataNoId = useCallback(<T = unknown, B = unknown>(url: string, data: B) => putDataApi(url, data) as Promise<T>, []);
 
+  // Cycle U W2: a DELETE whose url is already complete, and whose response body
+  // matters. Deleting a pot expense is not "remove entity by id" — the id sits
+  // inside a pot's route, and the answer is the whole recomputed ledger.
+  const deleteDataNoId = useCallback(<T = unknown>(url: string) => deleteDataApi(url) as Promise<T>, []);
+
 
   return useMemo(
-    () => ({ getAllData, postData, putData, deleteData, putDataNoId }),
-    [getAllData, postData, putData, deleteData, putDataNoId]
+    () => ({ getAllData, postData, putData, deleteData, putDataNoId, deleteDataNoId }),
+    [getAllData, postData, putData, deleteData, putDataNoId, deleteDataNoId]
   );
 }

@@ -8,27 +8,47 @@ import { Card, CardContent } from "@/Components/ui/card";
 import ConfirmDelete from "@/Components/General/ConfirmDelete";
 import LoadingSpinner from "@/Components/General/LoadingSpinner";
 import PotActivityLog from "@/Components/Pots/PotActivityLog";
+import PotBalanceHeader from "@/Components/Pots/PotBalanceHeader";
+import PotExpenseModal from "@/Components/Pots/PotExpenseModal";
 import PotFormModal from "@/Components/Pots/PotFormModal";
 import PotInvitePanel from "@/Components/Pots/PotInvitePanel";
+import PotLedgerList from "@/Components/Pots/PotLedgerList";
 import PotMemberList from "@/Components/Pots/PotMemberList";
+import PotMoveModal from "@/Components/Pots/PotMoveModal";
+import PotPositionsTable from "@/Components/Pots/PotPositionsTable";
 import { getApiErrorMessage } from "@/lib/errors";
 import { currencySymbol } from "@/lib/identity";
+import { formatPotAmount } from "@/lib/potMoney";
+import type { CreatePotExpense, PotLedgerEntry } from "@/Models/Pot";
 import {
+  useDeletePotExpense,
   useLeavePot,
+  useLogPotExpense,
   usePotActivityQuery,
   usePotInvitesQuery,
+  usePotLedgerQuery,
   usePotMembersQuery,
   usePotQuery,
+  usePotTopUp,
+  usePotWithdrawal,
   useUpdatePot,
 } from "@/Hooks/queries/usePots";
 
 /**
- * One pot: who is in it, how to let somebody else in, and everything that has
- * happened.
+ * One pot: what is in it, whose it is, who is in the group, and everything that
+ * has happened.
  *
- * There is no money on this screen and there is not supposed to be. W1 ships
- * the group; the balance header, the top-up flow and the positions table are
- * W2's, and they arrive with the invariant that keeps them honest.
+ * <h3>Money first</h3>
+ * W1 shipped this screen without any, deliberately. W2 puts the balance and the
+ * reader's own position at the top, because those are what somebody opens a pot
+ * to find out — the member list and the invite panel are things you need
+ * occasionally, and they move below.
+ *
+ * <h3>Two lists, and they are different things</h3>
+ * The money feed is the arithmetic: what came in, what was spent, who each
+ * expense was for. The activity log is the accountability: it records renames
+ * and invites too, and it exists because trust inside a pot is flat. Collapsing
+ * them would lose the second one inside the first.
  *
  * A pot the reader is not (or is no longer) a member of answers 404, so the
  * not-found state below is the same one a stranger sees — the screen cannot
@@ -40,14 +60,22 @@ export default function PotDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const { data: pot, isLoading, isError } = usePotQuery(potId);
   const { data: members = [] } = usePotMembersQuery(potId);
   const { data: invites = [] } = usePotInvitesQuery(potId);
   const { data: activity = [] } = usePotActivityQuery(potId);
+  const { data: ledger } = usePotLedgerQuery(potId);
 
   const updatePot = useUpdatePot();
   const leavePot = useLeavePot();
+  const topUp = usePotTopUp();
+  const logExpense = useLogPotExpense();
+  const deleteExpense = useDeletePotExpense();
+  const withdraw = usePotWithdrawal();
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -90,6 +118,81 @@ export default function PotDetailPage() {
     }
   };
 
+  // Every one of these rethrows so the modal stays open with what was typed
+  // still in it — the amount and the split are more than a moment's work, and
+  // losing them to a failed request is the difference between a retry and
+  // giving up. See PotMoveModal / PotExpenseModal.
+
+  const handleTopUp = async (move: {
+    amount: number;
+    accountId: string;
+    date: string;
+    note: string | null;
+  }) => {
+    try {
+      const result = await topUp.mutateAsync({
+        potId,
+        topUp: {
+          amount: move.amount,
+          sourceAccountId: move.accountId,
+          date: move.date,
+          note: move.note,
+        },
+      });
+      toast.success(
+        `Added ${formatPotAmount(move.amount, result.currencyCode)} to ${pot.name}.`,
+      );
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Could not add that money."));
+      throw e;
+    }
+  };
+
+  const handleWithdraw = async (move: {
+    amount: number;
+    accountId: string;
+    date: string;
+    note: string | null;
+  }) => {
+    try {
+      const result = await withdraw.mutateAsync({
+        potId,
+        withdrawal: {
+          amount: move.amount,
+          destinationAccountId: move.accountId,
+          date: move.date,
+          note: move.note,
+        },
+      });
+      toast.success(`Took ${formatPotAmount(move.amount, result.currencyCode)} out.`);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Could not take that money out."));
+      throw e;
+    }
+  };
+
+  const handleLogExpense = async (expense: CreatePotExpense) => {
+    try {
+      await logExpense.mutateAsync({ potId, expense });
+      toast.success("Logged. Everyone's position has moved.");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Could not log that expense."));
+      throw e;
+    }
+  };
+
+  const handleDeleteExpense = async (entry: PotLedgerEntry) => {
+    try {
+      await deleteExpense.mutateAsync({ potId, expenseId: entry.id });
+      toast.success("Removed, and everyone's share with it.");
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Could not remove that expense."));
+    }
+  };
+
+  const activeMembers = members.filter((m) => m.isActive);
+  const you = ledger?.positions.find((p) => p.isYou);
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="space-y-3">
@@ -125,16 +228,54 @@ export default function PotDetailPage() {
         </div>
       </div>
 
+      {ledger && (
+        <PotBalanceHeader
+          ledger={ledger}
+          onTopUp={() => setTopUpOpen(true)}
+          onLogExpense={() => setExpenseOpen(true)}
+          onWithdraw={() => setWithdrawOpen(true)}
+        />
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-4">
+          {ledger && <PotLedgerList ledger={ledger} onDeleteExpense={handleDeleteExpense} />}
           <PotMemberList members={members} />
           <PotInvitePanel potId={potId} invites={invites} />
         </div>
 
-        <PotActivityLog entries={activity} />
+        <div className="space-y-4">
+          {ledger && <PotPositionsTable ledger={ledger} />}
+          <PotActivityLog entries={activity} />
+        </div>
       </div>
 
       <PotFormModal pot={pot} open={editOpen} onOpenChange={setEditOpen} onSubmit={handleEdit} />
+
+      <PotExpenseModal
+        open={expenseOpen}
+        onOpenChange={setExpenseOpen}
+        members={activeMembers}
+        currencyCode={pot.currencyCode}
+        onSubmit={handleLogExpense}
+      />
+
+      <PotMoveModal
+        open={topUpOpen}
+        onOpenChange={setTopUpOpen}
+        direction="in"
+        currencyCode={pot.currencyCode}
+        onSubmit={handleTopUp}
+      />
+
+      <PotMoveModal
+        open={withdrawOpen}
+        onOpenChange={setWithdrawOpen}
+        direction="out"
+        currencyCode={pot.currencyCode}
+        limit={you?.withdrawable ?? 0}
+        onSubmit={handleWithdraw}
+      />
 
       <ConfirmDelete
         open={leaveOpen}

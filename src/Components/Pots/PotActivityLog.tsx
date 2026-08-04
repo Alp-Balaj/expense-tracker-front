@@ -1,10 +1,14 @@
 import {
+  ArrowDownToLine,
   ArrowRight,
+  ArrowUpFromLine,
   Link2,
   Link2Off,
   LogIn,
   LogOut,
   PiggyBank,
+  Receipt,
+  Trash2,
   Type,
   UserMinus,
   type LucideIcon,
@@ -26,6 +30,10 @@ const ICONS: Record<PotActivityKindValue, LucideIcon> = {
   [PotActivityKind.MemberJoined]: LogIn,
   [PotActivityKind.MemberLeft]: LogOut,
   [PotActivityKind.MemberAnonymized]: UserMinus,
+  [PotActivityKind.ToppedUp]: ArrowDownToLine,
+  [PotActivityKind.ExpenseLogged]: Receipt,
+  [PotActivityKind.ExpenseDeleted]: Trash2,
+  [PotActivityKind.Withdrew]: ArrowUpFromLine,
 };
 
 /**
@@ -53,6 +61,16 @@ function sentence(entry: PotActivity): string {
       return `${who} left`;
     case PotActivityKind.MemberAnonymized:
       return `${who} deleted their account`;
+    // W2. The amount lives in `after` (or `before`, for a removal), so the
+    // sentence stays a sentence and the figure is not baked into it.
+    case PotActivityKind.ToppedUp:
+      return `${who} added ${entry.targetLabel ?? "money"}`;
+    case PotActivityKind.Withdrew:
+      return `${who} took out ${entry.targetLabel ?? "money"}`;
+    case PotActivityKind.ExpenseLogged:
+      return `${who} logged "${entry.targetLabel ?? "an expense"}"`;
+    case PotActivityKind.ExpenseDeleted:
+      return `${who} removed "${entry.targetLabel ?? "an expense"}"`;
     default:
       return `${who} changed something`;
   }

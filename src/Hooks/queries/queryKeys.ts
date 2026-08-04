@@ -20,6 +20,8 @@ export const queryKeys = {
   potMembers: (id: string) => ["pots", id, "members"] as const,
   potInvites: (id: string) => ["pots", id, "invites"] as const,
   potActivity: (id: string) => ["pots", id, "activity"] as const,
+  /** W2: balance, positions and the money feed — one key, because it is one read. */
+  potLedger: (id: string) => ["pots", id, "ledger"] as const,
   /** Open receivables on split expenses. Expense writes can create or clear one. */
   reimbursements: ["reimbursements"] as const,
   /** The due queue. Separate from the templates: confirming one changes only this. */

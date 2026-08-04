@@ -6,10 +6,14 @@ import { useResourceQuery } from "./resourceHooks";
 import { queryKeys } from "./queryKeys";
 import type {
   CreatePot,
+  CreatePotExpense,
+  CreatePotTopUp,
+  CreatePotWithdrawal,
   Pot,
   PotActivity,
   PotInvite,
   PotInvitePreview,
+  PotLedger,
   PotMember,
   UpdatePot,
 } from "@/Models/Pot";
@@ -175,5 +179,95 @@ export function useLeavePot() {
     mutationFn: (potId: string) =>
       postData<void, Record<string, never>>(`${ENDPOINT}/${potId}/leave`, {}),
     onSuccess: (_result, potId) => invalidate(potId),
+  });
+}
+
+// ── W2, the ledger ──────────────────────────────────────────────────────────
+
+/**
+ * Balance, positions and the money feed, in one read — see `PotLedger`.
+ *
+ * Every write below answers with the whole fresh ledger, so each one seeds this
+ * cache directly rather than invalidating and waiting for a refetch. On a phone
+ * that is the difference between the balance updating as the sheet closes and
+ * it updating a moment later, which on a screen whose promise is "these numbers
+ * agree" reads as a bug.
+ *
+ * The pot list and the activity log are still invalidated, because they moved
+ * too and this response does not carry them.
+ */
+export function usePotLedgerQuery(potId: string | undefined) {
+  const { accessToken, isAuthReady } = useAuth();
+  const { getAllData } = useAuthorizationApi();
+
+  return useQuery({
+    queryKey: queryKeys.potLedger(potId ?? ""),
+    queryFn: () => getAllData<PotLedger>(`${ENDPOINT}/${potId}/ledger`),
+    enabled: isAuthReady && !!accessToken && !!potId,
+    ...REFETCH_ON_FOCUS,
+  });
+}
+
+/**
+ * What every ledger write does with its answer: put the fresh ledger straight
+ * into the cache, then let the rest of the pot's screens refetch.
+ */
+function useLedgerWriter() {
+  const client = useQueryClient();
+
+  return (potId: string, ledger: PotLedger) => {
+    client.setQueryData(queryKeys.potLedger(potId), ledger);
+    client.invalidateQueries({ queryKey: queryKeys.pots });
+    client.invalidateQueries({ queryKey: queryKeys.potActivity(potId) });
+    // The member's own accounts moved on a top-up, a withdrawal and a fronted
+    // expense — and their budgets and category totals moved on a share. All of
+    // those live outside this pot's keys.
+    client.invalidateQueries({ queryKey: queryKeys.accounts });
+    client.invalidateQueries({ queryKey: queryKeys.categories });
+    client.invalidateQueries({ queryKey: queryKeys.budgetStatusRoot });
+  };
+}
+
+export function usePotTopUp() {
+  const { postData } = useAuthorizationApi();
+  const write = useLedgerWriter();
+
+  return useMutation({
+    mutationFn: ({ potId, topUp }: { potId: string; topUp: CreatePotTopUp }) =>
+      postData<PotLedger, CreatePotTopUp>(`${ENDPOINT}/${potId}/topups`, topUp),
+    onSuccess: (ledger, { potId }) => write(potId, ledger),
+  });
+}
+
+export function useLogPotExpense() {
+  const { postData } = useAuthorizationApi();
+  const write = useLedgerWriter();
+
+  return useMutation({
+    mutationFn: ({ potId, expense }: { potId: string; expense: CreatePotExpense }) =>
+      postData<PotLedger, CreatePotExpense>(`${ENDPOINT}/${potId}/expenses`, expense),
+    onSuccess: (ledger, { potId }) => write(potId, ledger),
+  });
+}
+
+export function useDeletePotExpense() {
+  const { deleteDataNoId } = useAuthorizationApi();
+  const write = useLedgerWriter();
+
+  return useMutation({
+    mutationFn: ({ potId, expenseId }: { potId: string; expenseId: string }) =>
+      deleteDataNoId<PotLedger>(`${ENDPOINT}/${potId}/expenses/${expenseId}`),
+    onSuccess: (ledger, { potId }) => write(potId, ledger),
+  });
+}
+
+export function usePotWithdrawal() {
+  const { postData } = useAuthorizationApi();
+  const write = useLedgerWriter();
+
+  return useMutation({
+    mutationFn: ({ potId, withdrawal }: { potId: string; withdrawal: CreatePotWithdrawal }) =>
+      postData<PotLedger, CreatePotWithdrawal>(`${ENDPOINT}/${potId}/withdrawals`, withdrawal),
+    onSuccess: (ledger, { potId }) => write(potId, ledger),
   });
 }
