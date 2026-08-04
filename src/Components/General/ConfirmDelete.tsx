@@ -16,6 +16,8 @@ type ConfirmDeleteProps = {
   close: () => void
   title?: string
   description?: string
+  /** For the destructive-but-not-a-deletion cases, e.g. leaving a pot. */
+  confirmLabel?: string
 }
 
 function ConfirmDelete({
@@ -25,6 +27,7 @@ function ConfirmDelete({
   close,
   title = "Delete item?",
   description = "This action cannot be undone.",
+  confirmLabel = "Delete",
 }: ConfirmDeleteProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -39,7 +42,7 @@ function ConfirmDelete({
         <AlertDialogFooter>
           <AlertDialogCancel onClick={close}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Delete
+            {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
