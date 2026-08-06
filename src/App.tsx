@@ -13,6 +13,7 @@ import { SidebarProvider } from "./Components/ui/sidebar";
 import { UserPreferencesProvider } from "./Authorization/UserPreferencesContext";
 import { ThemeProvider } from "./Components/Layout/ThemeProvider";
 import LoadingSpinner from "./Components/General/LoadingSpinner";
+import { AppErrorBoundary } from "./Components/General/AppErrorBoundary";
 
 /**
  * Suggestion-12: every page is loaded on demand.
@@ -59,44 +60,48 @@ function App() {
               <Toaster richColors position="top-right" />
               {/* One boundary around the whole router rather than one per route:
                   a chunk fetch on a warm connection is a few milliseconds, and a
-                  spinner per route would flicker on every navigation. */}
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  {/* Public */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  {/* The emailed links land on these two with email+token query params. */}
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+                  spinner per route would flicker on every navigation. The error
+                  boundary sits outside Suspense so a rejected lazy import (chunk
+                  gone after a deploy) lands in it instead of blanking the app. */}
+              <AppErrorBoundary>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    {/* Public */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    {/* The emailed links land on these two with email+token query params. */}
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
-                  {/* Protected */}
-                  <Route element={<RequireAuth />}>
-                    <Route element={<AppLayout />}>
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/add" element={<AddExpensePage />} />
-                      <Route path="/account" element={<AccountPage />} />
-                      <Route path="/expenses" element={<ExpensePage />} />
-                      <Route path="/income" element={<IncomePage />} />
-                      <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
-                      <Route path="/data" element={<DataPage />} />
-                      {/* Cycle U. /join/:code sits inside RequireAuth on
-                          purpose: joining a pot is an act by a specific person,
-                          so a signed-out visitor opening an invite link is sent
-                          to login and returned here afterwards. */}
-                      <Route path="/pots" element={<PotsPage />} />
-                      <Route path="/pots/:potId" element={<PotDetailPage />} />
-                      <Route path="/join/:code" element={<JoinPotPage />} />
-                      <Route path="/savings" element={<SavingPage />} />
-                      <Route path="/budgets" element={<BudgetPage />} />
-                      <Route path="/planned" element={<PlannedPage />} />
-                      <Route path="/reports" element={<ReportsPage />} />
+                    {/* Protected */}
+                    <Route element={<RequireAuth />}>
+                      <Route element={<AppLayout />}>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/add" element={<AddExpensePage />} />
+                        <Route path="/account" element={<AccountPage />} />
+                        <Route path="/expenses" element={<ExpensePage />} />
+                        <Route path="/income" element={<IncomePage />} />
+                        <Route path="/categoryAndCurrency" element={<CategoryAndCurrencyPage />} />
+                        <Route path="/data" element={<DataPage />} />
+                        {/* Cycle U. /join/:code sits inside RequireAuth on
+                            purpose: joining a pot is an act by a specific person,
+                            so a signed-out visitor opening an invite link is sent
+                            to login and returned here afterwards. */}
+                        <Route path="/pots" element={<PotsPage />} />
+                        <Route path="/pots/:potId" element={<PotDetailPage />} />
+                        <Route path="/join/:code" element={<JoinPotPage />} />
+                        <Route path="/savings" element={<SavingPage />} />
+                        <Route path="/budgets" element={<BudgetPage />} />
+                        <Route path="/planned" element={<PlannedPage />} />
+                        <Route path="/reports" element={<ReportsPage />} />
+                      </Route>
                     </Route>
-                  </Route>
 
-                  {/* Fallback */}
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </Suspense>
+                    {/* Fallback */}
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </Suspense>
+              </AppErrorBoundary>
             </SidebarProvider>
           </UserPreferencesProvider>
         </ThemeProvider>
