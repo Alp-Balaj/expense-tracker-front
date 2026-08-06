@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const STORAGE_KEY = "accessToken";
 
@@ -46,6 +47,7 @@ export function AuthorizationProvider({
 }: AuthorizationProviderProps) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEY);
@@ -61,7 +63,11 @@ export function AuthorizationProvider({
 
   const logout = useCallback(() => {
     setToken(null);
-  }, [setToken]);
+    // This is the forced-logout path (AxiosAuthBridge on a dead session).
+    // Query keys carry no user id, so cached data must not outlive the
+    // identity it was fetched under.
+    queryClient.clear();
+  }, [setToken, queryClient]);
 
   const { email, username } = useMemo(() => {
     if (!accessToken) return { email: "", username: "" };

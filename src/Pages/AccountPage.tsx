@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, Plus, Search, Filter, ArrowLeftRight } from "lucide-react";
+import { Wallet, Plus, Search, Filter, ArrowLeftRight, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/Hooks/queries/useAccounts";
 
 export default function AccountPage() {
-  const { data: accounts = [] } = useAccountsQuery();
+  const { data: accounts = [], isError, refetch } = useAccountsQuery();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
   const deleteAccountMutation = useDeleteAccount();
@@ -158,8 +158,24 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Accounts Grid */}
-          {filteredAccounts.length > 0 ? (
+          {/* A failed load must not pass for an empty account list — with
+              retry off, one bad response would otherwise read as "you have
+              no accounts" until something invalidates the query. */}
+          {isError ? (
+            <div className="text-center py-12">
+              <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Couldn't load your accounts
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Something went wrong while fetching your accounts.
+              </p>
+              <Button onClick={() => void refetch()}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try again
+              </Button>
+            </div>
+          ) : filteredAccounts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredAccounts.map((account) => (
                 <AccountCard

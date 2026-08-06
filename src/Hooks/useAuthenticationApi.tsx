@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../Authorization/AuthContext";
 import {
   loginApi,
@@ -24,6 +25,7 @@ function serverErrorMessage(err: unknown, fallback: string): string {
 
 export function useAuthenticationApi() {
   const { setToken } = useAuth();
+  const queryClient = useQueryClient();
 
   const login = async (data: LoginRequest): Promise<AuthResponse> => {
     try {
@@ -31,6 +33,11 @@ export function useAuthenticationApi() {
 
       const token = response.token ?? null;
       setToken(token);
+
+      // Query keys are user-agnostic (["accounts"], ["categories"], …), so any
+      // cache built under a previous identity must go — including the case
+      // where this login happens without an intervening logout.
+      queryClient.clear();
 
       return response;
     } catch (err) {
@@ -44,6 +51,7 @@ export function useAuthenticationApi() {
 
       const token = response.token ?? null;
       setToken(token);
+      queryClient.clear();
 
       return response;
     } catch (err) {
@@ -60,6 +68,7 @@ export function useAuthenticationApi() {
       console.error(err);
     } finally {
       setToken(null);
+      queryClient.clear();
     }
   };
 
