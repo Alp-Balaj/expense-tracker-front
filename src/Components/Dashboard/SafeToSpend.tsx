@@ -14,6 +14,12 @@ export interface SafeToSpendProps {
   /** Null when no budget covers every category; the card then falls back to raw spend. */
   budget: { limit: number; spent: number; remaining: number; percentUsed: number } | null;
   spentThisMonth: number;
+  /**
+   * Planned spending still to come this month, or null when the month cannot
+   * have one — a past month the user stepped back to, or a projection that
+   * has not loaded. Zero means "nothing planned", which is a real answer.
+   */
+  plannedRemaining: number | null;
   netThisMonth: number;
   liquid: LiquidPosition;
   runwayDays: number | null;
@@ -31,6 +37,7 @@ export function SafeToSpend({
   elapsed,
   budget,
   spentThisMonth,
+  plannedRemaining,
   netThisMonth,
   liquid,
   runwayDays,
@@ -62,6 +69,15 @@ export function SafeToSpend({
   const { lead, fraction, trail } = splitAmountParts(money(headline));
 
   const perDay = daysLeft > 0 && budget && !overspent ? budget.remaining / daysLeft : null;
+
+  // What the month is heading for: what has gone already plus what is still
+  // committed. The "already" half is the budget's own `spent` whenever there
+  // is a budget, so the bar's projected segment and the sentence under it are
+  // two views of one number rather than two numbers that nearly agree.
+  const showProjection = plannedRemaining !== null && plannedRemaining > 0;
+  const spentSoFar = budget ? budget.spent : spentThisMonth;
+  const projectedSpend = spentSoFar + (plannedRemaining ?? 0);
+  const projectedPercent = budget && budget.limit > 0 ? (projectedSpend / budget.limit) * 100 : 0;
 
   return (
     <div className={shell}>
@@ -114,6 +130,27 @@ export function SafeToSpend({
                 }`}
                 style={{ width: `${Math.min(100, Math.max(0, budget.percentUsed))}%` }}
               />
+              {/*
+                What is spoken for but not yet gone, drawn faint and running on
+                from the solid fill. This is the point of the whole card: 62%
+                used reads as comfortable right up until you see the bar reach
+                94% on bills you have already agreed to.
+              */}
+              {showProjection && (
+                <div
+                  className={`absolute inset-y-0 rounded-full transition-all duration-500 ${
+                    projectedPercent > 100 ? "bg-destructive/30" : "bg-primary/30"
+                  }`}
+                  style={{
+                    left: `${Math.min(100, Math.max(0, budget.percentUsed))}%`,
+                    width: `${Math.max(
+                      0,
+                      Math.min(100, projectedPercent) - Math.min(100, Math.max(0, budget.percentUsed)),
+                    )}%`,
+                  }}
+                  aria-hidden
+                />
+              )}
               {/* Where the month itself has got to — spending should trail this. */}
               <div
                 className="absolute -top-1 -bottom-1 w-0.5 rounded-sm bg-foreground/70"
@@ -130,10 +167,37 @@ export function SafeToSpend({
                 {Math.round(budget.percentUsed)}% used · pace {Math.round(elapsed * 100)}%
               </span>
             </div>
+
+            {showProjection && (
+              <p
+                data-testid="projected-spend"
+                className="mt-2 text-[11.5px] text-muted-foreground lg:text-xs"
+              >
+                Heading for{" "}
+                <strong
+                  className={`font-semibold ${
+                    projectedPercent > 100 ? "text-destructive" : "text-foreground"
+                  }`}
+                >
+                  {money(projectedSpend)}
+                </strong>{" "}
+                by month end — {money(plannedRemaining ?? 0)} still planned.
+              </p>
+            )}
           </div>
         </>
       ) : (
         <div className="mt-3 flex flex-wrap items-center gap-3">
+          {showProjection && (
+            <p
+              data-testid="projected-spend"
+              className="w-full text-sm text-muted-foreground lg:text-[15px]"
+            >
+              Heading for{" "}
+              <strong className="font-semibold text-foreground">{money(projectedSpend)}</strong> by
+              month end — {money(plannedRemaining ?? 0)} still planned.
+            </p>
+          )}
           <p className="text-sm text-muted-foreground">
             Set a monthly budget to turn this into what&apos;s safe to spend.
           </p>

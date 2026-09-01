@@ -49,6 +49,7 @@ import { useCashflowProjectionQuery } from "@/Hooks/queries/useCashflow";
 import { useReimbursementsQuery } from "@/Hooks/queries/useReimbursements";
 import { currentMonth, formatMonth, overallBudgetStatus, shiftMonth } from "@/lib/budget";
 import { monthKey } from "@/lib/dates";
+import { plannedRemainingThisMonth } from "@/lib/cashflow";
 import {
   cashRunwayDays,
   dailyBurn,
@@ -148,6 +149,14 @@ export default function HomePage() {
   );
 
   const overall = useMemo(() => overallBudgetStatus(budgetStatuses), [budgetStatuses]);
+
+  // The forward half of the month: bills still to be paid, straight off the
+  // cashflow projection so this and the cashflow panel cannot disagree. Null
+  // for any month but the current one — a month that is over has no remainder.
+  const plannedRemaining = useMemo(
+    () => plannedRemainingThisMonth(cashflow, month),
+    [cashflow, month],
+  );
 
   // Usable, not raw: `liquid.total` is already net of what savings goals
   // reserved, so the Liquid stat and the runway below both answer "what can I
@@ -259,10 +268,11 @@ export default function HomePage() {
               elapsed={cursor.elapsed}
               budget={overall}
               spentThisMonth={spentThisMonth}
+              plannedRemaining={plannedRemaining}
               netThisMonth={netThisMonth}
               liquid={liquid}
               runwayDays={runwayDays}
-              isLoading={isLoading || isLoadingBudgets}
+              isLoading={isLoading || isLoadingBudgets || isLoadingCashflow}
               onSetBudget={() => navigate("/budgets")}
             />
           </div>
