@@ -11,6 +11,7 @@ import { AccountSettings } from "./AccountSettings";
 import { PasswordChange } from "./PasswordChange";
 import { Preferences } from "./Preferences";
 import { NotificationSettingsPanel } from "./NotificationSettings";
+import { McpTokenSettings } from "./McpTokenSettings";
 import type { UserSettings } from "@/Models/UserSettings";
 import type { CurrencyDropdown } from "@/Models/Currency";
 
@@ -68,10 +69,11 @@ export function UserSettingsModal({ triggerClassName }: { triggerClassName?: str
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
-          <TabsList className="w-full px-6">
+          <TabsList className="w-full px-1 sm:px-6 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:px-2 sm:[&>button]:text-sm">
             <TabsTrigger value="settings">User Settings</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="ai">AI</TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings" className="p-6">
@@ -88,6 +90,12 @@ export function UserSettingsModal({ triggerClassName }: { triggerClassName?: str
                 worker for a subscription, and there is no reason to do that on
                 every render of the sidebar. */}
             <NotificationSettingsPanel active={open && activeTab === "notifications"} />
+          </TabsContent>
+
+          {/* forceMount keeps it mounted so leaving the tab reaches its effect, which
+              is what wipes a freshly created token from the screen. */}
+          <TabsContent value="ai" forceMount className="p-6 data-[state=inactive]:hidden">
+            <McpTokenSettings active={open && activeTab === "ai"} />
           </TabsContent>
         </Tabs>
       </DialogContent>
