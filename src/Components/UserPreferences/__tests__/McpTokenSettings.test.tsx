@@ -24,6 +24,7 @@ const token = (overrides: Partial<McpToken> = {}): McpToken => ({
   canWrite: false,
   createdAt: "2026-11-01T10:00:00Z",
   lastUsedAtUtc: null,
+  viaOAuth: false,
   ...overrides,
 });
 
@@ -102,5 +103,16 @@ describe("McpTokenSettings", () => {
 
     expect(await screen.findByText(/Read only · Never used/)).toBeInTheDocument();
     expect(screen.getByText(/Read and log · Last used/)).toBeInTheDocument();
+  });
+});
+
+describe("McpTokenSettings OAuth connections", () => {
+  it("labels a signed-in connection instead of showing a meaningless token suffix", async () => {
+    vi.mocked(listMcpTokensApi).mockResolvedValue([token({ name: "Claude", viaOAuth: true, lastFour: "zz99" })]);
+    render(<McpTokenSettings active />);
+
+    expect(await screen.findByText("Claude")).toBeInTheDocument();
+    expect(screen.getByText(/Signed in · Read only/)).toBeInTheDocument();
+    expect(screen.queryByText(/zz99/)).not.toBeInTheDocument();
   });
 });

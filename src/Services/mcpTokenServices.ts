@@ -9,6 +9,8 @@ export interface McpToken {
   canWrite: boolean;
   createdAt: string;
   lastUsedAtUtc: string | null;
+  /** A connection made by signing in (claude.ai). Its token rotates, so lastFour means nothing. */
+  viaOAuth: boolean;
 }
 
 /** The only shape that ever carries the raw token; the server cannot show it again. */

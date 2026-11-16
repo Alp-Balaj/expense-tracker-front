@@ -96,10 +96,18 @@ export function McpTokenSettings({ active }: { active: boolean }) {
       <div className="space-y-2">
         <Label>Connect an AI assistant</Label>
         <p className="text-xs text-muted-foreground">
-          Tokens let an MCP client such as Claude Code read your accounts, spending and budgets. A token works only
-          for this connection, never for signing in. Changing your password revokes all of them.
+          Connect an MCP client such as Claude to read your accounts, spending and budgets. Changing your password
+          disconnects all of them.
         </p>
         <CopyBlock label="server URL" value={mcpEndpointUrl()} />
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">claude.ai or Claude Desktop:</span> Settings → Connectors → Add
+          custom connector, paste this URL, then sign in when asked. No token needed.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Claude Code and other clients:</span> create a token below. A
+          token works only for this connection, never for signing in.
+        </p>
       </div>
 
       {created ? (
@@ -155,7 +163,7 @@ export function McpTokenSettings({ active }: { active: boolean }) {
               <div className="min-w-0">
                 <p className="truncate text-sm">{token.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  ••••{token.lastFour} · {token.canWrite ? "Read and log" : "Read only"} ·{" "}
+                  {token.viaOAuth ? "Signed in" : `••••${token.lastFour}`} · {token.canWrite ? "Read and log" : "Read only"} ·{" "}
                   {token.lastUsedAtUtc ? `Last used ${formatDate(token.lastUsedAtUtc)}` : "Never used"}
                 </p>
               </div>

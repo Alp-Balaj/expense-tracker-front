@@ -47,6 +47,7 @@ const DataPage = lazy(() => import("./Pages/DataPage"));
 const PotsPage = lazy(() => import("./Pages/PotsPage"));
 const PotDetailPage = lazy(() => import("./Pages/PotDetailPage"));
 const JoinPotPage = lazy(() => import("./Pages/JoinPotPage"));
+const OAuthAuthorizePage = lazy(() => import("./Pages/OAuthAuthorizePage"));
 
 function App() {
   return (
@@ -75,6 +76,10 @@ function App() {
 
                     {/* Protected */}
                     <Route element={<RequireAuth />}>
+                      {/* OAuth consent for MCP clients (claude.ai). Signed-in, but
+                          outside the app shell: it is a stop on the way back to
+                          another app, not a page of this one. */}
+                      <Route path="/oauth/authorize" element={<OAuthAuthorizePage />} />
                       <Route element={<AppLayout />}>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/add" element={<AddExpensePage />} />
